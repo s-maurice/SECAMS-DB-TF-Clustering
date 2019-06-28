@@ -93,7 +93,7 @@ def training_input_func(dataset):
     MOY_em = tf.feature_column.embedding_column(categorical_column=MOY_fc, dimension=2)
     #dense feature columns - need to embed?
 
-#CategoricalColumn tetstsdaslkdjjaksdjkasbdkabsdkajsbdkj
+#CategoricalColumn
 
 def main():
     eventDF = getEvents()

@@ -3,23 +3,9 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import pyodbc
-from tensorflow import feature_column
-import math
 import matplotlib.pyplot as plt
-import datetime as dt
-from datetime import timedelta
 import seaborn as sns
-from sklearn.decomposition import PCA
-from sklearn.model_selection import train_test_split
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.svm import SVC
-from tensorflow import keras
-from tensorflow.contrib.layers import embedding_column
-from tensorflow.keras import layers
 import sklearn as svm
-from sklearn import preprocessing
-from tensorflow.python.feature_column.feature_column_v2 import CategoricalColumn
 
 
 def getEvents():
@@ -81,17 +67,19 @@ def training_input_func(dataset):
     DOW_fc = tf.feature_column.categorical_column_with_vocabulary_list(key='DAYOFWEEK', vocabulary_list=sparsedata["DAYOFWEEK"].unique(), default_value=0)
     MOY_fc = tf.feature_column.categorical_column_with_vocabulary_list(key='MONTHOFYEAR', vocabulary_list=sparsedata["MONTHOFYEAR"].unique(), default_value=0)
     #numeric for timescale
-    #daytime_fc = tf.feature_column.numeric_column(key="DAYTIME", shape=[2,1]) #put both daytx and dayty in as array, double check the shape
+    daytime_fc = tf.feature_column.numeric_column(key="DAYTIME", shape=[2,1]) #put both daytx and dayty in as array, double check the shape
 
 
     #Wrap within an embedding column
     #Sparse feature columns
-    USERID_em = tf.feature_column.embedding_column(categorical_column=USERID_fc, dimension=3) #dimension should be about number_of_categories**0.25 according to google
-    EVENTID_em = tf.feature_column.embedding_column(categorical_column=EVENTID_fc, dimension=2)
-    TERMINALSN_em = tf.feature_column.embedding_column(categorical_column=TERMINALSN_fc, dimension=50)
-    DOW_em = tf.feature_column.embedding_column(categorical_column=DOW_fc, dimension=1)
-    MOY_em = tf.feature_column.embedding_column(categorical_column=MOY_fc, dimension=2)
+    USERID_em = tf.feature_column.indicator_column(categorical_column=USERID_fc, dimension=3) #dimension should be about number_of_categories**0.25 according to google
+    EVENTID_em = tf.feature_column.indicator_column(categorical_column=EVENTID_fc, dimension=2) #indicator or embedding column???
+    TERMINALSN_em = tf.feature_column.indicator_column(categorical_column=TERMINALSN_fc, dimension=50)
+    DOW_em = tf.feature_column.indicator_column(categorical_column=DOW_fc, dimension=1)
+    MOY_em = tf.feature_column.indicator_column(categorical_column=MOY_fc, dimension=2)
     #dense feature columns - need to embed?
+
+    #tf.estimator.DNNRegressor()
 
 #CategoricalColumn
 

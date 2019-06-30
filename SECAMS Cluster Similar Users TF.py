@@ -11,7 +11,7 @@ import sklearn as svm
 def getEvents():
     #Connects to DB and grabs EVENT LOGS
     conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-L3DV0JT;DATABASE=SECAMS;UID=sa;PWD=1')
-    sqpQueryStr = """
+    sqlQueryStr = """
 SELECT TOP(1000) USERID, EVENTID, TIMESTAMPS, access_event_logs.TERMINALSN, TERMINALGROUP, TERMINALNAME
 FROM access_event_logs, access_terminal
 WHERE 1 = CASE
@@ -23,7 +23,7 @@ AND
 access_event_logs.TerminalSN = access_terminal.TerminalSN
 ORDER BY USERID"""
 
-    events = pd.read_sql(sqpQueryStr, conn)
+    events = pd.read_sql(sqlQueryStr, conn)
     return events
 
 def dayTimeNormed(events):

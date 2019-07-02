@@ -31,9 +31,9 @@ def get_events_from_csv():
         events = pd.read_csv("development_data.csv")
         # events['TIMESTAMPS'] = events['TIMESTAMPS'].apply(lambda x: dt.strptime(x, "%Y-%m-%d %H:%M:%S"))
         events['TIMESTAMPS'] = events['TIMESTAMPS'].apply(datetime64)
-        print(type(events['TIMESTAMPS'][0]))
-        print(events['TIMESTAMPS'])
 
+        # print(type(events['TIMESTAMPS'][0]))
+        # print(events['TIMESTAMPS'])
 
         return events
     except FileNotFoundError:

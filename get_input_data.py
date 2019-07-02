@@ -2,8 +2,9 @@ import pyodbc
 import pandas as pd
 
 
-def get_events():  # Replace pyodbe with pandas built in sql
+def get_events_from_sql():  # Replace pyodbe with pandas built in sql
     # Connects to DB and grabs EVENT LOGS
+
     conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-L3DV0JT;DATABASE=SECAMS;UID=sa;PWD=1')
     sql_query_str = """
 SELECT TOP(1000) USERID, EVENTID, TIMESTAMPS, access_event_logs.TERMINALSN, TERMINALGROUP, TERMINALNAME
@@ -27,5 +28,14 @@ def get_events_from_csv():
 
 
 def store_to_csv():
-    df = get_events()
+    df = get_events_from_sql()
     df.to_csv("development_data.csv")
+
+
+def get_events():
+    # blanket get_event method that tries both SQL and CSV
+
+    get_events_from_sql()
+
+
+get_events()

@@ -9,8 +9,13 @@ import tensorflow as tf
 import get_input_data
 
 
-def day_time_normed(events):
+def get_decimal_hour(events):
     decimal_hour = (events.dt.hour + events.dt.minute / 60)
+    return decimal_hour
+
+
+def day_time_normed(events):
+    decimal_hour = get_decimal_hour(events)
 
     tx = decimal_hour.apply(lambda x: np.math.cos(x * np.pi / 12))
     ty = decimal_hour.apply(lambda x: np.math.sin(x * np.pi / 12))
@@ -25,11 +30,22 @@ def data_preprocessing(df):
     # In the case of SECAMS DB, all terminals are on thr same TERMINALGROUP, so drop as it may confuse the DNN
     df = df.drop(columns=["TERMINALGROUP", "TERMINALNAME"])  # TerminalName redundant as same as teminal id FUTURE USE MAY CONSIDER GROUPING BOYS/GIRLS VERSIONS OF SCHOOLS
 
+    # Drop NANs
+    df = df.dropna(how="any", axis=0)
+
     # Modify TIMESTAMPS to "day of week" "month of year" <- catagorical, and "normedtime x/y" as dense
+
+    # This section uses daytimex daytimey in array, shape (2,1)
     # normedtime x/y
-    timexy = day_time_normed(df["TIMESTAMPS"])
-    df = df.join(timexy)
-    df['DAYTIME'] = df[['daytx', 'dayty']].values.tolist()  # puts daytx and dayty into a single df column, with array dimension (2,1)
+    #timexy = day_time_normed(df["TIMESTAMPS"])
+    #df = df.join(timexy)
+    #df['DAYTIME'] = df[['daytx', 'dayty']].values.tolist()  # puts daytx and dayty into a single df column, with array dimension (2,1)
+
+    # This section uses decimal hour time / 24
+    df["DECHOUR"] = get_decimal_hour(df["TIMESTAMPS"]).apply(lambda x: x / 24)
+
+    print(df.columns)
+
     # day of week
     dow = df["TIMESTAMPS"].dt.strftime("%a")
     df["DAYOFWEEK"] = dow
@@ -54,7 +70,8 @@ def data_preprocessing(df):
 
 
 def define_feature_columns(dataset):
-    sparse_df = dataset.drop(["daytx", "dayty"], axis=1).reset_index(drop=True) # Not necessary, prep for iterable in future?
+    #sparse_df = dataset.drop(["daytx", "dayty"], axis=1).reset_index(drop=True) # Not necessary, prep for iterable in future?
+    sparse_df = dataset
 
     # Create Feature Columns with each possible value for sparse data rows
     USERID_fc = tf.feature_column.categorical_column_with_vocabulary_list(key='USERID', vocabulary_list=sparse_df["USERID"].unique(), default_value=0)
@@ -63,7 +80,7 @@ def define_feature_columns(dataset):
     DOW_fc = tf.feature_column.categorical_column_with_vocabulary_list(key='DAYOFWEEK', vocabulary_list=sparse_df["DAYOFWEEK"].unique(), default_value=0)
     MOY_fc = tf.feature_column.categorical_column_with_vocabulary_list(key='MONTHOFYEAR', vocabulary_list=sparse_df["MONTHOFYEAR"].unique(), default_value=0)
     # numeric for timescale
-    daytime_fc = tf.feature_column.numeric_column(key="DAYTIME", shape=[2, 1])  # put both daytx and dayty in as array, double check the shape
+    daytime_fc = tf.feature_column.numeric_column(key="DECHOUR", shape=[1, 1])  # put both daytx and dayty in as array, double check the shape
 
 
 
@@ -89,10 +106,8 @@ def DNNBuilder(fc_list):
 
 def create_train_input_fn(df):
     # Places data into estimator
-    dfnoTIME = df.drop(["DAYTIME"], axis=1)
-    input_fn = tf.estimator.inputs.pandas_input_fn(dfnoTIME, y=df["USERID"], shuffle=True)  # other params needed? # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
-    print(input_fn)
-    print(type(input_fn))
+    #dfnoTIME = df.drop(["DAYTIME"], axis=1)
+    input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=False)  # other params needed?, shuffle = true? # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
     return input_fn
 
 

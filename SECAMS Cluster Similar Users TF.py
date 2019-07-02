@@ -80,7 +80,7 @@ def define_feature_columns(dataset):
     DOW_fc = tf.feature_column.categorical_column_with_vocabulary_list(key='DAYOFWEEK', vocabulary_list=sparse_df["DAYOFWEEK"].unique(), default_value=0)
     MOY_fc = tf.feature_column.categorical_column_with_vocabulary_list(key='MONTHOFYEAR', vocabulary_list=sparse_df["MONTHOFYEAR"].unique(), default_value=0)
     # numeric for timescale
-    daytime_fc = tf.feature_column.numeric_column(key="DECHOUR", shape=[1, 1])  # put both daytx and dayty in as array, double check the shape
+    #daytime_fc = tf.feature_column.numeric_column(key="DECHOUR", shape=[1, 1])  # put both daytx and dayty in as array, double check the shape
 
 
 
@@ -93,7 +93,7 @@ def define_feature_columns(dataset):
     MOY_ic= tf.feature_column.indicator_column(categorical_column=MOY_fc)
     # #dense feature columns - need to embed?
 
-    feature_columns_list = [USERID_ic, EVENTID_ic, TERMINALSN_ic, DOW_ic, MOY_ic, daytime_fc]
+    feature_columns_list = [USERID_ic, EVENTID_ic, TERMINALSN_ic, DOW_ic, MOY_ic]
 
     return feature_columns_list
 
@@ -106,8 +106,7 @@ def DNNBuilder(fc_list):
 
 def create_train_input_fn(df):
     # Places data into estimator
-    #dfnoTIME = df.drop(["DAYTIME"], axis=1)
-    input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=False)  # other params needed?, shuffle = true? # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
+    input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=True)  # other params needed?, shuffle = true? # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
     return input_fn
 
 
@@ -118,8 +117,13 @@ def main():
     fc_list = define_feature_columns(df_train)
     classifier = DNNBuilder(fc_list)
     input_fn = create_train_input_fn(df_train)
+    input_fn_test = create_train_input_fn(df_test)
 
-    classifier.train(input_fn=input_fn)  # error likely means normalisation wasn't correctly done
-
+    print("Begin Train")
+    classifier.train(input_fn=input_fn)
+    print("Train Complete")
+    print("Begin Test")
+    classifier.evaluate(input_fn=input_fn_test)
+    print("Test Conplete")
 
 main()

@@ -42,12 +42,16 @@ def get_events():
     # blanket get_event method that tries both SQL and CSV
 
     from_sql = get_events_from_sql()
-    if from_sql != False:
+    if type(from_sql) == pd.DataFrame:
         return from_sql
 
     from_csv = get_events_from_csv()
-    if from_csv != False:
+    if type(from_csv) == pd.DataFrame:
         return from_csv
 
     # If neither return, then both didn't work
     exit("ERROR: No data found.")
+
+
+# testy test test
+# get_events()

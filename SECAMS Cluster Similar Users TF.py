@@ -1,4 +1,3 @@
-import time
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -7,24 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import sklearn as svm
 
-
-def get_events():
-    # Connects to DB and grabs EVENT LOGS
-    conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-L3DV0JT;DATABASE=SECAMS;UID=sa;PWD=1')
-    sql_query_str = """
-SELECT TOP(1000) USERID, EVENTID, TIMESTAMPS, access_event_logs.TERMINALSN, TERMINALGROUP, TERMINALNAME
-FROM access_event_logs, access_terminal
-WHERE 1 = CASE
-WHEN ISNUMERIC(USERID) = 1 THEN CASE WHEN CAST(USERID as BIGINT) < 1000000 THEN 1 END
-END
-AND 
-TIMESTAMPS > '2003-1-1'
-AND 
-access_event_logs.TerminalSN = access_terminal.TerminalSN
-ORDER BY USERID"""
-
-    events = pd.read_sql(sql_query_str, conn)
-    return events
+import get_input_data
 
 
 def day_time_normed(events):
@@ -113,7 +95,7 @@ def create_train_input_fn(df):
 
 
 def main():
-    event_df = get_events()
+    event_df = get_input_data.get_events()
     df_train, df_test = dataPreprocessing(event_df)
 
     fc_list = define_feature_columns(df_train)

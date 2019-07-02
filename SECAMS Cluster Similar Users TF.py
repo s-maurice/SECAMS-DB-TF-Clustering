@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import pyodbc
-import matplotlib.pyplot as plt
-import seaborn as sns
-import sklearn as svm
+# import pyodbc
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+# import sklearn as svm
 
 import get_input_data
 
@@ -18,9 +18,10 @@ def day_time_normed(events):
     timexy.columns = ["daytx", "dayty"]
 
     return timexy
+    # Note: Why turn time of day into 2 variables, rather than simply letting the ML model handle it?
 
 
-def dataPreprocessing(df):
+def data_preprocessing(df):
     # In the case of SECAMS DB, all terminals are on thr same TERMINALGROUP, so drop as it may confuse the DNN
     df = df.drop(columns=["TERMINALGROUP", "TERMINALNAME"])  # TerminalName redundant as same as teminal id FUTURE USE MAY CONSIDER GROUPING BOYS/GIRLS VERSIONS OF SCHOOLS
 
@@ -38,8 +39,9 @@ def dataPreprocessing(df):
 
     # Shuffle DF Rows
     df = df.sample(frac=1).reset_index(drop=True)  # could use shuffle(df) from sklearn.utils - better because can use stratify which garuanties good ratio of points in test/train data
-    df_size = len(df.index)
+
     # Select ratio of train to test data - NEEDS REMAKE to handle decimal, give train_test_ratio differently - TEMP
+    df_size = len(df.index)
     train_test_ratio = (4, 5)
 
     train_len = int(df_size * train_test_ratio[0] / train_test_ratio[1])
@@ -52,7 +54,7 @@ def dataPreprocessing(df):
 
 
 def define_feature_columns(dataset):
-    sparse_df = dataset.drop(["daytx", "dayty"], axis=1).reset_index(drop=True) # Not nessacary, prep for iterable in future?
+    sparse_df = dataset.drop(["daytx", "dayty"], axis=1).reset_index(drop=True) # Not necessary, prep for iterable in future?
 
     # Create Feature Columns with each possible value for sparse data rows
     USERID_fc = tf.feature_column.categorical_column_with_vocabulary_list(key='USERID', vocabulary_list=sparse_df["USERID"].unique(), default_value=0)
@@ -76,9 +78,6 @@ def define_feature_columns(dataset):
 
     feature_columns_list = [USERID_ic, EVENTID_ic, TERMINALSN_ic, DOW_ic, MOY_ic, daytime_fc]
 
-
-    # CategoricalColumn
-
     return feature_columns_list
 
 
@@ -99,7 +98,7 @@ def create_train_input_fn(df):
 
 def main():
     event_df = get_input_data.get_events()
-    df_train, df_test = dataPreprocessing(event_df)
+    df_train, df_test = data_preprocessing(event_df)
 
     fc_list = define_feature_columns(df_train)
     classifier = DNNBuilder(fc_list)

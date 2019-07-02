@@ -1,5 +1,6 @@
 import pyodbc
 import pandas as pd
+from numpy import datetime64
 
 
 def get_events_from_sql():
@@ -28,6 +29,12 @@ def get_events_from_sql():
 def get_events_from_csv():
     try:
         events = pd.read_csv("development_data.csv")
+        # events['TIMESTAMPS'] = events['TIMESTAMPS'].apply(lambda x: dt.strptime(x, "%Y-%m-%d %H:%M:%S"))
+        events['TIMESTAMPS'] = events['TIMESTAMPS'].apply(datetime64)
+
+        # print(type(events['TIMESTAMPS'][0]))
+        # print(events['TIMESTAMPS'])
+
         return events
     except FileNotFoundError:
         return False
@@ -53,5 +60,5 @@ def get_events():
     exit("ERROR: No data found.")
 
 
-# testy test test
+# # testy test test
 # get_events()

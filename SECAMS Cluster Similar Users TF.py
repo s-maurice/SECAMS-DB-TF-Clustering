@@ -90,7 +90,10 @@ def DNNBuilder(fc_list):
 
 def create_train_input_fn(df):
     # Places data into estimator
-    input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DAYTIME"], shuffle=True)  # other params needed? # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
+    dfnoTIME = df.drop(["DAYTIME"], axis=1)
+    input_fn = tf.estimator.inputs.pandas_input_fn(dfnoTIME, y=df["USERID"], shuffle=True)  # other params needed? # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
+    print(input_fn)
+    print(type(input_fn))
     return input_fn
 
 
@@ -102,7 +105,7 @@ def main():
     classifier = DNNBuilder(fc_list)
     input_fn = create_train_input_fn(df_train)
 
-    classifier.train(input_fn=input_fn) # error likely means normalisation wasn't correctly done
+    classifier.train(input_fn=input_fn)  # error likely means normalisation wasn't correctly done
 
 
 main()

@@ -2,7 +2,7 @@ import pyodbc
 import pandas as pd
 
 
-def get_events_from_sql():  # Replace pyodbe with pandas built in sql
+def get_events_from_sql():
     # Connects to DB and grabs EVENT LOGS
     try:
         conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-L3DV0JT;DATABASE=SECAMS;UID=sa;PWD=1')

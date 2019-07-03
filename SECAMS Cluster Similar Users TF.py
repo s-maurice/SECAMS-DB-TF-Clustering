@@ -120,6 +120,9 @@ def training(classifier, train_input_fn, val_input_fn, train_labels, val_labels,
     train_rmse = []
     val_rmse = []
 
+    # print statement for RMSE values
+    print("  period    | train   | val")
+
     for period in range(periods):
         # Train Model
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
@@ -138,7 +141,8 @@ def training(classifier, train_input_fn, val_input_fn, train_labels, val_labels,
         train_rmse_current = math.sqrt(train_rmse_current_tensor)
         val_rmse_current = math.sqrt(val_rmse_current_tensor)
 
-        print(period, train_rmse_current, val_rmse_current)
+        # print(period, train_rmse_current, val_rmse_current)
+        print("  period %02d : %0.6f, %0.6f" % (period, train_rmse_current, val_rmse_current))
 
         # Append RMSE to List
         train_rmse.append(train_rmse_current)
@@ -161,7 +165,7 @@ def rmse_plot(train, val):
 def main():
     # Hyper-parameters
     learning_rate = 0.0001              #
-    batch_size = 1000                   #
+    batch_size = 200                    #
     steps_per_period = 100              #
     periods = 10                        #
     hidden_units = [1024, 512, 256]     # layers of DNN

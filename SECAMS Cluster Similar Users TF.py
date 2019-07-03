@@ -18,6 +18,7 @@ def get_decimal_hour(events):
     return decimal_hour
 
 
+# DEPRECATED: Expresses time in a cyclical format through trigonometry
 def day_time_normed(events):
     decimal_hour = get_decimal_hour(events)
 
@@ -27,23 +28,22 @@ def day_time_normed(events):
     timexy.columns = ["daytx", "dayty"]
 
     return timexy
-    # Note: Why turn time of day into 2 variables, rather than simply letting the ML model handle it?
 
 
-def data_preprocessing(df):
+def data_preprocessing(df, split=[0.6, 0.2, 0.2]):
     # In the case of SECAMS DB, all terminals are on thr same TERMINALGROUP, so drop as it may confuse the DNN
     df = df.drop(columns=["TERMINALGROUP", "TERMINALNAME"])  # TerminalName redundant as same as teminal id FUTURE USE MAY CONSIDER GROUPING BOYS/GIRLS VERSIONS OF SCHOOLS
 
     # Drop NANs
     df = df.dropna(how="any", axis=0)
 
-    # Modify TIMESTAMPS to "day of week" "month of year" <- catagorical, and "normedtime x/y" as dense
+    # Modify TIMESTAMPS to "day of week" "month of year" <- categorical, and "normedtime x/y" as dense
 
-    # This section uses daytimex daytimey in array, shape (2,1)
-    # normedtime x/y
-    #timexy = day_time_normed(df["TIMESTAMPS"])
-    #df = df.join(timexy)
-    #df['DAYTIME'] = df[['daytx', 'dayty']].values.tolist()  # puts daytx and dayty into a single df column, with array dimension (2,1)
+    # # DEPRECATED: Using cyclical time, as an array with shape (2,1)
+    # # normedtime x/y
+    # timexy = day_time_normed(df["TIMESTAMPS"])
+    # df = df.join(timexy)
+    # df['DAYTIME'] = df[['daytx', 'dayty']].values.tolist()  # puts daytx and dayty into a single df column, with array dimension (2,1)
 
     # This section uses decimal hour time / 24
     df["DECHOUR"] = get_decimal_hour(df["TIMESTAMPS"]).apply(lambda x: x / 24)
@@ -56,13 +56,21 @@ def data_preprocessing(df):
     df["MONTHOFYEAR"] = moy
 
     # Shuffle DF Rows
-    # df = df.sample(frac=1).reset_index(drop=True)
+    df = df.sample(frac=1).reset_index(drop=True)
 
     df = df.drop(["TIMESTAMPS"], axis=1) # Drop as unneeded and tf doesn't accept numpy datetime
 
     # Split data set into train, test, val
-    df_train, df_test = train_test_split(df, test_size=0.2, random_state=1)  # Split into training and test data # Use stratify?
-    df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=1)  # Splits training into training and validation data
+    # Multiply all values
+    split = [i * len(df) for i in split]
+
+    df_train = df.head(split[0])
+    df_val = df.iloc[(split[0] + 1):(split[0] + split[1])]
+    df_test = df.tail(split[2])
+
+    # df_train, df_test = train_test_split(df, test_size=0.2, random_state=1)  # Split into training and test data # Use stratify?
+    # df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=1)  # Splits training into training and validation data
+
     return df_train, df_test, df_val
 
 
@@ -95,26 +103,23 @@ def define_feature_columns(dataset):
     return feature_columns_list
 
 
-def DNNBuilder(fc_list, learning_rate = 0.001):
+def dnn_builder(fc_list, learning_rate=0.001, hidden_units=[1024, 512, 256]):
     # Create an Optimiser
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
     # Build DNN Classifier - #USE DNNRegressor or DNNClassifier
-    classifier = tf.estimator.DNNRegressor(feature_columns=fc_list, hidden_units=[1024, 512, 256], optimizer=optimizer)  # Not sure how many hidden units, layers/size, need more research/expermentation [1024, 512, 256]
+    classifier = tf.estimator.DNNRegressor(feature_columns=fc_list, hidden_units=hidden_units, optimizer=optimizer)  # Not sure how many hidden units, layers/size, need more research/expermentation [1024, 512, 256]
     return classifier
 
 
-def create_input_fn(df):
+def create_input_fn(df, batch_size=1):
     # Places data into estimator
-    input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=True, batch_size=30)  # other params needed?, shuffle = true?, batch size # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
+    input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=True, batch_size=batch_size)  # other params needed?, shuffle = true?, batch size # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
     return input_fn
 
 
-def training(classifier, train_input_fn, val_input_fn, train_labels, val_labels, steps):
+def training(classifier, train_input_fn, val_input_fn, train_labels, val_labels, steps_per_period, periods):
     train_rmse = []
     val_rmse = []
-
-    periods = 10
-    steps_per_period = steps / periods
 
     for period in range(periods):
         # Train Model
@@ -155,19 +160,29 @@ def rmse_plot(train, val):
 
 
 def main():
+    # Hyper-parameters
+    learning_rate = 0.0001              #
+    batch_size = 1000                   #
+    steps_per_period = 100              #
+    periods = 10                        #
+    hidden_units = [1024, 512, 256]     #
+    data_split_ratio = [0.4, 0.4, 0.2]  # train-validation-test; must add up to 1
+
+    assert(sum(data_split_ratio) == 1)
+
     event_df = get_input_data.get_events()
     df_train, df_test, df_val = data_preprocessing(event_df)
 
     fc_list = define_feature_columns(df_train)
-    classifier = DNNBuilder(fc_list, learning_rate=0.0005)
+    classifier = dnn_builder(fc_list, learning_rate=learning_rate, hidden_units=hidden_units)
 
     # Create input functions
-    train_input_fn = create_input_fn(df_train)
+    train_input_fn = create_input_fn(df_train, batch_size=batch_size)
     val_input_fn = create_input_fn(df_val)
     test_input_fn = create_input_fn(df_test)
 
     # Training and Validation, plotting RMSE
-    train_rmse, val_rmse = training(classifier, train_input_fn, val_input_fn, df_train["DECHOUR"], df_val["DECHOUR"], steps=1000)
+    train_rmse, val_rmse = training(classifier, train_input_fn, val_input_fn, df_train["DECHOUR"], df_val["DECHOUR"], steps_per_period=steps_per_period, periods=periods)
     rmse_plot(train_rmse, val_rmse)
 
     # classifier.evaluate(input_fn=test_input_fn, steps=300)

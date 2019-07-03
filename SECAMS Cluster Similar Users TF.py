@@ -1,7 +1,10 @@
+import math
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
+from sklearn import metrics
+import matplotlib.pyplot as plt
 # import pyodbc
 # import matplotlib.pyplot as plt
 # import seaborn as sns
@@ -104,18 +107,48 @@ def create_input_fn(df):
     return input_fn
 
 
-def training(classifier, train_input_fn, val_input_fn):
-    training_rmse = []
-    validation_rmse = []
+def training(classifier, train_input_fn, val_input_fn, train_labels, val_labels, steps):
+    train_rmse = []
+    val_rmse = []
 
-    print("training")
-
-    steps = 300
     periods = 10
     steps_per_period = steps / periods
 
     for period in range(periods):
+        # Train Model
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
+
+        # Compute Predictions
+        train_predictions = classifier.predict(input_fn=train_input_fn)
+        val_predictions = classifier.predict(input_fn=val_input_fn)
+
+        train_predictions_arr = np.array([item["predictions"][0] for item in train_predictions])
+        val_predictions_arr = np.array([item["predictions"][0] for item in val_predictions])
+
+        # Compute Loss
+        train_rmse_current_tensor = metrics.mean_squared_error(train_labels, train_predictions_arr)
+        val_rmse_current_tensor = metrics.mean_squared_error(val_labels, val_predictions_arr)
+
+        train_rmse_current = math.sqrt(train_rmse_current_tensor)
+        val_rmse_current = math.sqrt(val_rmse_current_tensor)
+
+        print(period, train_rmse_current, val_rmse_current)
+
+        # Append RMSE to List
+        train_rmse.append(train_rmse_current)
+        val_rmse.append(val_rmse_current)
+
+    return train_rmse, val_rmse
+
+def rmse_plot(train, val):
+    plt.ylabel("RMSE")
+    plt.xlabel("Periods")
+    plt.title("Root Mean Squared Error vs. Periods")
+    plt.tight_layout()
+    plt.plot(train, label="training")
+    plt.plot(val, label="validation")
+    plt.legend()
+    plt.show()
 
 
 def main():
@@ -127,12 +160,14 @@ def main():
 
     # Create input functions
     train_input_fn = create_input_fn(df_train)
-    test_input_fn = create_input_fn(df_test)
     val_input_fn = create_input_fn(df_val)
+    test_input_fn = create_input_fn(df_test)
 
-    training(classifier, train_input_fn, val_input_fn)
+    # Training and Validation, plotting RMSE
+    train_rmse, val_rmse = training(classifier, train_input_fn, val_input_fn, df_train["DECHOUR"], df_val["DECHOUR"], steps=300)
+    rmse_plot(train_rmse, val_rmse)
 
-    #classifier.evaluate(input_fn=test_input_fn, steps=300)
+    # classifier.evaluate(input_fn=test_input_fn, steps=300)
 
 
 

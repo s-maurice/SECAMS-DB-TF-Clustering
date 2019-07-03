@@ -17,7 +17,7 @@ def get_events_from_sql():
     TIMESTAMPS > '2003-1-1'
     AND 
     access_event_logs.TerminalSN = access_terminal.TerminalSN
-    ORDER BY USERID"""
+    ORDER BY NEWID()"""
 
         events = pd.read_sql(sql_query_str, conn)
         return events

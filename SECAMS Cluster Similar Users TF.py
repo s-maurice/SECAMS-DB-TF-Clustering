@@ -173,7 +173,7 @@ def main():
     steps_per_period = 100              #
     periods = 10                        #
     hidden_units = [1024, 512, 256]     # layers of DNN
-    data_split_ratio = [4, 4, 2]        # ratio of data used for train, validation, testing (respectively)
+    data_split_ratio = [6, 2, 2]        # ratio of data used for train, validation, testing (respectively)
 
     event_df = get_input_data.get_events()
     df_train, df_test, df_val = data_preprocessing(event_df, split=data_split_ratio)

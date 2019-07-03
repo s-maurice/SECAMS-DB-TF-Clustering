@@ -110,13 +110,13 @@ def dnn_builder(fc_list, learning_rate=0.001, hidden_units=[1024, 512, 256]):
     return classifier
 
 
-def create_input_fn(df, batch_size=1):
+def create_input_fn(df, shuffle=True, batch_size=1,num_epochs=0):
     # Places data into estimator
-    input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=True, batch_size=batch_size)  # other params needed?, shuffle = true?, batch size # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
+    input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=shuffle, batch_size=batch_size, num_epochs=num_epochs)  # other params needed?, shuffle = true?, batch size # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
     return input_fn
 
 
-def training(classifier, train_input_fn, val_input_fn, train_labels, val_labels, steps_per_period, periods):
+def training(classifier, train_input_fn, predict_train_input_fn, predict_val_input_fn, train_labels, val_labels, steps_per_period, periods):
     train_rmse = []
     val_rmse = []
 
@@ -128,8 +128,8 @@ def training(classifier, train_input_fn, val_input_fn, train_labels, val_labels,
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
 
         # Compute Predictions
-        train_predictions = classifier.predict(input_fn=train_input_fn)
-        val_predictions = classifier.predict(input_fn=val_input_fn)
+        train_predictions = classifier.predict(input_fn=predict_train_input_fn)
+        val_predictions = classifier.predict(input_fn=predict_val_input_fn)
 
         train_predictions_arr = np.array([item["predictions"][0] for item in train_predictions])
         val_predictions_arr = np.array([item["predictions"][0] for item in val_predictions])
@@ -150,6 +150,9 @@ def training(classifier, train_input_fn, val_input_fn, train_labels, val_labels,
 
     return train_rmse, val_rmse
 
+def testing(classifier, test_input_fn):
+    test_input_fn = create_input_fn()
+
 
 def rmse_plot(train, val):
     plt.ylabel("RMSE")
@@ -169,21 +172,25 @@ def main():
     steps_per_period = 100              #
     periods = 10                        #
     hidden_units = [1024, 512, 256]     # layers of DNN
-    data_split_ratio = [6, 3, 1]        # ratio of data used for train, validation, testing (respectively)
+    data_split_ratio = [4, 4, 2]        # ratio of data used for train, validation, testing (respectively)
 
     event_df = get_input_data.get_events()
-    df_train, df_test, df_val = data_preprocessing(event_df,split=data_split_ratio)
+    df_train, df_test, df_val = data_preprocessing(event_df, split=data_split_ratio)
 
     fc_list = define_feature_columns(df_train)
     classifier = dnn_builder(fc_list, learning_rate=learning_rate, hidden_units=hidden_units)
 
-    # Create input functions
-    train_input_fn = create_input_fn(df_train, batch_size=batch_size)
-    val_input_fn = create_input_fn(df_val)
-    test_input_fn = create_input_fn(df_test)
+    # Create input functions; note create_input_fn automatically sets batch_size=1, shuffle=true, and num_epochs=0
+    # For training - NOTE: num_epochs=0 doesn't seem to work; find a way to set num_epochs to 'None'.
+    train_input_fn = create_input_fn(df_train, batch_size=batch_size, num_epochs=10)
+
+    # For finding RMSE values
+    predict_train_input_fn = create_input_fn(df_train, shuffle=False, num_epochs=1)
+    predict_val_input_fn = create_input_fn(df_val, shuffle=False, num_epochs=1)
+    predict_test_input_fn = create_input_fn(df_test, shuffle=False, num_epochs=1)
 
     # Training and Validation, plotting RMSE
-    train_rmse, val_rmse = training(classifier, train_input_fn, val_input_fn, df_train["DECHOUR"], df_val["DECHOUR"], steps_per_period=steps_per_period, periods=periods)
+    train_rmse, val_rmse = training(classifier, train_input_fn, predict_train_input_fn, predict_val_input_fn, df_train["DECHOUR"], df_val["DECHOUR"], steps_per_period=steps_per_period, periods=periods)
     rmse_plot(train_rmse, val_rmse)
 
     # classifier.evaluate(input_fn=test_input_fn, steps=300)

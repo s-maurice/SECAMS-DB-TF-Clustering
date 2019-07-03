@@ -104,10 +104,21 @@ def DNNBuilder(fc_list):
     return classifier
 
 
-def create_train_input_fn(df):
+def create_input_fn(df):
     # Places data into estimator
     input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=True)  # other params needed?, shuffle = true? # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
     return input_fn
+
+def training(classifier, train_input_fn):
+    training_rmse = []
+    validation_rmse = []
+
+    steps = 300
+    periods = 10
+    steps_per_period = steps / periods
+
+    for period in range(periods):
+        classifier.train(input_fn=train_input_fn, steps=steps_per_period)
 
 
 def main():
@@ -116,14 +127,14 @@ def main():
 
     fc_list = define_feature_columns(df_train)
     classifier = DNNBuilder(fc_list)
-    input_fn = create_train_input_fn(df_train)
-    input_fn_test = create_train_input_fn(df_test)
 
-    print("Begin Train")
-    classifier.train(input_fn=input_fn)
-    print("Train Complete")
-    print("Begin Test")
-    classifier.evaluate(input_fn=input_fn_test)
-    print("Test Conplete")
+    train_input_fn = create_input_fn(df_train)
+    test_input_fn = create_input_fn(df_test)
+
+    training(classifier, train_input_fn)
+
+    classifier.evaluate(input_fn=test_input_fn, steps=steps)
+
+
 
 main()

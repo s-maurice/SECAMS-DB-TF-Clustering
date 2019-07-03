@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sklearn.model_selection import train_test_split
 # import pyodbc
 # import matplotlib.pyplot as plt
 # import seaborn as sns
@@ -44,8 +45,6 @@ def data_preprocessing(df):
     # This section uses decimal hour time / 24
     df["DECHOUR"] = get_decimal_hour(df["TIMESTAMPS"]).apply(lambda x: x / 24)
 
-    print(df.columns)
-
     # day of week
     dow = df["TIMESTAMPS"].dt.strftime("%a")
     df["DAYOFWEEK"] = dow
@@ -54,19 +53,14 @@ def data_preprocessing(df):
     df["MONTHOFYEAR"] = moy
 
     # Shuffle DF Rows
-    df = df.sample(frac=1).reset_index(drop=True)  # could use shuffle(df) from sklearn.utils - better because can use stratify which garuanties good ratio of points in test/train data
+    # df = df.sample(frac=1).reset_index(drop=True)
 
-    # Select ratio of train to test data - NEEDS REMAKE to handle decimal, give train_test_ratio differently - TEMP
-    df_size = len(df.index)
-    train_test_ratio = (4, 5)
+    df = df.drop(["TIMESTAMPS"], axis=1) # Drop as unneeded and tf doesn't accept numpy datetime
 
-    train_len = int(df_size * train_test_ratio[0] / train_test_ratio[1])
-    test_len = int(df_size - (df_size * train_test_ratio[0] / train_test_ratio[1]))
-
-    df_train = df.head(train_len).drop(["TIMESTAMPS"], axis=1)
-    df_test = df.tail(test_len).drop(["TIMESTAMPS"], axis=1)
-
-    return df_train, df_test
+    # Split data set into train, test, val
+    df_train, df_test = train_test_split(df, test_size=0.2, random_state=1)  # Split into training and test data # Use stratify?
+    df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=1)  # Splits training into training and validation data
+    return df_train, df_test, df_val
 
 
 def define_feature_columns(dataset):
@@ -109,9 +103,12 @@ def create_input_fn(df):
     input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=True)  # other params needed?, shuffle = true? # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
     return input_fn
 
-def training(classifier, train_input_fn):
+
+def training(classifier, train_input_fn, val_input_fn):
     training_rmse = []
     validation_rmse = []
+
+    print("training")
 
     steps = 300
     periods = 10
@@ -123,17 +120,19 @@ def training(classifier, train_input_fn):
 
 def main():
     event_df = get_input_data.get_events()
-    df_train, df_test = data_preprocessing(event_df)
+    df_train, df_test, df_val = data_preprocessing(event_df)
 
     fc_list = define_feature_columns(df_train)
     classifier = DNNBuilder(fc_list)
 
+    # Create input functions
     train_input_fn = create_input_fn(df_train)
     test_input_fn = create_input_fn(df_test)
+    val_input_fn = create_input_fn(df_val)
 
-    training(classifier, train_input_fn)
+    training(classifier, train_input_fn, val_input_fn)
 
-    classifier.evaluate(input_fn=test_input_fn, steps=steps)
+    #classifier.evaluate(input_fn=test_input_fn, steps=300)
 
 
 

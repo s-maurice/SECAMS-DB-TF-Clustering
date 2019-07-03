@@ -62,7 +62,7 @@ def data_preprocessing(df, split=[0.6, 0.2, 0.2]):
 
     # Split data set into train, test, val
     # Multiply all values
-    split = [int(i * len(df)) for i in split]
+    split = [int(i / sum(split) * len(df)) for i in split]
 
     df_train = df.head(split[0])
     df_val = df.iloc[(split[0] + 1):(split[0] + split[1])]
@@ -70,7 +70,6 @@ def data_preprocessing(df, split=[0.6, 0.2, 0.2]):
 
     # df_train, df_test = train_test_split(df, test_size=0.2, random_state=1)  # Split into training and test data # Use stratify?
     # df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=1)  # Splits training into training and validation data
-    print(split)
     return df_train, df_test, df_val
 
 
@@ -166,12 +165,10 @@ def main():
     steps_per_period = 100              #
     periods = 10                        #
     hidden_units = [1024, 512, 256]     #
-    data_split_ratio = [0.4, 0.4, 0.2]  # train-validation-test; must add up to 1
-
-    assert(sum(data_split_ratio) == 1)
+    data_split_ratio = [0.6, 0.3, 0.1]  # train-validation-test; must add up to 1
 
     event_df = get_input_data.get_events()
-    df_train, df_test, df_val = data_preprocessing(event_df)
+    df_train, df_test, df_val = data_preprocessing(event_df,split=data_split_ratio)
 
     fc_list = define_feature_columns(df_train)
     classifier = dnn_builder(fc_list, learning_rate=learning_rate, hidden_units=hidden_units)

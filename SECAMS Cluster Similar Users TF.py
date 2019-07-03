@@ -154,6 +154,7 @@ def rmse_plot(train, val):
     plt.tight_layout()
     plt.plot(train, label="training")
     plt.plot(val, label="validation")
+    plt.axis([0, 10, 0, 0.2]) # Lock axis
     plt.legend()
     plt.show()
 

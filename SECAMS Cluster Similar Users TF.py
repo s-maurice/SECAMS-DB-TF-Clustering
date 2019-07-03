@@ -150,8 +150,13 @@ def training(classifier, train_input_fn, predict_train_input_fn, predict_val_inp
 
     return train_rmse, val_rmse
 
-def testing(classifier, test_input_fn):
-    test_input_fn = create_input_fn()
+
+def testing(classifier, input_fn, test_labels):
+    # Computing RMSE for test dataset
+    test_predictions = classifier.predict(input_fn=input_fn)
+    test_predictions = np.array([item["predictions"][0] for item in test_predictions])
+    test_rmse_current = math.sqrt(metrics.mean_squared_error(test_labels, test_predictions))
+    print("Test Data RMSE:", test_rmse_current)
 
 
 def rmse_plot(train, val):
@@ -163,17 +168,17 @@ def rmse_plot(train, val):
     plt.plot(val, label="validation")
     plt.axis([0, 10, 0, 0.2]) # Lock axis
     plt.legend()
-    plt.show()
+    # plt.show()
 
 
 def main():
     # Hyper-parameters
-    learning_rate = 0.0001              #
+    learning_rate = 0.0003              #
     batch_size = 200                    #
     steps_per_period = 100              #
     periods = 10                        #
     hidden_units = [1024, 512, 256]     # layers of DNN
-    data_split_ratio = [4, 4, 2]        # ratio of data used for train, validation, testing (respectively)
+    data_split_ratio = [6, 2, 2]        # ratio of data used for train, validation, testing (respectively)
 
     event_df = get_input_data.get_events()
     df_train, df_test, df_val = data_preprocessing(event_df, split=data_split_ratio)
@@ -185,7 +190,7 @@ def main():
     # For training - NOTE: num_epochs=0 doesn't seem to work; find a way to set num_epochs to 'None'.
     train_input_fn = create_input_fn(df_train, batch_size=batch_size, num_epochs=10)
 
-    # For finding RMSE values
+    # Input functions for finding RMSE values
     predict_train_input_fn = create_input_fn(df_train, shuffle=False, num_epochs=1)
     predict_val_input_fn = create_input_fn(df_val, shuffle=False, num_epochs=1)
     predict_test_input_fn = create_input_fn(df_test, shuffle=False, num_epochs=1)
@@ -194,7 +199,12 @@ def main():
     train_rmse, val_rmse = training(classifier, train_input_fn, predict_train_input_fn, predict_val_input_fn, df_train["DECHOUR"], df_val["DECHOUR"], steps_per_period=steps_per_period, periods=periods)
     rmse_plot(train_rmse, val_rmse)
 
-    # classifier.evaluate(input_fn=test_input_fn, steps=300)
+    # Printing out RMSE for the Test Data Set
+    testing(classifier, predict_test_input_fn, df_test["DECHOUR"])
+
+    # Show the graph
+    plt.show()
 
 
+# Run the actual code
 main()

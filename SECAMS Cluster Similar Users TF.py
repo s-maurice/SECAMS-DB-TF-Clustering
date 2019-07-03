@@ -62,7 +62,7 @@ def data_preprocessing(df, split=[0.6, 0.2, 0.2]):
 
     # Split data set into train, test, val
     # Multiply all values
-    split = [i * len(df) for i in split]
+    split = [int(i * len(df)) for i in split]
 
     df_train = df.head(split[0])
     df_val = df.iloc[(split[0] + 1):(split[0] + split[1])]
@@ -70,7 +70,7 @@ def data_preprocessing(df, split=[0.6, 0.2, 0.2]):
 
     # df_train, df_test = train_test_split(df, test_size=0.2, random_state=1)  # Split into training and test data # Use stratify?
     # df_train, df_val = train_test_split(df_train, test_size=0.2, random_state=1)  # Splits training into training and validation data
-
+    print(split)
     return df_train, df_test, df_val
 
 

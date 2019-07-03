@@ -95,15 +95,17 @@ def define_feature_columns(dataset):
     return feature_columns_list
 
 
-def DNNBuilder(fc_list):
+def DNNBuilder(fc_list, learning_rate = 0.001):
+    # Create an Optimiser
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
     # Build DNN Classifier - #USE DNNRegressor or DNNClassifier
-    classifier = tf.estimator.DNNRegressor(feature_columns=fc_list, hidden_units=[256, 32])  # Not sure how many hidden units, layers/size, need more research/expermentation
+    classifier = tf.estimator.DNNRegressor(feature_columns=fc_list, hidden_units=[1024, 512, 256], optimizer=optimizer)  # Not sure how many hidden units, layers/size, need more research/expermentation [1024, 512, 256]
     return classifier
 
 
 def create_input_fn(df):
     # Places data into estimator
-    input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=True)  # other params needed?, shuffle = true? # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
+    input_fn = tf.estimator.inputs.pandas_input_fn(df, y=df["DECHOUR"], shuffle=True, batch_size=30)  # other params needed?, shuffle = true?, batch size # Deprecated, use tf.compat.v1.estimator.inputs.pandas_input_fn instead
     return input_fn
 
 
@@ -140,6 +142,7 @@ def training(classifier, train_input_fn, val_input_fn, train_labels, val_labels,
 
     return train_rmse, val_rmse
 
+
 def rmse_plot(train, val):
     plt.ylabel("RMSE")
     plt.xlabel("Periods")
@@ -156,7 +159,7 @@ def main():
     df_train, df_test, df_val = data_preprocessing(event_df)
 
     fc_list = define_feature_columns(df_train)
-    classifier = DNNBuilder(fc_list)
+    classifier = DNNBuilder(fc_list, learning_rate=0.0005)
 
     # Create input functions
     train_input_fn = create_input_fn(df_train)
@@ -164,7 +167,7 @@ def main():
     test_input_fn = create_input_fn(df_test)
 
     # Training and Validation, plotting RMSE
-    train_rmse, val_rmse = training(classifier, train_input_fn, val_input_fn, df_train["DECHOUR"], df_val["DECHOUR"], steps=300)
+    train_rmse, val_rmse = training(classifier, train_input_fn, val_input_fn, df_train["DECHOUR"], df_val["DECHOUR"], steps=1000)
     rmse_plot(train_rmse, val_rmse)
 
     # classifier.evaluate(input_fn=test_input_fn, steps=300)

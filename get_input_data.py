@@ -14,7 +14,7 @@ def get_events_from_sql():
     WHEN ISNUMERIC(USERID) = 1 THEN CASE WHEN CAST(USERID as BIGINT) < 1000000 THEN 1 END
     END
     AND 
-    TIMESTAMPS > '2003-1-1'
+    TIMESTAMPS > '2016-1-1'
     AND 
     access_event_logs.TerminalSN = access_terminal.TerminalSN
     ORDER BY NEWID()"""

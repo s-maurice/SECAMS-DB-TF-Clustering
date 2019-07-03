@@ -97,7 +97,7 @@ def define_feature_columns(dataset):
 
 def DNNBuilder(fc_list, learning_rate = 0.001):
     # Create an Optimiser
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # Experement with custom optmisers with variable rate
     # Build DNN Classifier - #USE DNNRegressor or DNNClassifier
     classifier = tf.estimator.DNNRegressor(feature_columns=fc_list, hidden_units=[1024, 512, 256], optimizer=optimizer)  # Not sure how many hidden units, layers/size, need more research/expermentation [1024, 512, 256]
     return classifier

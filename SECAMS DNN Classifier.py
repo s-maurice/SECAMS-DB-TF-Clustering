@@ -32,7 +32,18 @@ def preprocess_targets(df):
     return processed_targets
 
 
-def train_model(split=[0.6, 0.2, 0.2]):
+def train_model(
+        train_features,
+        train_targets,
+        val_features,
+        val_targets,
+        learning_rate = 0.001,
+        batch_size = 1,
+        steps_per_period = 50,
+        periods = 10,
+        hidden_units = [1024, 512, 256]
+):
+
     raw_df = get_input_data.get_events()    # Get Raw DF
     df = raw_df.drop(columns=["TERMINALGROUP", "TERMINALNAME"]) # Drops unused columns
     df = df.dropna(how="any", axis=0) # Remove NANs

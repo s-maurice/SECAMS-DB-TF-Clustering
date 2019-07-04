@@ -59,6 +59,7 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
         catagorical_features_list.append(current_column)
 
     feature_column_list = numerical_features_list + catagorical_features_list
+
     return feature_column_list
 
 

@@ -10,11 +10,7 @@ def get_events_from_sql():
         sql_query_str = """
     SELECT TOP(10000) USERID, EVENTID, TIMESTAMPS, access_event_logs.TERMINALSN, TERMINALGROUP, TERMINALNAME
     FROM access_event_logs, access_terminal
-    WHERE 1 = CASE
-    WHEN ISNUMERIC(USERID) = 1 THEN CASE WHEN CAST(USERID as BIGINT) < 1000000 THEN 1 END
-    END
-    AND 
-    TIMESTAMPS > '2016-1-1'
+	WHERE TIMESTAMPS > '2016-1-1'
     AND 
     access_event_logs.TerminalSN = access_terminal.TerminalSN
     ORDER BY NEWID()"""

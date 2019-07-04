@@ -32,8 +32,8 @@ def get_decimal_hour(events):
 def preprocess_features(df):
     processed_features = pd.DataFrame()
     processed_features["DECHOUR"] = get_decimal_hour(df["TIMESTAMPS"]).apply(lambda x: x / 24)  # Turns datetime format into decimalhour, normalised by day
-    processed_features["DAYOFWEEK"] = df["TIMESTAMPS"].dt.strftime("%a")     # day of week
-    processed_features["MONTHOFYEAR"] = df["TIMESTAMPS"].dt.strftime("%b")     # month of year
+    processed_features["DAYOFWEEK"] = df["TIMESTAMPS"].dt.strftime("%w")     # day of week
+    processed_features["MONTHOFYEAR"] = df["TIMESTAMPS"].dt.strftime("%-m")     # month of year
     processed_features["TERMINALSN"] = df["TERMINALSN"]
     processed_features["EVENTID"] = df["EVENTID"]
     return processed_features
@@ -45,7 +45,7 @@ def preprocess_targets(df):
     return processed_targets
 
 
-def construct_feature_columns(numerical_columns_list, catagorical_columns_list, raw_df):
+def construct_feature_columns(numerical_columns_list, catagorical_columns_list):
 
     numerical_features_list = []
     for i in numerical_columns_list:
@@ -54,7 +54,9 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
 
     categorical_features_list = []
     for i in catagorical_columns_list:
-        i = str(i)
+
+
+
         current_column = tf.feature_column.categorical_column_with_vocabulary_list(key=i, vocabulary_list=get_input_data.get_vocab_lists(i))
         # current_column = tf.feature_column.indicator_column(catagorical_column=current_column) # May need to wrap within indicator column
         categorical_features_list.append(current_column)
@@ -95,10 +97,9 @@ def train_model(
     numerical_features = ["DECHOUR"]
     categorical_features = ["DAYOFWEEK", "MONTHOFYEAR", "TERMINALSN", "EVENTID"]
 
-
     # Create DNN
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # Create optimiser - Try variable rate optimisers
-    classifier = tf.estimator.DNNClassifier(feature_columns=construct_feature_columns(train_features), hidden_units=hidden_units, optimizer=optimizer)
+    classifier = tf.estimator.DNNClassifier(feature_columns=construct_feature_columns(numerical_features, categorical_features), hidden_units=hidden_units, optimizer=optimizer)
 
     # Create input functions
     train_input_fn = create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)

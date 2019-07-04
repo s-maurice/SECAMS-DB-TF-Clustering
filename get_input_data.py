@@ -57,6 +57,13 @@ def get_events():
 
 
 def get_vocab_lists(column_name):
+    # Preset synthetic column names; return an already-defined vocab list
+    if column_name == "DAYOFWEEK":
+        return pd.DataFrame([0, 1, 2, 3, 4, 5, 6])
+
+    elif column_name == "MONTHOFYEAR":
+        return pd.DataFrame([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+
     # Connect to DB event_logs table, and grab distinct values (vocab lists), given the column name
     try:
         conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-L3DV0JT;DATABASE=SECAMS;UID=sa;PWD=1')

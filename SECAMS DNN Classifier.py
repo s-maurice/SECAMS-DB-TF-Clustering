@@ -170,3 +170,5 @@ def main():
     )
 
     test_model(dnn_classifier, test_features, test_targets)
+
+main()

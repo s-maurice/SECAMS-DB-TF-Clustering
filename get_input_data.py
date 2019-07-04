@@ -62,3 +62,4 @@ def get_events():
 
 # # testy test test
 # get_events()
+#store_to_csv()

@@ -1,4 +1,5 @@
 import pandas as pd
+import tensorflow as tf
 
 import get_input_data
 
@@ -16,6 +17,22 @@ def preprocess_targets(df):
     processed_targets["USERID"] = df["USERID"]
     return processed_targets
 
+def construct_feature_columns(numerical_columns_list, catagorical_columns_list, raw_df):
+
+    numerical_features_list = []
+    for i in numerical_columns_list:
+        current_column = tf.feature_column.numeric_column(key=i)
+        numerical_features_list.append(current_column)
+
+    catagorical_features_list = []
+    for i in catagorical_columns_list:
+        current_column = tf.feature_column.categorical_column_with_vocabulary_list(key=i, vocabulary_list=raw_df[i].unique())
+        # current_column = tf.feature_column.indicator_column(catagorical_column=current_column) # May need to wrap within indicator column
+        catagorical_features_list.append(current_column)
+
+    feature_column_list = numerical_features_list + catagorical_features_list
+    return feature_column_list
+
 
 def train_model(split=[0.6, 0.2, 0.2]):
     raw_df = get_input_data.get_events()    # Get Raw DF
@@ -29,7 +46,13 @@ def train_model(split=[0.6, 0.2, 0.2]):
     df_val = df.iloc[(split[0] + 1):(split[0] + split[1])]
     df_test = df.tail(split[2])
 
+    train_features = preprocess_features()
+    val_features = preprocess_features()
+    test_features = preprocess_features()
 
+    train_targets = preprocess_targets()
+    val_targets = preprocess_targets()
+    test_targets = preprocess_targets()
 
 
 

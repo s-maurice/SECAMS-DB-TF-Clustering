@@ -59,17 +59,18 @@ def get_events():
 def get_vocab_lists(column_name):
     # Preset synthetic column names; return an already-defined vocab list
     if column_name == "DAYOFWEEK":
-        return pd.DataFrame([0, 1, 2, 3, 4, 5, 6])
+        return ["0", "1", "2", "3", "4", "5", "6"]
 
     elif column_name == "MONTHOFYEAR":
-        return pd.DataFrame([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+        return ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
 
     # Connect to DB event_logs table, and grab distinct values (vocab lists), given the column name
     try:
         conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-L3DV0JT;DATABASE=SECAMS;UID=sa;PWD=1')
-        query_str = "SELECT DISTINCT(" + column_name + ") FROM access_event_logs"
+        query_str = "SELECT " + column_name + " FROM access_event_logs group by " + column_name + ""
 
-        return pd.read_sql(query_str, conn)
+        # print(type(pd.read_sql(query_str, conn)['TERMINALSN'][0]))
+        return pd.read_sql(query_str, conn).apply(lambda x: str(x))
 
     except pyodbc.Error:
         exit("ERROR: Cannot find vocab list for " + column_name + "; invalid column name or unable to connect to database.")
@@ -78,4 +79,4 @@ def get_vocab_lists(column_name):
 
 # # testy test test
 # get_events()
-#store_to_csv()
+# store_to_csv()

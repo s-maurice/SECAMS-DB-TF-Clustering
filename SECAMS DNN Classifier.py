@@ -54,11 +54,8 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list):
 
     categorical_features_list = []
     for i in catagorical_columns_list:
-
-
-
         current_column = tf.feature_column.categorical_column_with_vocabulary_list(key=i, vocabulary_list=get_input_data.get_vocab_lists(i))
-        # current_column = tf.feature_column.indicator_column(catagorical_column=current_column) # May need to wrap within indicator column
+        current_column = tf.feature_column.indicator_column(categorical_column=current_column) # May need to wrap within indicator column
         categorical_features_list.append(current_column)
 
     feature_column_list = numerical_features_list + categorical_features_list

@@ -3,6 +3,7 @@ import pandas as pd
 import sklearn
 import tensorflow as tf
 import numpy as np
+from sklearn import metrics
 
 import get_input_data
 
@@ -58,7 +59,6 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
     return input_fn
 
 
-# Function that trains a model and compares it against validation data
 def train_model(
         train_features,
         train_targets,
@@ -114,10 +114,18 @@ def train_model(
 
     return classifier
 
-# Function that tests an already-trained model against test data
+
 def test_model(model, test_features, test_targets):
     # Create test input function
-    predict_test_input_fn = create_input_function(test_features, test_targets, shuffle=False, )
+    predict_test_input_fn = create_input_function(test_features, test_targets, shuffle=False, batch_size=1, num_epochs=1)
+
+    # Get predictions as an Array
+    test_predictions = model.predict(input_fn=predict_test_input_fn)
+    test_predictions = np.array([item["predictions"][0] for item in test_predictions])
+
+    # Use sklearn.metrics to calculate and print RMSE
+    test_rmse_current = math.sqrt(metrics.mean_squared_error(test_targets, test_predictions))
+    print("Test Data RMSE:", test_rmse_current)
 
 
 def main():

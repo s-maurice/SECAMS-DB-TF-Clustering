@@ -63,9 +63,14 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list):
     return feature_column_list
 
 
-def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=0):
-    input_fn = tf.estimator.inputs.pandas_input_fn(features, y=targets, shuffle=shuffle, batch_size=batch_size, num_epochs=num_epochs)
-    return input_fn
+def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
+    ds = tf.data.Dataset.from_tensor_slices((dict(features), targets))
+    ds = ds.batch(batch_size).repeat(num_epochs)
+    if shuffle:
+        ds = ds.shuffle(buffer_size=len(features))
+    features, labels = ds.make_one_shot_iterator().get_next()
+
+    return features, labels
 
 
 def rmse_plot(train, val):
@@ -99,10 +104,10 @@ def train_model(
     classifier = tf.estimator.DNNClassifier(feature_columns=construct_feature_columns(numerical_features, categorical_features), hidden_units=hidden_units, optimizer=optimizer)
 
     # Create input functions
-    train_input_fn = create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
+    train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
     # Input functions for finding RMSE values
-    predict_train_input_fn = create_input_function(train_features, train_targets, shuffle=False, num_epochs=1)
-    predict_val_input_fn = create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
+    predict_train_input_fn = lambda: create_input_function(train_features, train_targets, shuffle=False, num_epochs=1)
+    predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
 
     # Begin Training
 
@@ -142,7 +147,7 @@ def train_model(
 
 def test_model(model, test_features, test_targets):
     # Create test input function
-    predict_test_input_fn = create_input_function(test_features, test_targets, shuffle=False, batch_size=1, num_epochs=1)
+    predict_test_input_fn = lambda: create_input_function(test_features, test_targets, shuffle=False, batch_size=1)
 
     # Get predictions as an Array
     test_predictions = model.predict(input_fn=predict_test_input_fn)

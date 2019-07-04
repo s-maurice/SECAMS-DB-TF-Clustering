@@ -56,6 +56,19 @@ def get_events():
     exit("ERROR: No data found.")
 
 
+def get_vocab_lists(column_name):
+    # Connect to DB event_logs table, and grab distinct values (vocab lists), given the column name
+    try:
+        conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-L3DV0JT;DATABASE=SECAMS;UID=sa;PWD=1')
+        query_str = "SELECT DISTINCT(" + column_name + ") FROM access_event_logs"
+
+        return pd.read_sql(query_str, conn)
+
+    except pyodbc.Error:
+        exit("ERROR: Cannot find vocab list for " + column_name + "; invalid column name or unable to connect to database.")
+        return False
+
+
 # # testy test test
 # get_events()
 #store_to_csv()

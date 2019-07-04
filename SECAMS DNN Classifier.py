@@ -117,74 +117,7 @@ def train_model(
 # Function that tests an already-trained model against test data
 def test_model(model, test_features, test_targets):
     # Create test input function
-    predict_test_input_fn = create_input_fn(test_features, test_targets, shuffle=False, )
-
-
-def main():
-    raw_df = get_input_data.get_events()    # Get Raw DF
-
-    df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
-
-    # Assign train, validation and test features + targets
-    train_features = preprocess_features(df_array[0])
-    train_targets = preprocess_targets(df_array[0])
-
-    val_features = preprocess_features(df_array[1])
-    val_targets = preprocess_targets(df_array[1])
-
-    dnn_classifier = train_model(
-        train_features,
-        train_targets,
-        val_features,
-        val_targets,
-        learning_rate=0.0005,
-        batch_size=1000,
-        steps_per_period=100,
-        periods=10,
-        hidden_units=[1024, 512, 256]
-    )
-
-    test_model(dnn_classifier, test_features, test_targets)
-
-
-# ------- TRAINING CODE --------
-
-train_rmse = []
-val_rmse = []
-# print statement for RMSE values
-print("  period    | train   | val")
-
-    for period in range(periods):
-        # Train Model
-        classifier.train(input_fn=train_input_fn, steps=steps_per_period)
-
-        # Compute Predictions
-        train_predictions = classifier.predict(input_fn=predict_train_input_fn)
-        val_predictions = classifier.predict(input_fn=predict_val_input_fn)
-
-        train_predictions_arr = np.array([item["predictions"][0] for item in train_predictions])
-        val_predictions_arr = np.array([item["predictions"][0] for item in val_predictions])
-
-        # Compute Loss
-        train_rmse_current_tensor = sklearn.metrics.mean_squared_error(train_targets, train_predictions_arr)
-        val_rmse_current_tensor = sklearn.metrics.mean_squared_error(val_targets, val_predictions_arr)
-
-        train_rmse_current = math.sqrt(train_rmse_current_tensor)
-        val_rmse_current = math.sqrt(val_rmse_current_tensor)
-
-        # print(period, train_rmse_current, val_rmse_current)
-        print("  period %02d : %0.6f, %0.6f" % (period, train_rmse_current, val_rmse_current))
-
-        # Append RMSE to List
-        train_rmse.append(train_rmse_current)
-        val_rmse.append(val_rmse_current)
-
-
-
-
-
-
-
+    predict_test_input_fn = create_input_function(test_features, test_targets, shuffle=False, )
 
 
 def main():
@@ -214,4 +147,4 @@ def main():
         hidden_units=[1024, 512, 256]
     )
 
-
+    test_model(dnn_classifier, test_features, test_targets)

@@ -32,6 +32,7 @@ def preprocess_targets(df):
     processed_targets["USERID"] = df["USERID"]
     return processed_targets
 
+
 def construct_feature_columns(numerical_columns_list, catagorical_columns_list, raw_df):
 
     numerical_features_list = []
@@ -49,22 +50,75 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
     return feature_column_list
 
 
+def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=0):
+    input_fn = tf.estimator.inputs.pandas_input_fn(features, y=targets, shuffle=shuffle, batch_size=batch_size, num_epochs=num_epochs)
+    return input_fn
+
+
 def train_model(
         train_features,
         train_targets,
         val_features,
         val_targets,
-        learning_rate = 0.001,
-        batch_size = 1,
-        steps_per_period = 50,
+        learning_rate=0.001,
+        batch_size=1,
+        steps_per_period=50,
         periods = 10,
-        hidden_units = [1024, 512, 256]
+        hidden_units=[1024, 512, 256]
 ):
 
     raw_df = get_input_data.get_events()    # Get Raw DF
-    df = raw_df.drop(columns=["TERMINALGROUP", "TERMINALNAME"]) # Drops unused columns
+    df = raw_df.drop(columns=["TERMINALGROUP", "TERMINALNAME"])  # Drops unused columns
     df = df.dropna(how="any", axis=0) # Remove NANs
     df = df.sample(frac=1).reset_index(drop=True) #Shuffle Rows, reset index
+
+    # Create DNN
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # Create optimiser - Try variable rate optimisers
+    classifier = tf.estimator.DNNClassifier(feature_columns=train_features, hidden_units=hidden_units, optimizer=optimizer)
+
+    # Create input functions
+    train_input_fn = create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
+
+    # Input functions for finding RMSE values
+    predict_train_input_fn = create_input_function(train_features, train_targets, shuffle=False, num_epochs=1)
+    predict_val_input_fn = create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
+
+    # print statement for RMSE values
+    print("  period    | train   | val")
+    train_rmse = []
+    val_rmse = []
+
+    for period in range(periods):
+        # Train Model
+        classifier.train(input_fn=train_input_fn, steps=steps_per_period)
+
+        # Compute Predictions
+        train_predictions = classifier.predict(input_fn=predict_train_input_fn)
+        val_predictions = classifier.predict(input_fn=predict_val_input_fn)
+
+        train_predictions_arr = np.array([item["predictions"][0] for item in train_predictions])
+        val_predictions_arr = np.array([item["predictions"][0] for item in val_predictions])
+
+        # Compute Loss
+        train_rmse_current_tensor = metrics.mean_squared_error(train_labels, train_predictions_arr)
+        val_rmse_current_tensor = metrics.mean_squared_error(val_labels, val_predictions_arr)
+
+        train_rmse_current = math.sqrt(train_rmse_current_tensor)
+        val_rmse_current = math.sqrt(val_rmse_current_tensor)
+
+        # print(period, train_rmse_current, val_rmse_current)
+        print("  period %02d : %0.6f, %0.6f" % (period, train_rmse_current, val_rmse_current))
+
+        # Append RMSE to List
+        train_rmse.append(train_rmse_current)
+        val_rmse.append(val_rmse_current)
+
+
+
+
+
+
+
 
 
 def main():
@@ -94,35 +148,4 @@ def main():
         hidden_units=[1024, 512, 256]
     )
 
-    #TRAINING
 
-    train_rmse = []
-    val_rmse = []
-
-    # print statement for RMSE values
-    print("  period    | train   | val")
-
-for period in range(periods):
-    # Train Model
-    classifier.train(input_fn=train_input_fn, steps=steps_per_period)
-
-    # Compute Predictions
-    train_predictions = classifier.predict(input_fn=predict_train_input_fn)
-    val_predictions = classifier.predict(input_fn=predict_val_input_fn)
-
-    train_predictions_arr = np.array([item["predictions"][0] for item in train_predictions])
-    val_predictions_arr = np.array([item["predictions"][0] for item in val_predictions])
-
-    # Compute Loss
-    train_rmse_current_tensor = metrics.mean_squared_error(train_labels, train_predictions_arr)
-    val_rmse_current_tensor = metrics.mean_squared_error(val_labels, val_predictions_arr)
-
-    train_rmse_current = math.sqrt(train_rmse_current_tensor)
-    val_rmse_current = math.sqrt(val_rmse_current_tensor)
-
-    # print(period, train_rmse_current, val_rmse_current)
-    print("  period %02d : %0.6f, %0.6f" % (period, train_rmse_current, val_rmse_current))
-
-    # Append RMSE to List
-    train_rmse.append(train_rmse_current)
-    val_rmse.append(val_rmse_current)

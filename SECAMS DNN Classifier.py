@@ -67,14 +67,20 @@ def train_model(
     df = df.sample(frac=1).reset_index(drop=True) #Shuffle Rows, reset index
 
 
+def main():
+    raw_df = get_input_data.get_events()    # Get Raw DF
 
-    train_features = preprocess_features()
-    val_features = preprocess_features()
-    test_features = preprocess_features()
+    df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
 
-    train_targets = preprocess_targets()
-    val_targets = preprocess_targets()
-    test_targets = preprocess_targets()
+    # Assign train, validation and test features + targets
+    train_features = preprocess_features(df_array[0])
+    train_targets = preprocess_targets(df_array[0])
+
+    val_targets = preprocess_features(df_array[1])
+    val_targets = preprocess_targets(df_array[1])
+
+    test_targets = preprocess_features(df_array[2])
+    test_targets = preprocess_targets(df_array[2])
 
 
 

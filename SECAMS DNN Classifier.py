@@ -41,7 +41,7 @@ def preprocess_features(df):
 
 def preprocess_targets(df):
     processed_targets = pd.DataFrame()
-    processed_targets["USERID"] = df["USERID"]
+    processed_targets["USERID"] = df["USERID"].apply(lambda x: str(x))
     return processed_targets
 
 

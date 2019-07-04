@@ -34,7 +34,7 @@ def preprocess_features(df):
     processed_features["DECHOUR"] = get_decimal_hour(df["TIMESTAMPS"]).apply(lambda x: x / 24)  # Turns datetime format into decimalhour, normalised by day
     processed_features["DAYOFWEEK"] = df["TIMESTAMPS"].dt.strftime("%a")     # day of week
     processed_features["MONTHOFYEAR"] = df["TIMESTAMPS"].dt.strftime("%b")     # month of year
-    processed_features["TERMIANLSN"] = df["TERMINALSN"]
+    processed_features["TERMINALSN"] = df["TERMINALSN"]
     processed_features["EVENTID"] = df["EVENTID"]
     return processed_features
 
@@ -54,6 +54,7 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
 
     catagorical_features_list = []
     for i in catagorical_columns_list:
+        i = str(i)
         current_column = tf.feature_column.categorical_column_with_vocabulary_list(key=i, vocabulary_list=raw_df[i].unique())
         # current_column = tf.feature_column.indicator_column(catagorical_column=current_column) # May need to wrap within indicator column
         catagorical_features_list.append(current_column)
@@ -90,9 +91,13 @@ def train_model(
         periods=10,
         hidden_units=[1024, 512, 256]
 ):
+    numerical_features = ["DECHOUR"]
+    categorical_features = ["DAYOFWEEK", "MONTHOFYEAR", "TERMINALSN", "EVENTID"]
+
+
     # Create DNN
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # Create optimiser - Try variable rate optimisers
-    classifier = tf.estimator.DNNClassifier(feature_columns=train_features, hidden_units=hidden_units, optimizer=optimizer)
+    classifier = tf.estimator.DNNClassifier(feature_columns=construct_feature_columns(train_features), hidden_units=hidden_units, optimizer=optimizer)
 
     # Create input functions
     train_input_fn = create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
@@ -150,7 +155,7 @@ def test_model(model, test_features, test_targets):
 
 
 def main():
-    raw_df = get_input_data.get_events()    # Get Raw DF
+    raw_df = get_input_data.get_events()  # Get Raw DF
 
     df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
 

@@ -13,7 +13,7 @@ def split_df(df, split_array):
     # Takes a DataFrame and splits it into 3 sets according to the ratio in the given array
     # split_array must have a length of 3.
 
-    assert(len(split_array == 3))
+    assert(len(split_array) == 3)
 
     split = [int(i / sum(split_array) * len(df)) for i in split_array]
 
@@ -24,11 +24,18 @@ def split_df(df, split_array):
     return [df_head, df_mid, df_tail]
 
 
+def get_decimal_hour(events):
+    decimal_hour = (events.dt.hour + events.dt.minute / 60)
+    return decimal_hour
+
+
 def preprocess_features(df):
     processed_features = pd.DataFrame()
-    processed_features["DECHOUR"] = df["TIMESTAMPS"].apply(lambda x: x.dt.hour + x.dt.minute / 1440)  # Turns datetime format into decimalhour, normalised by day
+    processed_features["DECHOUR"] = get_decimal_hour(df["TIMESTAMPS"]).apply(lambda x: x / 24)  # Turns datetime format into decimalhour, normalised by day
     processed_features["DAYOFWEEK"] = df["TIMESTAMPS"].dt.strftime("%a")     # day of week
     processed_features["MONTHOFYEAR"] = df["TIMESTAMPS"].dt.strftime("%b")     # month of year
+    processed_features["TERMIANLSN"] = df["TERMINALSN"]
+    processed_features["EVENTID"] = df["EVENTID"]
     return processed_features
 
 
@@ -170,5 +177,6 @@ def main():
     )
 
     test_model(dnn_classifier, test_features, test_targets)
+
 
 main()

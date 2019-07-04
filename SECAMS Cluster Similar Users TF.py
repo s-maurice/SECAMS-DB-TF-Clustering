@@ -30,7 +30,7 @@ def day_time_normed(events):
     return timexy
 
 
-def data_preprocessing(df, split=[0.6, 0.2, 0.2]):
+def data_preprocessing(df, split=[1, 1, 1]):
     # In the case of SECAMS DB, all terminals are on thr same TERMINALGROUP, so drop as it may confuse the DNN
     df = df.drop(columns=["TERMINALGROUP", "TERMINALNAME"])  # TerminalName redundant as same as teminal id FUTURE USE MAY CONSIDER GROUPING BOYS/GIRLS VERSIONS OF SCHOOLS
 

@@ -1,5 +1,8 @@
+import math
 import pandas as pd
+import sklearn
 import tensorflow as tf
+import numpy as np
 
 import get_input_data
 
@@ -64,23 +67,52 @@ def train_model(
         learning_rate=0.001,
         batch_size=1,
         steps_per_period=50,
-        periods = 10,
-        hidden_units=[1024, 512, 256]):
+        periods=10,
+        hidden_units=[1024, 512, 256]
+):
     # Create DNN
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # Create optimiser - Try variable rate optimisers
     classifier = tf.estimator.DNNClassifier(feature_columns=train_features, hidden_units=hidden_units, optimizer=optimizer)
 
     # Create input functions
     train_input_fn = create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
-
     # Input functions for finding RMSE values
     predict_train_input_fn = create_input_function(train_features, train_targets, shuffle=False, num_epochs=1)
     predict_val_input_fn = create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
+
+    # Begin Training
 
     # print statement for RMSE values
     print("  period    | train   | val")
     train_rmse = []
     val_rmse = []
+
+    for period in range(periods):
+        # Train Model
+        classifier.train(input_fn=train_input_fn, steps=steps_per_period)
+
+        # Compute Predictions
+        train_predictions = classifier.predict(input_fn=predict_train_input_fn)
+        val_predictions = classifier.predict(input_fn=predict_val_input_fn)
+
+        train_predictions_arr = np.array([item["predictions"][0] for item in train_predictions])
+        val_predictions_arr = np.array([item["predictions"][0] for item in val_predictions])
+
+        # Compute Loss
+        train_rmse_current_tensor = sklearn.metrics.mean_squared_error(train_targets, train_predictions_arr)
+        val_rmse_current_tensor = sklearn.metrics.mean_squared_error(val_targets, val_predictions_arr)
+
+        train_rmse_current = math.sqrt(train_rmse_current_tensor)
+        val_rmse_current = math.sqrt(val_rmse_current_tensor)
+
+        # print(period, train_rmse_current, val_rmse_current)
+        print("  period %02d : %0.6f, %0.6f" % (period, train_rmse_current, val_rmse_current))
+
+        # Append RMSE to List
+        train_rmse.append(train_rmse_current)
+        val_rmse.append(val_rmse_current)
+
+    return classifier
 
 # Function that tests an already-trained model against test data
 def test_model(model, test_features, test_targets):
@@ -134,8 +166,8 @@ print("  period    | train   | val")
         val_predictions_arr = np.array([item["predictions"][0] for item in val_predictions])
 
         # Compute Loss
-        train_rmse_current_tensor = metrics.mean_squared_error(train_labels, train_predictions_arr)
-        val_rmse_current_tensor = metrics.mean_squared_error(val_labels, val_predictions_arr)
+        train_rmse_current_tensor = sklearn.metrics.mean_squared_error(train_targets, train_predictions_arr)
+        val_rmse_current_tensor = sklearn.metrics.mean_squared_error(val_targets, val_predictions_arr)
 
         train_rmse_current = math.sqrt(train_rmse_current_tensor)
         val_rmse_current = math.sqrt(val_rmse_current_tensor)

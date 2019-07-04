@@ -3,6 +3,21 @@ import pandas as pd
 import get_input_data
 
 
+def split_df(df, split_array):
+    # Takes a DataFrame and splits it into 3 sets according to the ratio in the given array
+    # split_array must have a length of 3.
+
+    assert(len(split_array == 3))
+
+    split = [int(i / sum(split_array) * len(df)) for i in split_array]
+
+    df_head = df.head(split[0])
+    df_mid = df.iloc[(split[0] + 1):(split[0] + split[1])]
+    df_tail = df.tail(split[2])
+
+    return [df_head, df_mid, df_tail]
+
+
 def preprocess_features(df):
     processed_features = pd.DataFrame()
     processed_features["DECHOUR"] = df["TIMESTAMPS"].apply(lambda x: x.dt.hour + x.dt.minute / 1440)  # Turns datetime format into decimalhour, normalised by day
@@ -23,11 +38,7 @@ def train_model(split=[0.6, 0.2, 0.2]):
     df = df.dropna(how="any", axis=0) # Remove NANs
     df = df.sample(frac=1).reset_index(drop=True) #Shuffle Rows, reset index
 
-    # Split data set into train, test, val
-    split = [int(i / sum(split) * len(df)) for i in split]
-    df_train = df.head(split[0])
-    df_val = df.iloc[(split[0] + 1):(split[0] + split[1])]
-    df_test = df.tail(split[2])
+
 
 
 

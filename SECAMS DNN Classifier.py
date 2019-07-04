@@ -76,13 +76,23 @@ def main():
     train_features = preprocess_features(df_array[0])
     train_targets = preprocess_targets(df_array[0])
 
-    val_targets = preprocess_features(df_array[1])
+    val_features = preprocess_features(df_array[1])
     val_targets = preprocess_targets(df_array[1])
 
-    test_targets = preprocess_features(df_array[2])
+    test_features = preprocess_features(df_array[2])
     test_targets = preprocess_targets(df_array[2])
 
-
+    dnn_classifier = train_model(
+        train_features,
+        train_targets,
+        val_features,
+        val_targets,
+        learning_rate=0.0005,
+        batch_size=1000,
+        steps_per_period=100,
+        periods=10,
+        hidden_units=[1024, 512, 256]
+    )
 
     #TRAINING
 

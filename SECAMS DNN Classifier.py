@@ -55,6 +55,7 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
     return input_fn
 
 
+# Function that trains a model and compares it against validation data
 def train_model(
         train_features,
         train_targets,
@@ -64,14 +65,7 @@ def train_model(
         batch_size=1,
         steps_per_period=50,
         periods = 10,
-        hidden_units=[1024, 512, 256]
-):
-
-    raw_df = get_input_data.get_events()    # Get Raw DF
-    df = raw_df.drop(columns=["TERMINALGROUP", "TERMINALNAME"])  # Drops unused columns
-    df = df.dropna(how="any", axis=0) # Remove NANs
-    df = df.sample(frac=1).reset_index(drop=True) #Shuffle Rows, reset index
-
+        hidden_units=[1024, 512, 256]):
     # Create DNN
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # Create optimiser - Try variable rate optimisers
     classifier = tf.estimator.DNNClassifier(feature_columns=train_features, hidden_units=hidden_units, optimizer=optimizer)
@@ -87,6 +81,46 @@ def train_model(
     print("  period    | train   | val")
     train_rmse = []
     val_rmse = []
+
+# Function that tests an already-trained model against test data
+def test_model(model, test_features, test_targets):
+    # Create test input function
+    predict_test_input_fn = create_input_fn(test_features, test_targets, shuffle=False, )
+
+
+def main():
+    raw_df = get_input_data.get_events()    # Get Raw DF
+
+    df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
+
+    # Assign train, validation and test features + targets
+    train_features = preprocess_features(df_array[0])
+    train_targets = preprocess_targets(df_array[0])
+
+    val_features = preprocess_features(df_array[1])
+    val_targets = preprocess_targets(df_array[1])
+
+    dnn_classifier = train_model(
+        train_features,
+        train_targets,
+        val_features,
+        val_targets,
+        learning_rate=0.0005,
+        batch_size=1000,
+        steps_per_period=100,
+        periods=10,
+        hidden_units=[1024, 512, 256]
+    )
+
+    test_model(dnn_classifier, test_features, test_targets)
+
+
+# ------- TRAINING CODE --------
+
+train_rmse = []
+val_rmse = []
+# print statement for RMSE values
+print("  period    | train   | val")
 
     for period in range(periods):
         # Train Model

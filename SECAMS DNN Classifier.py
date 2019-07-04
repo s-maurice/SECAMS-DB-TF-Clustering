@@ -3,6 +3,7 @@ import pandas as pd
 import sklearn
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 
 import get_input_data
 
@@ -58,6 +59,18 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
     return input_fn
 
 
+def rmse_plot(train, val):
+    plt.ylabel("RMSE")
+    plt.xlabel("Periods")
+    plt.title("Root Mean Squared Error vs. Periods")
+    plt.tight_layout()
+    plt.plot(train, label="training")
+    plt.plot(val, label="validation")
+    plt.axis([0, 10, 0, 0.2])  # Lock axis
+    plt.legend()
+    plt.show()
+
+
 def train_model(
         train_features,
         train_targets,
@@ -111,6 +124,7 @@ def train_model(
         train_rmse.append(train_rmse_current)
         val_rmse.append(val_rmse_current)
 
+    rmse_plot(train_rmse, val_rmse)
     return classifier
 
 

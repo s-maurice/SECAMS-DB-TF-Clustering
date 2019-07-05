@@ -92,7 +92,7 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
         feature_dict[str(i)] = features[i].tolist()
 
     # turn targets DataFrame into a List - these are our labels
-    label_list = targets.tolist()
+    label_list = targets[targets.columns[0]].tolist()
     return feature_dict, label_list
 
 
@@ -142,17 +142,17 @@ def train_model(
     classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns, hidden_units=hidden_units, optimizer=optimizer, label_vocabulary=label_vocab_list, n_classes=len(label_vocab_list))
 
     # Encoding of train_targets
-    one_hot_dict = train_targets["USERID"].to_dict() # Generate Dict
-    one_hot_dict = dict([[v, str(k)] for k, v in one_hot_dict.items()])  # Reverse Dict
-    #one_hot_dict = dict([[k, str(i)] for k, i in one_hot_dict.items()])
-    print(one_hot_dict)
-    train_targets_encoded = train_targets["USERID"].map(one_hot_dict)
+    # one_hot_dict = train_targets["USERID"].to_dict() # Generate Dict
+    # one_hot_dict = dict([[v, str(k)] for k, v in one_hot_dict.items()])  # Reverse Dict
+    # #one_hot_dict = dict([[k, str(i)] for k, i in one_hot_dict.items()])
+    # print(one_hot_dict)
+    # train_targets_encoded = train_targets.replace({"USERID": one_hot_dict})
 
     # train_targets_encoding_size = train_targets["USERID"].unique().size
     # train_targets_encoded_one_hot = tf.one_hot(train_targets_encoded, train_targets_encoding_size)
 
     # Create input functions
-    train_input_fn = lambda: create_input_function(train_features, train_targets_encoded, batch_size=batch_size, num_epochs=10)
+    train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
     # Input functions for finding RMSE values
     predict_train_input_fn = lambda: create_input_function(train_features, train_targets, shuffle=False, num_epochs=1)
     predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)

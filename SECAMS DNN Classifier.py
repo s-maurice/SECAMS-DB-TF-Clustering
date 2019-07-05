@@ -68,7 +68,6 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
         categorical_features_list.append(current_column)
 
     feature_column_list = numerical_features_list + categorical_features_list
-    print('feature column list: ', feature_column_list)
     return feature_column_list
 
 
@@ -149,8 +148,6 @@ def train_model(
 
     # train_targets_encoding_size = train_targets["USERID"].unique().size
     # train_targets_encoded_one_hot = tf.one_hot(train_targets_encoded, train_targets_encoding_size)
-
-    print(len(train_targets["USERID"]))
 
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets_encoded, batch_size=batch_size, num_epochs=10)

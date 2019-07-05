@@ -132,7 +132,7 @@ def train_model(
     print(len(train_targets["USERID"]))
 
     # Create input functions
-    train_input_fn = lambda: create_input_function(train_features, train_targets_encoded_one_hot, batch_size=batch_size, num_epochs=10)
+    train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
     # Input functions for finding RMSE values
     predict_train_input_fn = lambda: create_input_function(train_features, train_targets, shuffle=False, num_epochs=1)
     predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)

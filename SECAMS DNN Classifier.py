@@ -36,6 +36,7 @@ def preprocess_features(df):
     processed_features["MONTHOFYEAR"] = df["TIMESTAMPS"].dt.strftime("%-m")     # month of year
     processed_features["TERMINALSN"] = df["TERMINALSN"]
     processed_features["EVENTID"] = df["EVENTID"]
+    print(processed_features)
     return processed_features
 
 
@@ -46,7 +47,6 @@ def preprocess_targets(df):
 
 
 def construct_feature_columns(numerical_columns_list, catagorical_columns_list, vocab_df):
-
     numerical_features_list = []
     for i in numerical_columns_list:
         current_column = tf.feature_column.numeric_column(key=i)
@@ -59,7 +59,7 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
         categorical_features_list.append(current_column)
 
     feature_column_list = numerical_features_list + categorical_features_list
-
+    print(feature_column_list)
     return feature_column_list
 
 
@@ -132,7 +132,7 @@ def train_model(
     print(len(train_targets["USERID"]))
 
     # Create input functions
-    train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
+    train_input_fn = lambda: create_input_function(train_features, train_targets_encoded, batch_size=batch_size, num_epochs=10)
     # Input functions for finding RMSE values
     predict_train_input_fn = lambda: create_input_function(train_features, train_targets, shuffle=False, num_epochs=1)
     predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)

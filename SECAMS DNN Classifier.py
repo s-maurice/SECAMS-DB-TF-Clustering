@@ -1,6 +1,5 @@
 import math
 import pandas as pd
-import sklearn
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt

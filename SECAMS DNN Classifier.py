@@ -72,6 +72,9 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
 
     return features, labels
 
+    # input_fn = tf.estimator.inputs.pandas_input_fn(features, y=targets, shuffle=shuffle, batch_size=batch_size, num_epochs=num_epochs)
+    # return input_fn
+
 
 def rmse_plot(train, val):
     plt.ylabel("RMSE")

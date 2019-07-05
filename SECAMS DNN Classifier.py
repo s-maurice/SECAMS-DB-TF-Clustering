@@ -36,7 +36,16 @@ def preprocess_features(df):
     processed_features["MONTHOFYEAR"] = df["TIMESTAMPS"].dt.strftime("%-m")     # month of year
     processed_features["TERMINALSN"] = df["TERMINALSN"]
     processed_features["EVENTID"] = df["EVENTID"]
-    print(processed_features)
+
+    # # debugging:
+    # print(type(processed_features["DECHOUR"][0]))
+    # print(type(processed_features["DAYOFWEEK"][0]))
+    # print(type(processed_features["MONTHOFYEAR"][0]))
+    # print(type(processed_features["TERMINALSN"][0]))
+    # print(type(processed_features["EVENTID"][0]))
+    #
+    # print('processed features:\n', processed_features)
+
     return processed_features
 
 
@@ -59,22 +68,34 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
         categorical_features_list.append(current_column)
 
     feature_column_list = numerical_features_list + categorical_features_list
-    print(feature_column_list)
+    print('feature column list: ', feature_column_list)
     return feature_column_list
 
 
 def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
-    ds = tf.data.Dataset.from_tensor_slices((dict(features), targets))
-    ds = ds.batch(batch_size).repeat(num_epochs)
-    if shuffle:
-        ds = ds.shuffle(buffer_size=len(features))
-    features, labels = ds.make_one_shot_iterator().get_next()
 
-    return features, labels
+    # DEPRECATED 1: Using tf.data (and DataSet)
+    # ds = tf.data.Dataset.from_tensor_slices((dict(features), targets))
+    # ds = ds.batch(batch_size).repeat(num_epochs)
+    # if shuffle:
+    #     ds = ds.shuffle(buffer_size=len(features))
+    # features, labels = ds.make_one_shot_iterator().get_next()
 
+    # DEPRECATED 2: Using pandas input function
     # input_fn = tf.estimator.inputs.pandas_input_fn(features, y=targets, shuffle=shuffle, batch_size=batch_size, num_epochs=num_epochs)
     # return input_fn
 
+    # APPROACH 3: Directly turning it into a dict-list tuple
+    # turn features DataFrame into Dict - input feature is a key, and then a list of values for the training batch
+    feature_dict = dict()
+
+    for i in features.columns:
+        feature_dict[str(i)] = features[i].tolist()
+
+    # turn targets DataFrame into a List - these are our labels
+    label_list = targets[targets.columns[0]].tolist()
+
+    return feature_dict, label_list
 
 def rmse_plot(train, val):
     plt.ylabel("RMSE")
@@ -126,8 +147,8 @@ def train_model(
     one_hot_dict = dict([[v, k] for k, v in one_hot_dict.items()]) # Reverse Dict
     train_targets_encoded = train_targets.replace({"USERID": one_hot_dict})
 
-    train_targets_encoding_size = train_targets["USERID"].unique().size
-    train_targets_encoded_one_hot = tf.one_hot(train_targets_encoded, train_targets_encoding_size)
+    # train_targets_encoding_size = train_targets["USERID"].unique().size
+    # train_targets_encoded_one_hot = tf.one_hot(train_targets_encoded, train_targets_encoding_size)
 
     print(len(train_targets["USERID"]))
 
@@ -214,7 +235,7 @@ def main():
         hidden_units=[1024, 512, 256]
     )
 
-    test_model(dnn_classifier, test_features, test_targets)
+    # test_model(dnn_classifier, test_features, test_targets)
 
 
 main()

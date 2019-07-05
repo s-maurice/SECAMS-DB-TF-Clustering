@@ -36,7 +36,6 @@ def preprocess_features(df):
     processed_features["MONTHOFYEAR"] = df["TIMESTAMPS"].dt.strftime("%-m")     # month of year
     processed_features["TERMINALSN"] = df["TERMINALSN"]
     processed_features["EVENTID"] = df["EVENTID"]
-    print(processed_features)
     return processed_features
 
 
@@ -59,19 +58,18 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
         categorical_features_list.append(current_column)
 
     feature_column_list = numerical_features_list + categorical_features_list
-    print(feature_column_list)
     return feature_column_list
 
 
 def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
+
     ds = tf.data.Dataset.from_tensor_slices((dict(features), targets))
     ds = ds.batch(batch_size).repeat(num_epochs)
     if shuffle:
         ds = ds.shuffle(buffer_size=len(features))
     features, labels = ds.make_one_shot_iterator().get_next()
-
+    print(features)
     return features, labels
-
     # input_fn = tf.estimator.inputs.pandas_input_fn(features, y=targets, shuffle=shuffle, batch_size=batch_size, num_epochs=num_epochs)
     # return input_fn
 
@@ -126,10 +124,8 @@ def train_model(
     one_hot_dict = dict([[v, k] for k, v in one_hot_dict.items()]) # Reverse Dict
     train_targets_encoded = train_targets.replace({"USERID": one_hot_dict})
 
-    train_targets_encoding_size = train_targets["USERID"].unique().size
-    train_targets_encoded_one_hot = tf.one_hot(train_targets_encoded, train_targets_encoding_size)
-
-    print(len(train_targets["USERID"]))
+    # train_targets_encoding_size = train_targets["USERID"].unique().size
+    # train_targets_encoded_one_hot = tf.one_hot(train_targets_encoded, train_targets_encoding_size)
 
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets_encoded, batch_size=batch_size, num_epochs=10)

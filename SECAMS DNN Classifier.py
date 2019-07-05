@@ -112,9 +112,14 @@ def train_model(
 
     feature_columns = construct_feature_columns(numerical_features, categorical_features, features_vocab_df)
 
+    # Prepare label_vocab
+    label_vocab_list = train_targets["USERID"].unique()
+    label_vocab_list = label_vocab_list.tolist()
+    #label_vocab_list = [str(i) for i in label_vocab_list]
+
     # Create DNN
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # Create optimiser - Try variable rate optimisers
-    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns, hidden_units=hidden_units, optimizer=optimizer)
+    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns, hidden_units=hidden_units, optimizer=optimizer, label_vocabulary=label_vocab_list)
 
     # Encoding of train_targets
     one_hot_dict = train_targets["USERID"].to_dict() # Generate Dict
@@ -123,7 +128,8 @@ def train_model(
 
     train_targets_encoding_size = train_targets["USERID"].unique().size
     train_targets_encoded_one_hot = tf.one_hot(train_targets_encoded, train_targets_encoding_size)
-    print(train_targets_encoded_one_hot)
+
+    print(len(train_targets["USERID"]))
 
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets_encoded_one_hot, batch_size=batch_size, num_epochs=10)

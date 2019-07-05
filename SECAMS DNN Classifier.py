@@ -73,11 +73,12 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
 def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
 
     # DEPRECATED 1: Using tf.data (and DataSet)
-    # ds = tf.data.Dataset.from_tensor_slices((dict(features), targets))
+    # ds = tf.data.Dataset.from_tensor_slices((features.values, targets.values))
     # ds = ds.batch(batch_size).repeat(num_epochs)
     # if shuffle:
     #     ds = ds.shuffle(buffer_size=len(features))
-    # features, labels = ds.make_one_shot_iterator().get_next()
+    # feature_dict, label_list = ds.make_one_shot_iterator().get_next()
+
 
     # DEPRECATED 2: Using pandas input function
     # input_fn = tf.estimator.inputs.pandas_input_fn(features, y=targets, shuffle=shuffle, batch_size=batch_size, num_epochs=num_epochs)
@@ -91,9 +92,9 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
         feature_dict[str(i)] = features[i].tolist()
 
     # turn targets DataFrame into a List - these are our labels
-    label_list = targets[targets.columns[0]].tolist()
-
+    label_list = targets.tolist()
     return feature_dict, label_list
+
 
 def rmse_plot(train, val):
     plt.ylabel("RMSE")
@@ -134,16 +135,18 @@ def train_model(
     # Prepare label_vocab
     label_vocab_list = train_targets["USERID"].unique()
     label_vocab_list = label_vocab_list.tolist()
-    #label_vocab_list = [str(i) for i in label_vocab_list]
+    label_vocab_list = [str(i) for i in label_vocab_list]
 
     # Create DNN
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # Create optimiser - Try variable rate optimisers
-    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns, hidden_units=hidden_units, optimizer=optimizer, label_vocabulary=label_vocab_list)
+    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns, hidden_units=hidden_units, optimizer=optimizer, label_vocabulary=label_vocab_list, n_classes=len(label_vocab_list))
 
     # Encoding of train_targets
     one_hot_dict = train_targets["USERID"].to_dict() # Generate Dict
-    one_hot_dict = dict([[v, k] for k, v in one_hot_dict.items()]) # Reverse Dict
-    train_targets_encoded = train_targets.replace({"USERID": one_hot_dict})
+    one_hot_dict = dict([[v, str(k)] for k, v in one_hot_dict.items()])  # Reverse Dict
+    #one_hot_dict = dict([[k, str(i)] for k, i in one_hot_dict.items()])
+    print(one_hot_dict)
+    train_targets_encoded = train_targets["USERID"].map(one_hot_dict)
 
     # train_targets_encoding_size = train_targets["USERID"].unique().size
     # train_targets_encoded_one_hot = tf.one_hot(train_targets_encoded, train_targets_encoding_size)

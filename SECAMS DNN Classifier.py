@@ -131,10 +131,12 @@ def train_model(
 
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
-    # Input functions for finding RMSE values
+    # Input functions for testing
+    predict_train_input_fn = lambda: create_input_function(train_features, train_targets, shuffle=False, num_epochs=1)
     predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
 
     # Begin Training
+    print("training start")
     for period in range(periods):
         # Train Model
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)

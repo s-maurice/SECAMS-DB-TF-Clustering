@@ -118,7 +118,7 @@ def train_model(
     label_vocab_list = [str(i) for i in label_vocab_list]
 
     # Create DNN
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # Create optimiser - Try variable rate optimisers
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate) # Create optimiser - Try variable rate optimisers
     classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns, hidden_units=hidden_units, optimizer=optimizer, label_vocabulary=label_vocab_list, n_classes=len(label_vocab_list), config=tf.estimator.RunConfig().replace(save_summary_steps=10)) # Config bit is for tensorboard
 
     # Create input functions
@@ -146,14 +146,24 @@ def train_model(
     # print("Evaluation results:")
     # print(evaluate_result)
 
-    session = tf.Session()
+    # Currently working on  Below
 
-    def get_embed():
-        with session.run():
-            return tf.get_variable("embedding")
-
-    embedding = get_embed()
-    print(embedding)
+    # sess = tf.Session()
+    #
+    # embedding = tf.Variable(tf.zeros([1024, embedding_size]), name="test_embedding")
+    # assignment = embedding.assign(embedding_input)
+    # saver = tf.train.Saver()
+    #
+    # sess.run(tf.global_variables_initializer())
+    # writer = tf.summary.FileWriter(LOGDIR + hparam)
+    # writer.add_graph(sess.graph)
+    #
+    # config = tf.contrib.tensorboard.plugins.projector.ProjectorConfig()
+    # embedding_config = config.embeddings.add()
+    # embedding_config.tensor_name = embedding.name
+    # embedding_config.metadata_path = LABELS
+    #
+    # tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)
 
     return classifier
 

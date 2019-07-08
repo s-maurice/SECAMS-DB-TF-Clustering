@@ -8,11 +8,15 @@ from sklearn import metrics
 import get_input_data
 
 
-def split_df(df, split_array):
+def split_df(df, split_array, shuffle=True):
     # Takes a DataFrame and splits it into 3 sets according to the ratio in the given array
     # split_array must have a length of 3.
+    # shuffle: Shuffles the DataFrame before splitting
 
     assert(len(split_array) == 3)
+
+    if shuffle:
+        df = df.sample(frac=1).reset_index(drop=True)
 
     split = [int(i / sum(split_array) * len(df)) for i in split_array]
 
@@ -123,18 +127,21 @@ def train_model(
 
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
-    # Input functions for testing
-    predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
 
-    # ----- Begin Training -----
-
-    # ignore periods for now
+    # ----- Begin Training + Train/Val Evaluation -----
     print("Training...")
-    classifier.train(input_fn=train_input_fn, steps=steps_per_period)
-    print("Classifier trained.")
 
-    # Don't evaluate yet
-    # evaluate_model(classifier, train_features, train_targets)
+    # Train in periods; after every 'train', call .evaluate() and take accuracy
+    for period in range(periods):
+        classifier.train(input_fn=train_input_fn, steps=steps_per_period)
+
+        evaluate_results = evaluate_model(classifier, val_features, val_targets, steps=100)
+
+        print("  Period %02d: Accuracy = %02f // Loss = %02f // Average Loss = %02f" %
+              (period, evaluate_results.get('accuracy'), evaluate_results.get('loss'), evaluate_results.get('average_loss')))
+
+    # All periods done
+    print("Classifier trained.")
 
     # Embedding Visualisation / Extraction
 
@@ -171,7 +178,6 @@ def train_model(
 # Function that tests a model against a set of features and targets;
 # Verbose: Checks and prints the result of every single one
 def evaluate_model(model, features, targets, verbose=False, name=None, steps=None):
-    print("Evaluating...")
     evaluate_input_function = lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1)
 
     evaluate_result = model.evaluate(
@@ -179,11 +185,14 @@ def evaluate_model(model, features, targets, verbose=False, name=None, steps=Non
         steps=steps,
         name=name)
 
+    # print("Evaluation results:", name)
+    # print(evaluate_result)
+
     if verbose:
         # Predict all our prediction_input
         predict_results = model.predict(input_fn=evaluate_input_function)
 
-        # Print results
+        # Print results - doesn't work
         print("Predictions on data:")
         for idx, prediction in enumerate(predict_results):
 
@@ -198,10 +207,12 @@ def evaluate_model(model, features, targets, verbose=False, name=None, steps=Non
             # else:
             #     print("I think: {}, is Iris Virginica".format(targets[idx])
 
+    return evaluate_result
+
 
 def main():
     # raw_df = get_input_data.get_events()  # Get Raw DF
-    raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
+    # raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
 
     df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
 
@@ -227,7 +238,8 @@ def main():
         hidden_units=[1024, 512, 256]
     )
 
-    evaluate_model(dnn_classifier, train_features, train_targets, steps=500, verbose=False)
+    # evaluate_model(dnn_classifier, train_features, train_targets, steps=600, verbose=False, name='Training')
+    # evaluate_model(dnn_classifier, val_features, val_targets, steps=600, verbose=False, name='Validation')
 
 
 main()

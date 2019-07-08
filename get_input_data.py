@@ -22,9 +22,9 @@ def get_events_from_sql():
         return False
 
 
-def get_events_from_csv():
+def get_events_from_csv(filename="development_data.csv"):
     try:
-        events = pd.read_csv("development_data.csv")
+        events = pd.read_csv(filename)
         # events['TIMESTAMPS'] = events['TIMESTAMPS'].apply(lambda x: dt.strptime(x, "%Y-%m-%d %H:%M:%S"))
         events['TIMESTAMPS'] = events['TIMESTAMPS'].apply(datetime64)
 
@@ -42,7 +42,7 @@ def store_to_csv():
 
 
 def get_events():
-    # blanket get_event method that tries both SQL and CSV
+    # blanket get_event method that tries SQL then CSV
 
     from_sql = get_events_from_sql()
     if type(from_sql) == pd.DataFrame:

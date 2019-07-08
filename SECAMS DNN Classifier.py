@@ -72,6 +72,14 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
 
 def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
 
+    # # DEPRECATED 1: Using tf.data (and DataSet)
+    # features = {key: np.array(value) for key, value in dict(features).items()}
+    # ds = tf.data.Dataset.from_tensor_slices((features, targets))  # warning: 2GB limit
+    # ds = ds.batch(batch_size).repeat(num_epochs)
+    # if shuffle:
+    #     ds = ds.shuffle(buffer_size=len(features))
+    # feature_dict, label_list = ds.make_one_shot_iterator().get_next()
+
     # APPROACH 3: Directly turning it into a dict-list tuple
     # turn features DataFrame into Dict - input feature is a key, and then a list of values for the training batch
     feature_dict = dict()
@@ -81,6 +89,7 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
 
     # turn targets DataFrame into a List - these are our labels
     label_list = targets[targets.columns[0]].tolist()
+
     return feature_dict, label_list
 
 
@@ -134,23 +143,39 @@ def train_model(
 # Verbose: Checks and prints the result of every single one
 def evaluate_model(model, features, targets, verbose=False, name=None, steps=None):
     print("Evaluating...")
+    evaluate_input_function = lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1)
+
     evaluate_result = model.evaluate(
-        input_fn=lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1),
+        input_fn=evaluate_input_function,
         steps=steps,
         name=name)
 
     print("Evaluation results:")
-
     print(evaluate_result)
 
     if verbose:
-        for r_key in evaluate_result:
-            print("  {}, was: {}".format(r_key, evaluate_result[r_key]))
+        # Predict all our prediction_input
+        predict_results = model.predict(input_fn=evaluate_input_function)
+
+        # Print results
+        print("Predictions on data:")
+        for idx, prediction in enumerate(predict_results):
+
+            print(idx, prediction, targets[idx])
+
+            # type = prediction["class_ids"][0] # Get the predicted class (index)
+
+            # if type == 0:
+            #     print("I think: {}, is Iris Sentosa".format(targets[idx]))
+            # elif type == 1:
+            #     print("I think: {}, is Iris Versicolor".format(targets[idx]))
+            # else:
+            #     print("I think: {}, is Iris Virginica".format(targets[idx])
 
 
 def main():
-    raw_df = get_input_data.get_events()  # Get Raw DF
-    # raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
+    # raw_df = get_input_data.get_events()  # Get Raw DF
+    raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
 
     df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
 
@@ -176,7 +201,7 @@ def main():
         hidden_units=[1024, 512, 256]
     )
 
-    evaluate_model(dnn_classifier, train_features, train_targets, steps=500, verbose=True)
+    evaluate_model(dnn_classifier, train_features, train_targets, steps=500, verbose=False)
 
 
 main()

@@ -106,7 +106,8 @@ def train_model(
         batch_size=1,
         steps_per_period=50,
         periods=10,
-        hidden_units=[1024, 512, 256]
+        hidden_units=[1024, 512, 256],
+        model_dir=None
 ):
     numerical_features = ["DECHOUR"]
     categorical_features = ["DAYOFWEEK", "MONTHOFYEAR", "TERMINALSN", "EVENTID"]
@@ -123,25 +124,64 @@ def train_model(
 
     # Create DNN
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate) # Create optimiser - Try variable rate optimisers
-    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns, hidden_units=hidden_units, optimizer=optimizer, label_vocabulary=label_vocab_list, n_classes=len(label_vocab_list), config=tf.estimator.RunConfig().replace(save_summary_steps=10)) # Config bit is for tensorboard
+    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
+                                            hidden_units=hidden_units,
+                                            optimizer=optimizer,
+                                            label_vocabulary=label_vocab_list,
+                                            n_classes=len(label_vocab_list),
+                                            model_dir=model_dir,
+                                            config=tf.estimator.RunConfig().replace(save_summary_steps=10)) # Config bit is for tensorboard
 
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
 
     # ----- Begin Training + Train/Val Evaluation -----
     print("Training...")
+    train_acc = []
+    train_loss = []
+    val_acc = []
+    val_loss = []
 
     # Train in periods; after every 'train', call .evaluate() and take accuracy
     for period in range(periods):
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
 
-        evaluate_results = evaluate_model(classifier, val_features, val_targets, steps=100)
+        eval_train_results = evaluate_model(classifier, train_features, train_targets, steps=100)
+        eval_val_results = evaluate_model(classifier, val_features, val_targets, steps=100)
 
-        print("  Period %02d: Accuracy = %02f // Loss = %02f // Average Loss = %02f" %
-              (period, evaluate_results.get('accuracy'), evaluate_results.get('loss'), evaluate_results.get('average_loss')))
+        train_acc.append(eval_train_results.get('accuracy'))
+        train_loss.append(eval_train_results.get('average_loss'))
+        val_acc.append(eval_val_results.get('accuracy'))
+        val_loss.append(eval_val_results.get('average_loss'))
+
+        print("  Period %02d: Train: Accuracy = %f // Loss = %f // Average Loss = %f \n"
+              "             Valid: Accuracy = %f // Loss = %f // Average Loss = %f" %
+              (period, eval_train_results.get('accuracy'), eval_train_results.get('loss'), eval_train_results.get('average_loss'),
+               eval_val_results.get('accuracy'), eval_val_results.get('loss'), eval_val_results.get('average_loss')))
 
     # All periods done
     print("Classifier trained.")
+
+    # Graph the accuracy + average loss over the periods
+    plt.subplot(111)
+    plt.title("Accuracy vs. Periods (Learning rate: " + str(learning_rate) + ")")
+    plt.ylabel("Accuracy")
+    plt.xlabel("Periods")
+
+    plt.plot(train_acc, label="training")
+    plt.plot(val_acc, label="validation")
+    plt.legend()
+
+    plt.subplot(221)
+    plt.title("Loss vs. Periods (Learning rate: " + str(learning_rate) + ")")
+    plt.ylabel("Loss")
+    plt.xlabel("Periods")
+
+    plt.plot(train_loss, label="training")
+    plt.plot(val_loss, label="validation")
+    plt.legend()
+
+    plt.show()
 
     # Embedding Visualisation / Extraction
 
@@ -231,12 +271,11 @@ def main():
         train_targets,
         val_features,
         val_targets,
-        learning_rate=0.0005,
+        learning_rate=0.0002,
         batch_size=1000,
-        steps_per_period=300,
-        periods=10,     # periods not used in steps_per_period
-        hidden_units=[1024, 512, 256]
-    )
+        steps_per_period=200,
+        periods=10,
+        hidden_units=[1024, 512, 256])
 
     # evaluate_model(dnn_classifier, train_features, train_targets, steps=600, verbose=False, name='Training')
     # evaluate_model(dnn_classifier, val_features, val_targets, steps=600, verbose=False, name='Validation')

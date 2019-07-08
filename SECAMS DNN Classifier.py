@@ -166,8 +166,9 @@ def train_model(
     # Graph the accuracy + average loss over the periods
     plt.subplot(211)
     plt.title("Accuracy vs. Periods (Learning rate: " + str(learning_rate) + ")")
-    plt.ylabel("Accuracy")
     plt.xlabel("Periods")
+    plt.ylabel("Accuracy")
+    plt.ylim(0,1)
 
     plt.plot(train_acc, label="training")
     plt.plot(val_acc, label="validation")

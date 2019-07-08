@@ -139,12 +139,12 @@ def evaluate_model(model, features, targets, verbose=False, name=None, steps=Non
         steps=steps,
         name=name)
 
-    print("Evaluation results: " + name)
+    print("Evaluation results:")
 
     print(evaluate_result)
 
-    for r_key in evaluate_result:
-        if verbose:
+    if verbose:
+        for r_key in evaluate_result:
             print("  {}, was: {}".format(r_key, evaluate_result[r_key]))
 
 
@@ -176,7 +176,7 @@ def main():
         hidden_units=[1024, 512, 256]
     )
 
-    evaluate_model(dnn_classifier, train_features, train_targets, steps=100)
+    evaluate_model(dnn_classifier, train_features, train_targets, steps=500, verbose=True)
 
 
 main()

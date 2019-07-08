@@ -133,23 +133,25 @@ def train_model(
     # ----- Begin Training -----
 
     # ignore periods for now
-    total_steps = steps_per_period * periods
-    classifier.train(input_fn=train_input_fn, steps=total_steps)
-    print("classifier gay")
+    print("Training...")
+    classifier.train(input_fn=train_input_fn, steps=steps_per_period)
+    print("Classifier trained.")
 
-    evaluate_model(classifier, train_features, train_targets)
+    # Don't evaluate yet
+    # evaluate_model(classifier, train_features, train_targets)
 
     return classifier
 
 
 # Function that tests a model against a set of features and targets;
 # Verbose: Checks and prints the result of every single one
-def evaluate_model(model, features, targets, verbose=False, name=None):
+def evaluate_model(model, features, targets, verbose=False, name=None, steps=None):
 
     print("Evaluating...")
 
     evaluate_result = model.evaluate(
         input_fn=lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1),
+        steps=steps,
         name=name)
 
     print("Evaluation results: " + name)
@@ -184,12 +186,17 @@ def main():
         val_targets,
         learning_rate=0.0005,
         batch_size=1000,
-        steps_per_period=100,
-        periods=10,
+        steps_per_period=300,
+        periods=10,     # periods not used in steps_per_period
         hidden_units=[1024, 512, 256]
     )
 
-    # test_model(dnn_classifier, test_features, test_targets)
+    # dnn_classifier.export_saved_model(
+    #     "dnn_classifier",
+    #
+    # )
+
+    evaluate_model(dnn_classifier, train_features, train_targets, steps=100)
 
 
 main()

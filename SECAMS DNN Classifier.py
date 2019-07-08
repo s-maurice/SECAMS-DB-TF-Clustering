@@ -158,17 +158,12 @@ def train_model(
     predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
 
     # Begin Training
-
-    # print statement for RMSE values
-    print("  period    | train   | val")
-    train_rmse = []
-    val_rmse = []
-
     for period in range(periods):
         # Train Model
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
         print("classifier gay")
-
+        metricsa = classifier.evaluate(input_fn=predict_train_input_fn)
+        print(metricsa)
         # # Compute Predictions
         # train_predictions = classifier.predict(input_fn=predict_train_input_fn)
         # val_predictions = classifier.predict(input_fn=predict_val_input_fn)
@@ -190,7 +185,7 @@ def train_model(
         # train_rmse.append(train_rmse_current)
         # val_rmse.append(val_rmse_current)
 
-    rmse_plot(train_rmse, val_rmse)
+    # rmse_plot(train_rmse, val_rmse)
     return classifier
 
 

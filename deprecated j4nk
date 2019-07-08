@@ -1,0 +1,77 @@
+train():
+# Encoding of train_targets
+# one_hot_dict = train_targets["USERID"].to_dict() # Generate Dict
+# one_hot_dict = dict([[v, str(k)] for k, v in one_hot_dict.items()])  # Reverse Dict
+# #one_hot_dict = dict([[k, str(i)] for k, i in one_hot_dict.items()])
+# print(one_hot_dict)
+# train_targets_encoded = train_targets.replace({"USERID": one_hot_dict})
+
+# train_targets_encoding_size = train_targets["USERID"].unique().size
+# train_targets_encoded_one_hot = tf.one_hot(train_targets_encoded, train_targets_encoding_size)
+
+----------
+
+def test_model(model, test_features, test_targets):
+    # Create test input function
+    predict_test_input_fn = lambda: create_input_function(test_features, test_targets, shuffle=False, batch_size=1)
+
+    # Get predictions as an Array
+    test_predictions = model.predict(input_fn=predict_test_input_fn)
+    test_predictions = np.array([item["predictions"][0] for item in test_predictions])
+
+    # Use sklearn.metrics to calculate and print RMSE
+    test_rmse_current = math.sqrt(metrics.mean_squared_error(test_targets, test_predictions))
+    print("Test Data RMSE:", test_rmse_current)
+
+----------
+
+def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
+
+    # DEPRECATED 1: Using tf.data (and DataSet)
+    # ds = tf.data.Dataset.from_tensor_slices((features.values, targets.values))
+    # ds = ds.batch(batch_size).repeat(num_epochs)
+    # if shuffle:
+    #     ds = ds.shuffle(buffer_size=len(features))
+    # feature_dict, label_list = ds.make_one_shot_iterator().get_next()
+
+
+    # DEPRECATED 2: Using pandas input function
+    # input_fn = tf.estimator.inputs.pandas_input_fn(features, y=targets, shuffle=shuffle, batch_size=batch_size, num_epochs=num_epochs)
+    # return input_fn
+
+----------
+
+# Begin Training
+
+# print statement for RMSE values
+print("  period    | train   | val")
+train_rmse = []
+val_rmse = []
+
+for period in range(periods):
+    # Train Model
+    classifier.train(input_fn=train_input_fn, steps=steps_per_period)
+    print("classifier gay")
+
+    # # Compute Predictions
+    # train_predictions = classifier.predict(input_fn=predict_train_input_fn)
+    # val_predictions = classifier.predict(input_fn=predict_val_input_fn)
+    #
+    # train_predictions_arr = np.array([item["predictions"][0] for item in train_predictions])
+    # val_predictions_arr = np.array([item["predictions"][0] for item in val_predictions])
+    #
+    # # Compute Loss
+    # train_rmse_current_tensor = sklearn.metrics.mean_squared_error(train_targets, train_predictions_arr)
+    # val_rmse_current_tensor = sklearn.metrics.mean_squared_error(val_targets, val_predictions_arr)
+    #
+    # train_rmse_current = math.sqrt(train_rmse_current_tensor)
+    # val_rmse_current = math.sqrt(val_rmse_current_tensor)
+    #
+    # # print(period, train_rmse_current, val_rmse_current)
+    # print("  period %02d : %0.6f, %0.6f" % (period, train_rmse_current, val_rmse_current))
+    #
+    # # Append RMSE to List
+    # train_rmse.append(train_rmse_current)
+    # val_rmse.append(val_rmse_current)
+
+rmse_plot(train_rmse, val_rmse)

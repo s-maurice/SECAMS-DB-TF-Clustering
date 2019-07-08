@@ -72,18 +72,6 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
 
 def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
 
-    # DEPRECATED 1: Using tf.data (and DataSet)
-    # ds = tf.data.Dataset.from_tensor_slices((features.values, targets.values))
-    # ds = ds.batch(batch_size).repeat(num_epochs)
-    # if shuffle:
-    #     ds = ds.shuffle(buffer_size=len(features))
-    # feature_dict, label_list = ds.make_one_shot_iterator().get_next()
-
-
-    # DEPRECATED 2: Using pandas input function
-    # input_fn = tf.estimator.inputs.pandas_input_fn(features, y=targets, shuffle=shuffle, batch_size=batch_size, num_epochs=num_epochs)
-    # return input_fn
-
     # APPROACH 3: Directly turning it into a dict-list tuple
     # turn features DataFrame into Dict - input feature is a key, and then a list of values for the training batch
     feature_dict = dict()
@@ -141,20 +129,9 @@ def train_model(
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # Create optimiser - Try variable rate optimisers
     classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns, hidden_units=hidden_units, optimizer=optimizer, label_vocabulary=label_vocab_list, n_classes=len(label_vocab_list))
 
-    # Encoding of train_targets
-    # one_hot_dict = train_targets["USERID"].to_dict() # Generate Dict
-    # one_hot_dict = dict([[v, str(k)] for k, v in one_hot_dict.items()])  # Reverse Dict
-    # #one_hot_dict = dict([[k, str(i)] for k, i in one_hot_dict.items()])
-    # print(one_hot_dict)
-    # train_targets_encoded = train_targets.replace({"USERID": one_hot_dict})
-
-    # train_targets_encoding_size = train_targets["USERID"].unique().size
-    # train_targets_encoded_one_hot = tf.one_hot(train_targets_encoded, train_targets_encoding_size)
-
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
     # Input functions for finding RMSE values
-    predict_train_input_fn = lambda: create_input_function(train_features, train_targets, shuffle=False, num_epochs=1)
     predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
 
     # Begin Training
@@ -189,17 +166,21 @@ def train_model(
     return classifier
 
 
-def test_model(model, test_features, test_targets):
-    # Create test input function
-    predict_test_input_fn = lambda: create_input_function(test_features, test_targets, shuffle=False, batch_size=1)
+# Function that tests a model against a set of features and targets;
+# Verbose: Checks and prints the result of every single one
+def evaluate_model(model, features, targets, verbose=False, name=None):
 
-    # Get predictions as an Array
-    test_predictions = model.predict(input_fn=predict_test_input_fn)
-    test_predictions = np.array([item["predictions"][0] for item in test_predictions])
+    evaluate_result = model.evaluate(
+        input_fn=lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1),
+        name=name)
 
-    # Use sklearn.metrics to calculate and print RMSE
-    test_rmse_current = math.sqrt(metrics.mean_squared_error(test_targets, test_predictions))
-    print("Test Data RMSE:", test_rmse_current)
+    print("Evaluation results: " + name)
+
+    print(evaluate_result)
+
+    for r_key in evaluate_result:
+        if verbose:
+            print("  {}, was: {}".format(r_key, evaluate_result[r_key]))
 
 
 def main():

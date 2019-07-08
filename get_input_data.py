@@ -10,7 +10,7 @@ def get_events_from_sql():
         sql_query_str = """
 WITH USERID_TALLIES (userid, tally)
 AS(
-SELECT TOP(1000) userid, COUNT(*) AS tally
+SELECT TOP(100) userid, COUNT(*) AS tally
 FROM access_event_logs
 GROUP BY userid)
 

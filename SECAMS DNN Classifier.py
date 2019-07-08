@@ -76,15 +76,24 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
 
 def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
 
+    # DEPRECATED 1: Using tf.data (and DataSet)
+    features = {key:np.array(value) for key,value in dict(features).items()}
+
+    ds = tf.data.Dataset.from_tensor_slices((features, targets))
+    ds = ds.batch(batch_size).repeat(num_epochs)
+    if shuffle:
+        ds = ds.shuffle(buffer_size=len(features))
+    feature_dict, label_list = ds.make_one_shot_iterator().get_next()
+
     # APPROACH 3: Directly turning it into a dict-list tuple
     # turn features DataFrame into Dict - input feature is a key, and then a list of values for the training batch
-    feature_dict = dict()
-
-    for i in features.columns:
-        feature_dict[str(i)] = features[i].tolist()
-
-    # turn targets DataFrame into a List - these are our labels
-    label_list = targets[targets.columns[0]].tolist()
+    # feature_dict = dict()
+    #
+    # for i in features.columns:
+    #     feature_dict[str(i)] = features[i].tolist()
+    #
+    # # turn targets DataFrame into a List - these are our labels
+    # label_list = targets[targets.columns[0]].tolist()
 
     return feature_dict, label_list
 
@@ -118,7 +127,7 @@ def train_model(
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate) # Create optimiser - Try variable rate optimisers
     classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
                                             hidden_units=hidden_units,
-                                            # optimizer=optimizer,
+                                            optimizer=optimizer,
                                             label_vocabulary=label_vocab_list,
                                             n_classes=len(label_vocab_list),
                                             model_dir=model_dir,
@@ -138,8 +147,8 @@ def train_model(
     for period in range(periods):
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
 
-        eval_train_results = evaluate_model(classifier, train_features, train_targets, steps=100)
-        eval_val_results = evaluate_model(classifier, val_features, val_targets, steps=100)
+        eval_train_results = evaluate_model(classifier, train_features, train_targets)
+        eval_val_results = evaluate_model(classifier, val_features, val_targets)
 
         train_acc.append(eval_train_results.get('accuracy'))
         train_loss.append(eval_train_results.get('average_loss'))
@@ -163,7 +172,6 @@ def train_model(
     plt.plot(train_acc, label="training")
     plt.plot(val_acc, label="validation")
     plt.legend()
-    plt.show()
 
     plt.subplot(212)
     plt.title("Loss vs. Periods (Learning rate: " + str(learning_rate) + ")")

@@ -84,18 +84,6 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
     return feature_dict, label_list
 
 
-def rmse_plot(train, val):
-    plt.ylabel("RMSE")
-    plt.xlabel("Periods")
-    plt.title("Root Mean Squared Error vs. Periods")
-    plt.tight_layout()
-    plt.plot(train, label="training")
-    plt.plot(val, label="validation")
-    plt.axis([0, 10, 0, 0.2])  # Lock axis
-    plt.legend()
-    plt.show()
-
-
 def train_model(
         train_features,
         train_targets,
@@ -126,8 +114,7 @@ def train_model(
 
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
-
-    # Input functions for finding RMSE values
+    # Input functions for testing
     predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
 
     # ----- Begin Training -----
@@ -146,9 +133,7 @@ def train_model(
 # Function that tests a model against a set of features and targets;
 # Verbose: Checks and prints the result of every single one
 def evaluate_model(model, features, targets, verbose=False, name=None, steps=None):
-
     print("Evaluating...")
-
     evaluate_result = model.evaluate(
         input_fn=lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1),
         steps=steps,
@@ -190,11 +175,6 @@ def main():
         periods=10,     # periods not used in steps_per_period
         hidden_units=[1024, 512, 256]
     )
-
-    # dnn_classifier.export_saved_model(
-    #     "dnn_classifier",
-    #
-    # )
 
     evaluate_model(dnn_classifier, train_features, train_targets, steps=100)
 

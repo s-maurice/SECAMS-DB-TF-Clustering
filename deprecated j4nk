@@ -41,6 +41,18 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
 
 ----------
 
+    # Create a vocab DataFrame by concatenating the given DFs.
+    # NOTE: Should add test_features and test_targets to this later on as well.
+    features_vocab_df = train_features.append(val_features)
+
+    # features_vocab_list = [features_vocab_df[i].unique() for i in features_vocab_df]
+    # for i in range (0, 5):
+    #     print(features_vocab_list[i])
+
+    feature_columns = construct_feature_columns(numerical_features, categorical_features, features_vocab_df)
+
+----------
+
 # Begin Training
 
 # print statement for RMSE values

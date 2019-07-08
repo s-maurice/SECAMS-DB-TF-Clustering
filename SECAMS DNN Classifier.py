@@ -113,11 +113,6 @@ def train_model(
     # Create a vocab DataFrame by concatenating the given DFs.
     # NOTE: Should add test_features and test_targets to this later on as well.
     features_vocab_df = train_features.append(val_features)
-
-    # features_vocab_list = [features_vocab_df[i].unique() for i in features_vocab_df]
-    # for i in range (0, 5):
-    #     print(features_vocab_list[i])
-
     feature_columns = construct_feature_columns(numerical_features, categorical_features, features_vocab_df)
 
     # Prepare label_vocab
@@ -131,49 +126,27 @@ def train_model(
 
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
+
     # Input functions for finding RMSE values
     predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
 
-    # Begin Training
+    # ----- Begin Training -----
 
-    # print statement for RMSE values
-    print("  period    | train   | val")
-    train_rmse = []
-    val_rmse = []
+    # ignore periods for now
+    total_steps = steps_per_period * periods
+    classifier.train(input_fn=train_input_fn, steps=total_steps)
+    print("classifier gay")
 
-    for period in range(periods):
-        # Train Model
-        classifier.train(input_fn=train_input_fn, steps=steps_per_period)
-        print("classifier gay")
+    evaluate_model(classifier, train_features, train_targets)
 
-        # # Compute Predictions
-        # train_predictions = classifier.predict(input_fn=predict_train_input_fn)
-        # val_predictions = classifier.predict(input_fn=predict_val_input_fn)
-        #
-        # train_predictions_arr = np.array([item["predictions"][0] for item in train_predictions])
-        # val_predictions_arr = np.array([item["predictions"][0] for item in val_predictions])
-        #
-        # # Compute Loss
-        # train_rmse_current_tensor = sklearn.metrics.mean_squared_error(train_targets, train_predictions_arr)
-        # val_rmse_current_tensor = sklearn.metrics.mean_squared_error(val_targets, val_predictions_arr)
-        #
-        # train_rmse_current = math.sqrt(train_rmse_current_tensor)
-        # val_rmse_current = math.sqrt(val_rmse_current_tensor)
-        #
-        # # print(period, train_rmse_current, val_rmse_current)
-        # print("  period %02d : %0.6f, %0.6f" % (period, train_rmse_current, val_rmse_current))
-        #
-        # # Append RMSE to List
-        # train_rmse.append(train_rmse_current)
-        # val_rmse.append(val_rmse_current)
-
-    rmse_plot(train_rmse, val_rmse)
     return classifier
 
 
 # Function that tests a model against a set of features and targets;
 # Verbose: Checks and prints the result of every single one
 def evaluate_model(model, features, targets, verbose=False, name=None):
+
+    print("Evaluating...")
 
     evaluate_result = model.evaluate(
         input_fn=lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1),
@@ -189,7 +162,8 @@ def evaluate_model(model, features, targets, verbose=False, name=None):
 
 
 def main():
-    raw_df = get_input_data.get_events()  # Get Raw DF
+    # raw_df = get_input_data.get_events()  # Get Raw DF
+    raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
 
     df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
 

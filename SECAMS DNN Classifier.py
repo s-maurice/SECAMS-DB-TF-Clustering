@@ -8,11 +8,15 @@ from sklearn import metrics
 import get_input_data
 
 
-def split_df(df, split_array):
+def split_df(df, split_array, shuffle=True):
     # Takes a DataFrame and splits it into 3 sets according to the ratio in the given array
     # split_array must have a length of 3.
+    # shuffle: Shuffles the DataFrame before splitting
 
     assert(len(split_array) == 3)
+
+    if shuffle:
+        df = df.sample(frac=1).reset_index(drop=True)
 
     split = [int(i / sum(split_array) * len(df)) for i in split_array]
 
@@ -142,7 +146,7 @@ def train_model(
 # Function that tests a model against a set of features and targets;
 # Verbose: Checks and prints the result of every single one
 def evaluate_model(model, features, targets, verbose=False, name=None, steps=None):
-    print("Evaluating...")
+    print(name, "- Evaluating...")
     evaluate_input_function = lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1)
 
     evaluate_result = model.evaluate(
@@ -150,7 +154,7 @@ def evaluate_model(model, features, targets, verbose=False, name=None, steps=Non
         steps=steps,
         name=name)
 
-    print("Evaluation results:")
+    print("Evaluation results:", name)
     print(evaluate_result)
 
     if verbose:
@@ -201,7 +205,8 @@ def main():
         hidden_units=[1024, 512, 256]
     )
 
-    evaluate_model(dnn_classifier, train_features, train_targets, steps=500, verbose=False)
+    evaluate_model(dnn_classifier, train_features, train_targets, steps=300, verbose=False, name='Training')
+    evaluate_model(dnn_classifier, val_features, val_targets, steps=300, verbose=False, name='Validation')
 
 
 main()

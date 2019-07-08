@@ -127,18 +127,21 @@ def train_model(
 
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
-    # Input functions for testing
-    predict_val_input_fn = lambda: create_input_function(val_features, val_targets, shuffle=False, num_epochs=1)
 
-    # ----- Begin Training -----
-
-    # ignore periods for now
+    # ----- Begin Training + Train/Val Evaluation -----
     print("Training...")
-    classifier.train(input_fn=train_input_fn, steps=steps_per_period)
-    print("Classifier trained.")
 
-    # Don't evaluate yet
-    # evaluate_model(classifier, train_features, train_targets)
+    # Train in periods; after every 'train', call .evaluate() and take accuracy
+    for period in range(periods):
+        classifier.train(input_fn=train_input_fn, steps=steps_per_period)
+
+        evaluate_results = evaluate_model(classifier, val_features, val_targets, steps=100)
+
+        print("  Period %02d: Accuracy = %02f // Loss = %02f // Average Loss = %02f" %
+              (period, evaluate_results.get('accuracy'), evaluate_results.get('loss'), evaluate_results.get('average_loss')))
+
+    # All periods done
+    print("Classifier trained.")
 
     return classifier
 
@@ -146,7 +149,7 @@ def train_model(
 # Function that tests a model against a set of features and targets;
 # Verbose: Checks and prints the result of every single one
 def evaluate_model(model, features, targets, verbose=False, name=None, steps=None):
-    print(name, "- Evaluating...")
+    # print(name, "- Evaluating...")
     evaluate_input_function = lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1)
 
     evaluate_result = model.evaluate(
@@ -154,14 +157,14 @@ def evaluate_model(model, features, targets, verbose=False, name=None, steps=Non
         steps=steps,
         name=name)
 
-    print("Evaluation results:", name)
-    print(evaluate_result)
+    # print("Evaluation results:", name)
+    # print(evaluate_result)
 
     if verbose:
         # Predict all our prediction_input
         predict_results = model.predict(input_fn=evaluate_input_function)
 
-        # Print results
+        # Print results - doesn't work
         print("Predictions on data:")
         for idx, prediction in enumerate(predict_results):
 
@@ -175,6 +178,8 @@ def evaluate_model(model, features, targets, verbose=False, name=None, steps=Non
             #     print("I think: {}, is Iris Versicolor".format(targets[idx]))
             # else:
             #     print("I think: {}, is Iris Virginica".format(targets[idx])
+
+    return evaluate_result
 
 
 def main():
@@ -205,8 +210,8 @@ def main():
         hidden_units=[1024, 512, 256]
     )
 
-    evaluate_model(dnn_classifier, train_features, train_targets, steps=300, verbose=False, name='Training')
-    evaluate_model(dnn_classifier, val_features, val_targets, steps=300, verbose=False, name='Validation')
+    # evaluate_model(dnn_classifier, train_features, train_targets, steps=600, verbose=False, name='Training')
+    # evaluate_model(dnn_classifier, val_features, val_targets, steps=600, verbose=False, name='Validation')
 
 
 main()

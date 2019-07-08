@@ -162,8 +162,8 @@ def evaluate_model(model, features, targets, verbose=False, name=None):
 
 
 def main():
-    # raw_df = get_input_data.get_events()  # Get Raw DF
-    raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
+    raw_df = get_input_data.get_events()  # Get Raw DF
+    # raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
 
     df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
 

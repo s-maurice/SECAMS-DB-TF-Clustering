@@ -8,12 +8,18 @@ def get_events_from_sql():
     try:
         conn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-L3DV0JT;DATABASE=SECAMS;UID=sa;PWD=1')
         sql_query_str = """
-    SELECT TOP(1000) USERID, EVENTID, TIMESTAMPS, access_event_logs.TERMINALSN, TERMINALGROUP, TERMINALNAME
-    FROM access_event_logs, access_terminal
-	WHERE TIMESTAMPS > '2016-1-1'
-    AND 
-    access_event_logs.TerminalSN = access_terminal.TerminalSN
-    ORDER BY NEWID()"""
+WITH USERID_TALLIES (userid, tally)
+AS(
+SELECT TOP(1000) userid, COUNT(*) AS tally
+FROM access_event_logs
+GROUP BY userid)
+
+SELECT DISTINCT USERID, EVENTID, TERMINALSN, TIMESTAMPS
+FROM access_event_logs AS l
+WHERE EXISTS (SELECT * 
+FROM USERID_TALLIES AS UT
+WHERE l.userid = ut.userid
+AND uT.tally > 100);"""
 
         events = pd.read_sql(sql_query_str, conn)
         return events

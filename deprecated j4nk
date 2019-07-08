@@ -53,6 +53,20 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
 
 ----------
 
+def rmse_plot(train, val):
+    plt.ylabel("RMSE")
+    plt.xlabel("Periods")
+    plt.title("Root Mean Squared Error vs. Periods")
+    plt.tight_layout()
+    plt.plot(train, label="training")
+    plt.plot(val, label="validation")
+    plt.axis([0, 10, 0, 0.2])  # Lock axis
+    plt.legend()
+    plt.show()
+
+
+----------
+
 # Begin Training
 
 # print statement for RMSE values

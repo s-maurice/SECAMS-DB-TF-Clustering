@@ -230,6 +230,17 @@ def evaluate_model(model, features, targets, name=None, steps=None):
     return evaluate_result
 
 
+# function that directly predicts and compares all data points given, using a model
+def predict_model(model, features, targets):
+
+    predict_input_function = lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1)
+
+    predict_results = model.predict()
+
+    for idx, prediction in enumerate(predict_results):
+        print(idx, prediction)
+
+
 def main():
     raw_df = get_input_data.get_events()  # Get Raw DF
     # raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")

@@ -166,17 +166,17 @@ def train_model(
     print("Classifier trained.")
 
     # Graph the accuracy + average loss over the periods
-    plt.subplot(211)
+    plt.subplot(311)
     plt.title("Accuracy vs. Periods (Learning rate: " + str(learning_rate) + ")")
     plt.xlabel("Periods")
     plt.ylabel("Accuracy")
-    plt.ylim(0,1)
+    plt.ylim(0, 1)
 
     plt.plot(train_acc, label="training")
     plt.plot(val_acc, label="validation")
     plt.legend()
 
-    plt.subplot(212)
+    plt.subplot(312)
     plt.title("Loss vs. Periods (Learning rate: " + str(learning_rate) + ")")
     plt.ylabel("Loss")
     plt.xlabel("Periods")
@@ -184,8 +184,6 @@ def train_model(
     plt.plot(train_loss, label="training")
     plt.plot(val_loss, label="validation")
     plt.legend()
-
-    plt.show()
 
     # Embedding Visualisation / Extraction
 
@@ -265,12 +263,17 @@ def main():
         val_features,
         val_targets,
         learning_rate=0.0001,
-        batch_size=300,
-        steps_per_period=100,
+        batch_size=500,
+        steps_per_period=200,
         periods=10,
         model_dir="tmp/tf",
         hidden_units=[1024, 512, 256])
 
+    plt.subplot(313)
+    plt.title("UserID vs. Timestamps")
+    plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"])
+
+    plt.show()
     # evaluate_model(dnn_classifier, train_features, train_targets, steps=600, verbose=False, name='Training')
     # evaluate_model(dnn_classifier, val_features, val_targets, steps=600, verbose=False, name='Validation')
 

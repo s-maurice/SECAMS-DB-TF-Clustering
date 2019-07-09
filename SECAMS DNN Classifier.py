@@ -20,9 +20,9 @@ def split_df(df, split_array, shuffle=True):
 
     split = [int(i / sum(split_array) * len(df)) for i in split_array]
 
-    df_head = df.head(split[0])
-    df_mid = df.iloc[(split[0] + 1):(split[0] + split[1])]
-    df_tail = df.tail(split[2])
+    df_head = df.head(split[0]).reset_index(drop=True)
+    df_mid = df.iloc[(split[0] + 1):(split[0] + split[1])].reset_index(drop=True)
+    df_tail = df.tail(split[2]).reset_index(drop=True)
 
     return [df_head, df_mid, df_tail]
 
@@ -77,7 +77,7 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
 def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
 
     # DEPRECATED 1: Using tf.data (and DataSet)
-    features = {key:np.array(value) for key,value in dict(features).items()}
+    features = {key: np.array(value) for key, value in dict(features).items()}
 
     ds = tf.data.Dataset.from_tensor_slices((features, targets))
     ds = ds.batch(batch_size).repeat(num_epochs)
@@ -97,6 +97,12 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
 
     return feature_dict, label_list
 
+
+def prepare_label_vocab(label_list):
+    # Prepare label_vocab
+    label_vocab_list = label_list.unique().tolist()
+    label_vocab_list = [str(i) for i in label_vocab_list]
+    return label_vocab_list
 
 def train_model(
         train_features,
@@ -118,14 +124,12 @@ def train_model(
     features_vocab_df = train_features.append(val_features)
     feature_columns = construct_feature_columns(numerical_features, categorical_features, features_vocab_df)
 
-    # Prepare label_vocab
-    label_vocab_list = train_targets["USERID"].unique()
-    label_vocab_list = label_vocab_list.tolist()
-    label_vocab_list = [str(i) for i in label_vocab_list]
+    # Get Label Vocab List
+    label_vocab_list = prepare_label_vocab(train_targets["USERID"])
 
     # Create DNN
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate) # Create optimiser - Try variable rate optimisers
-    optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, 5.0)
+    # optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, 5.0)
 
     classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
                                             hidden_units=hidden_units,
@@ -206,8 +210,19 @@ def predict_model(model, features, targets):
     predict_input_function = lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1)
     predict_results = model.predict(input_fn=predict_input_function, predict_keys="probabilities")
 
+    result_df = pd.DataFrame()
     for idx, prediction in enumerate(predict_results):
-        print(targets.iloc[idx], prediction)
+        cur_df = pd.DataFrame(prediction.get("probabilities"))
+        cur_correct_df = pd.Series(targets.iloc[idx]["USERID"], name="Correct USERID")
+        cur_df = cur_df.append(cur_correct_df)
+        cur_df = cur_df.transpose()
+        result_df = result_df.append(cur_df)
+    column_list = prepare_label_vocab(targets["USERID"])
+    column_list.append("Correct USERID")
+    result_df.columns = column_list
+    result_df = result_df.reset_index(drop=True)
+
+    return result_df
 
 
 def main():

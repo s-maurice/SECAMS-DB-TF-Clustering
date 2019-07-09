@@ -101,3 +101,35 @@ for period in range(periods):
     # val_rmse.append(val_rmse_current)
 
 rmse_plot(train_rmse, val_rmse)
+
+
+-------------
+
+    # Embedding Visualisation / Extraction
+
+    # embeddings = tf.get_variable("embeddings", [len(targets), len(targets)])
+    # print(embeddings)
+    # embedded_word_ids = tf.nn.embedding_lookup(embeddings, features)
+    # print(embedded_word_ids)
+    #
+    # print("Evaluation results:")
+    # print(evaluate_result)
+
+    # Currently working on  Below
+
+    # sess = tf.Session()
+    #
+    # embedding = tf.Variable(tf.zeros([1024, embedding_size]), name="test_embedding")
+    # assignment = embedding.assign(embedding_input)
+    # saver = tf.train.Saver()
+    #
+    # sess.run(tf.global_variables_initializer())
+    # writer = tf.summary.FileWriter(LOGDIR + hparam)
+    # writer.add_graph(sess.graph)
+    #
+    # config = tf.contrib.tensorboard.plugins.projector.ProjectorConfig()
+    # embedding_config = config.embeddings.add()
+    # embedding_config.tensor_name = embedding.name
+    # embedding_config.metadata_path = LABELS
+    #
+    # tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)

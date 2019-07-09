@@ -185,35 +185,6 @@ def train_model(
     plt.plot(val_loss, label="validation")
     plt.legend()
 
-    # Embedding Visualisation / Extraction
-
-    # embeddings = tf.get_variable("embeddings", [len(targets), len(targets)])
-    # print(embeddings)
-    # embedded_word_ids = tf.nn.embedding_lookup(embeddings, features)
-    # print(embedded_word_ids)
-    #
-    # print("Evaluation results:")
-    # print(evaluate_result)
-
-    # Currently working on  Below
-
-    # sess = tf.Session()
-    #
-    # embedding = tf.Variable(tf.zeros([1024, embedding_size]), name="test_embedding")
-    # assignment = embedding.assign(embedding_input)
-    # saver = tf.train.Saver()
-    #
-    # sess.run(tf.global_variables_initializer())
-    # writer = tf.summary.FileWriter(LOGDIR + hparam)
-    # writer.add_graph(sess.graph)
-    #
-    # config = tf.contrib.tensorboard.plugins.projector.ProjectorConfig()
-    # embedding_config = config.embeddings.add()
-    # embedding_config.tensor_name = embedding.name
-    # embedding_config.metadata_path = LABELS
-    #
-    # tf.contrib.tensorboard.plugins.projector.visualize_embeddings(writer, config)
-
     return classifier
 
 
@@ -232,18 +203,16 @@ def evaluate_model(model, features, targets, name=None, steps=None):
 
 # function that directly predicts and compares all data points given, using a model
 def predict_model(model, features, targets):
-
     predict_input_function = lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1)
-
-    predict_results = model.predict()
+    predict_results = model.predict(input_fn=predict_input_function, predict_keys="probabilities")
 
     for idx, prediction in enumerate(predict_results):
-        print(idx, prediction)
+        print(targets.iloc[idx], prediction)
 
 
 def main():
-    # raw_df = get_input_data.get_events()  # Get Raw DF
-    raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
+    raw_df = get_input_data.get_events()  # Get Raw DF
+    # raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
 
     df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
 
@@ -273,9 +242,10 @@ def main():
     plt.title("UserID vs. Timestamps")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"])
 
+    predict_model(dnn_classifier, test_features, test_targets)
+
     plt.show()
-    # evaluate_model(dnn_classifier, train_features, train_targets, steps=600, verbose=False, name='Training')
-    # evaluate_model(dnn_classifier, val_features, val_targets, steps=600, verbose=False, name='Validation')
+
 
 
 main()

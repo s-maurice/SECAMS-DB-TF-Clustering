@@ -125,6 +125,8 @@ def train_model(
 
     # Create DNN
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate) # Create optimiser - Try variable rate optimisers
+    optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, 5.0)
+
     classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
                                             hidden_units=hidden_units,
                                             optimizer=optimizer,
@@ -242,8 +244,8 @@ def predict_model(model, features, targets):
 
 
 def main():
-    raw_df = get_input_data.get_events()  # Get Raw DF
-    # raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
+    # raw_df = get_input_data.get_events()  # Get Raw DF
+    raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
 
     df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
 
@@ -262,9 +264,9 @@ def main():
         train_targets,
         val_features,
         val_targets,
-        learning_rate=0.0002,
-        batch_size=1000,
-        steps_per_period=200,
+        learning_rate=0.0001,
+        batch_size=300,
+        steps_per_period=100,
         periods=10,
         model_dir="tmp/tf",
         hidden_units=[1024, 512, 256])

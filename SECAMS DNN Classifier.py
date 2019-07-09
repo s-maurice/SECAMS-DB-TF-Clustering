@@ -215,6 +215,16 @@ def predict_model(model, features, targets):
     return result_df
 
 
+def test_result_plotter(result_df, num):
+    results_to_plot = result_df.head(num)
+    # print(results_to_plot)
+
+    for index, row in results_to_plot.iterrows():
+        print(row)
+        row.plot()
+        # row.plot(subplots=True, kind="bar")
+
+
 def main():
     raw_df = get_input_data.get_events()  # Get Raw DF
     # raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
@@ -239,7 +249,7 @@ def main():
         learning_rate=0.0001,
         batch_size=500,
         steps_per_period=200,
-        periods=10,
+        periods=1,
         model_dir="tmp/tf",
         hidden_units=[1024, 512, 256])
 
@@ -250,7 +260,8 @@ def main():
     plt.title("UserID vs. Timestamps")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"])
 
-    print(predict_model(dnn_classifier, test_features, test_targets))
+    test_results = predict_model(dnn_classifier, test_features, test_targets)
+    test_result_plotter(test_results, 5)
 
     plt.show()
 

@@ -76,24 +76,14 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
 
 def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
 
-    # DEPRECATED 1: Using tf.data (and DataSet)
-    features = {key: np.array(value) for key, value in dict(features).items()}
+    # Using tf.data (and DataSet)
+    features = {key:np.array(value) for key,value in dict(features).items()}
 
     ds = tf.data.Dataset.from_tensor_slices((features, targets))
     ds = ds.batch(batch_size).repeat(num_epochs)
     if shuffle:
         ds = ds.shuffle(buffer_size=len(features))
     feature_dict, label_list = ds.make_one_shot_iterator().get_next()
-
-    # APPROACH 3: Directly turning it into a dict-list tuple
-    # turn features DataFrame into Dict - input feature is a key, and then a list of values for the training batch
-    # feature_dict = dict()
-    #
-    # for i in features.columns:
-    #     feature_dict[str(i)] = features[i].tolist()
-    #
-    # # turn targets DataFrame into a List - these are our labels
-    # label_list = targets[targets.columns[0]].tolist()
 
     return feature_dict, label_list
 
@@ -103,6 +93,7 @@ def prepare_label_vocab(label_list):
     label_vocab_list = label_list.unique().tolist()
     label_vocab_list = [str(i) for i in label_vocab_list]
     return label_vocab_list
+
 
 def train_model(
         train_features,
@@ -194,12 +185,11 @@ def train_model(
 
 # Function that tests a model against a set of features and targets;
 # Verbose: Checks and prints the result of every single one
-def evaluate_model(model, features, targets, name=None, steps=None):
+def evaluate_model(model, features, targets, name=None):
     evaluate_input_function = lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1)
 
     evaluate_result = model.evaluate(
         input_fn=evaluate_input_function,
-        steps=steps,
         name=name)
 
     return evaluate_result
@@ -253,11 +243,14 @@ def main():
         model_dir="tmp/tf",
         hidden_units=[1024, 512, 256])
 
+    eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets)
+    print("Test results:", eval_test_results)
+
     plt.subplot(313)
     plt.title("UserID vs. Timestamps")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"])
 
-    predict_model(dnn_classifier, test_features, test_targets)
+    print(predict_model(dnn_classifier, test_features, test_targets))
 
     plt.show()
 

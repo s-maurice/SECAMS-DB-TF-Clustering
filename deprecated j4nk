@@ -39,6 +39,16 @@ def create_input_function(features, targets, shuffle=True, batch_size=1, num_epo
     # input_fn = tf.estimator.inputs.pandas_input_fn(features, y=targets, shuffle=shuffle, batch_size=batch_size, num_epochs=num_epochs)
     # return input_fn
 
+    # APPROACH 3: Directly turning it into a dict-list tuple
+    # turn features DataFrame into Dict - input feature is a key, and then a list of values for the training batch
+    # feature_dict = dict()
+    #
+    # for i in features.columns:
+    #     feature_dict[str(i)] = features[i].tolist()
+    #
+    # # turn targets DataFrame into a List - these are our labels
+    # label_list = targets[targets.columns[0]].tolist()
+
 ----------
 
     # Create a vocab DataFrame by concatenating the given DFs.

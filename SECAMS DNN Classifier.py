@@ -3,8 +3,9 @@ import pandas as pd
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn import metrics
+import shutil
 import os
+from sklearn import metrics
 
 import get_input_data
 
@@ -120,7 +121,7 @@ def train_model(
                                             label_vocabulary=label_vocab_list,
                                             n_classes=len(label_vocab_list),
                                             model_dir=model_dir,
-                                            # config=tf.estimator.RunConfig().replace(save_summary_steps=10)
+                                            config=tf.estimator.RunConfig().replace(save_summary_steps=10)
                                             ) # Config bit is for tensorboard
 
     # Create input functions
@@ -139,8 +140,8 @@ def train_model(
     for period in range(periods):
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
 
-        eval_train_results = evaluate_model(classifier, train_features, train_targets)
-        eval_val_results = evaluate_model(classifier, val_features, val_targets)
+        eval_train_results = evaluate_model(classifier, train_features, train_targets, name="Training")
+        eval_val_results = evaluate_model(classifier, val_features, val_targets, name="Validation")
 
         train_acc.append(eval_train_results.get('accuracy'))
         train_loss.append(eval_train_results.get('average_loss'))
@@ -244,8 +245,17 @@ def test_predict():
     print('wank')
 
 def main():
-    raw_df = get_input_data.get_events()  # Get Raw DF
-    # raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
+
+    # defines and deletes the 'tmp' file if exists (for TensorBoard)
+    model_dir_path = "tmp/tf"
+    try:
+        if os.path.exists(model_dir_path) and os.path.isdir(model_dir_path):
+            shutil.rmtree(model_dir_path)
+    except FileNotFoundError:
+        print('Error while attempting to delete directory ' + model_dir_path)
+
+    # raw_df = get_input_data.get_events()  # Get Raw DF
+    raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
 
     df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
 
@@ -271,11 +281,11 @@ def main():
         val_targets,
         learning_rate=0.001,
         batch_size=50,
-        steps=1000,
-        # model_dir="tmp/tf",
+        steps=1500,
+        model_dir=model_dir_path,
         hidden_units=[1024, 512, 256])
 
-    eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets)
+    eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets, name="Test")
     print("Test results:", eval_test_results)
 
     plt.subplot(224)

@@ -219,7 +219,7 @@ def test_result_plotter(result_df, num):
     results_to_plot = result_df.head(num)
     # print(results_to_plot)
 
-    def plot_row(index, row, ax):
+    def plot_row(row, ax):
         xlabels = [str(i) for i in results_to_plot.columns[0:-1]]
         barheight = row[0:-1]
 
@@ -230,9 +230,11 @@ def test_result_plotter(result_df, num):
         cur_plot[prediction_label].set_color('r')
         cur_plot[actual_label].set_color('b')
 
-    fig, axes = plt.subplots(nrows=num, ncols=1)
+    fig, axes = plt.subplots(nrows=num, ncols=1, sharex=True)
     for index, row in results_to_plot.iterrows():
-        plot_row(index, row, axes[index])
+        plot_row(row, axes[index])
+    fig.canvas.set_window_title('Testing Results')
+    fig.suptitle("Test Predict Result Percentages")
 
 
 def main():
@@ -274,7 +276,6 @@ def main():
     test_result_plotter(test_results, 5)
 
     plt.show()
-
 
 
 main()

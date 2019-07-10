@@ -219,6 +219,10 @@ def test_result_plotter(result_df, num):
     results_to_plot = result_df.head(num)
     # print(results_to_plot)
 
+    # Get highest probability predicted and lock all figures's y axis to that
+    max_value = results_to_plot.iloc[[0, -1]].max()
+    max_value = max_value[0:-1].max()
+
     def plot_row(row, ax):
         xlabels = [str(i) for i in results_to_plot.columns[0:-1]]
         barheight = row[0:-1]
@@ -227,8 +231,10 @@ def test_result_plotter(result_df, num):
         actual_label = xlabels.index(row.values[-1])
 
         cur_plot = ax.bar(xlabels, barheight, color='gray')
+        ax.axes.set_ylim(bottom=0, top=max_value)
         cur_plot[prediction_label].set_color('r')
         cur_plot[actual_label].set_color('b')
+
 
     fig, axes = plt.subplots(nrows=num, ncols=1, sharex=True)
     for index, row in results_to_plot.iterrows():

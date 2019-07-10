@@ -219,19 +219,20 @@ def test_result_plotter(result_df, num):
     results_to_plot = result_df.head(num)
     # print(results_to_plot)
 
-    for index, row in results_to_plot.iterrows():
-        plt.subplot(8, 1, index+3)
+    def plot_row(index, row, ax):
         xlabels = [str(i) for i in results_to_plot.columns[0:-1]]
         barheight = row[0:-1]
 
-        print(xlabels)
         prediction_label = np.argmax(row[:-1].values)
         actual_label = xlabels.index(row.values[-1])
 
-        cur_plot = plt.bar(xlabels, barheight)
+        cur_plot = ax.bar(xlabels, barheight, color='gray')
         cur_plot[prediction_label].set_color('r')
         cur_plot[actual_label].set_color('b')
 
+    fig, axes = plt.subplots(nrows=num, ncols=1)
+    for index, row in results_to_plot.iterrows():
+        plot_row(index, row, axes[index])
 
 
 def main():

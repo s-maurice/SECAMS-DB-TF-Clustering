@@ -8,6 +8,9 @@ import os
 
 import get_input_data
 
+# I don't really know what this does, but may as well try
+# tf.logging.set_verbosity(tf.logging.INFO)
+
 
 def split_df(df, split_array, shuffle=True):
     # Takes a DataFrame and splits it into 3 sets according to the ratio in the given array
@@ -101,11 +104,11 @@ def train_model(
         train_targets,
         val_features,
         val_targets,
-        learning_rate=0.001,
-        batch_size=1,
-        steps_per_period=50,
+        learning_rate,
+        batch_size,
+        steps,
+        hidden_units,
         periods=10,
-        hidden_units=[1024, 512, 256],
         model_dir=None
 ):
     numerical_features = ["DECHOUR"]
@@ -143,6 +146,8 @@ def train_model(
     val_loss = []
 
     # Train in periods; after every 'train', call .evaluate() and take accuracy
+    steps_per_period = steps / periods
+
     for period in range(periods):
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
 
@@ -272,10 +277,9 @@ def main():
         train_targets,
         val_features,
         val_targets,
-        learning_rate=0.0001,
-        batch_size=500,
-        steps_per_period=200,
-        periods=1,
+        learning_rate=0.001,
+        batch_size=50,
+        steps=1000,
         # model_dir="tmp/tf",
         hidden_units=[1024, 512, 256])
 
@@ -286,7 +290,7 @@ def main():
     plt.title("UserID vs. Timestamps")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"])
 
-    test_results = predict_model(dnn_classifier, train_features, train_targets)
+    test_results = predict_model(dnn_classifier, test_features, test_targets)
     test_result_plotter(test_results, 10)
 
     plt.show()

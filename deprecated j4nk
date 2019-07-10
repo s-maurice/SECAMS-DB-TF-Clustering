@@ -11,6 +11,19 @@ train():
 
 ----------
 
+preprocess_features() debugging:
+
+    # # debugging:
+    # print(type(processed_features["DECHOUR"][0]))
+    # print(type(processed_features["DAYOFWEEK"][0]))
+    # print(type(processed_features["MONTHOFYEAR"][0]))
+    # print(type(processed_features["TERMINALSN"][0]))
+    # print(type(processed_features["EVENTID"][0]))
+    #
+    # print('processed features:\n', processed_features)
+
+----------
+
 def test_model(model, test_features, test_targets):
     # Create test input function
     predict_test_input_fn = lambda: create_input_function(test_features, test_targets, shuffle=False, batch_size=1)

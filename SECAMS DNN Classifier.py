@@ -8,9 +8,6 @@ import os
 
 import get_input_data
 
-# I don't really know what this does, but may as well try
-# tf.logging.set_verbosity(tf.logging.INFO)
-
 
 def split_df(df, split_array, shuffle=True):
     # Takes a DataFrame and splits it into 3 sets according to the ratio in the given array
@@ -43,15 +40,6 @@ def preprocess_features(df):
     processed_features["MONTHOFYEAR"] = df["TIMESTAMPS"].dt.strftime("%-m")     # month of year
     processed_features["TERMINALSN"] = df["TERMINALSN"]
     processed_features["EVENTID"] = df["EVENTID"]
-
-    # # debugging:
-    # print(type(processed_features["DECHOUR"][0]))
-    # print(type(processed_features["DAYOFWEEK"][0]))
-    # print(type(processed_features["MONTHOFYEAR"][0]))
-    # print(type(processed_features["TERMINALSN"][0]))
-    # print(type(processed_features["EVENTID"][0]))
-    #
-    # print('processed features:\n', processed_features)
 
     return processed_features
 
@@ -122,7 +110,7 @@ def train_model(
     # Get Label Vocab List
     label_vocab_list = prepare_label_vocab(train_targets["USERID"])
 
-    # Create DNN
+    # Create DNN - clip gradients?
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate) # Create optimiser - Try variable rate optimisers
     # optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, 5.0)
 
@@ -250,6 +238,10 @@ def test_result_plotter(result_df, num):
     fig.canvas.set_window_title('Testing Results')
     fig.suptitle("Test Predict Result Percentages")
 
+
+# TO DO: This should be a function that accepts a single set of data for the model to predict on.
+def test_predict():
+    print('wank')
 
 def main():
     raw_df = get_input_data.get_events()  # Get Raw DF

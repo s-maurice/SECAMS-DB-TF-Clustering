@@ -161,7 +161,7 @@ def train_model(
     print("Classifier trained.")
 
     # Graph the accuracy + average loss over the periods
-    plt.subplot(811)
+    plt.subplot(311)
     plt.title("Accuracy vs. Periods (Learning rate: " + str(learning_rate) + ")")
     plt.xlabel("Periods")
     plt.ylabel("Accuracy")
@@ -171,7 +171,7 @@ def train_model(
     plt.plot(val_acc, label="validation")
     plt.legend()
 
-    plt.subplot(812)
+    plt.subplot(312)
     plt.title("Loss vs. Periods (Learning rate: " + str(learning_rate) + ")")
     plt.ylabel("Loss")
     plt.xlabel("Periods")
@@ -266,7 +266,7 @@ def main():
     eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets)
     print("Test results:", eval_test_results)
 
-    plt.subplot(813)
+    plt.subplot(313)
     plt.title("UserID vs. Timestamps")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"])
 

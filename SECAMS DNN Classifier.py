@@ -161,7 +161,7 @@ def train_model(
     print("Classifier trained.")
 
     # Graph the accuracy + average loss over the periods
-    plt.subplot(311)
+    plt.subplot(811)
     plt.title("Accuracy vs. Periods (Learning rate: " + str(learning_rate) + ")")
     plt.xlabel("Periods")
     plt.ylabel("Accuracy")
@@ -171,7 +171,7 @@ def train_model(
     plt.plot(val_acc, label="validation")
     plt.legend()
 
-    plt.subplot(312)
+    plt.subplot(812)
     plt.title("Loss vs. Periods (Learning rate: " + str(learning_rate) + ")")
     plt.ylabel("Loss")
     plt.xlabel("Periods")
@@ -220,9 +220,18 @@ def test_result_plotter(result_df, num):
     # print(results_to_plot)
 
     for index, row in results_to_plot.iterrows():
-        print(row)
-        row.plot()
-        # row.plot(subplots=True, kind="bar")
+        plt.subplot(8, 1, index+3)
+        xlabels = [str(i) for i in results_to_plot.columns[0:-1]]
+        barheight = row[0:-1]
+
+        print(xlabels)
+        prediction_label = np.argmax(row[:-1].values)
+        actual_label = xlabels.index(row.values[-1])
+
+        cur_plot = plt.bar(xlabels, barheight)
+        cur_plot[prediction_label].set_color('r')
+        cur_plot[actual_label].set_color('b')
+
 
 
 def main():
@@ -250,13 +259,13 @@ def main():
         batch_size=500,
         steps_per_period=200,
         periods=1,
-        model_dir="tmp/tf",
+        # model_dir="tmp/tf",
         hidden_units=[1024, 512, 256])
 
     eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets)
     print("Test results:", eval_test_results)
 
-    plt.subplot(313)
+    plt.subplot(813)
     plt.title("UserID vs. Timestamps")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"])
 

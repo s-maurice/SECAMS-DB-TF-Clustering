@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import metrics
+import os
 
 import get_input_data
 
@@ -128,7 +129,8 @@ def train_model(
                                             label_vocabulary=label_vocab_list,
                                             n_classes=len(label_vocab_list),
                                             model_dir=model_dir,
-                                            config=tf.estimator.RunConfig().replace(save_summary_steps=10)) # Config bit is for tensorboard
+                                            # config=tf.estimator.RunConfig().replace(save_summary_steps=10)
+                                            ) # Config bit is for tensorboard
 
     # Create input functions
     train_input_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, num_epochs=10)
@@ -161,7 +163,7 @@ def train_model(
     print("Classifier trained.")
 
     # Graph the accuracy + average loss over the periods
-    plt.subplot(311)
+    plt.subplot(221)
     plt.title("Accuracy vs. Periods (Learning rate: " + str(learning_rate) + ")")
     plt.xlabel("Periods")
     plt.ylabel("Accuracy")
@@ -171,7 +173,7 @@ def train_model(
     plt.plot(val_acc, label="validation")
     plt.legend()
 
-    plt.subplot(312)
+    plt.subplot(222)
     plt.title("Loss vs. Periods (Learning rate: " + str(learning_rate) + ")")
     plt.ylabel("Loss")
     plt.xlabel("Periods")
@@ -216,6 +218,7 @@ def predict_model(model, features, targets):
 
 
 def test_result_plotter(result_df, num):
+    result_df = result_df.sample(frac=1).reset_index(drop=True)
     results_to_plot = result_df.head(num)
     # print(results_to_plot)
 
@@ -259,6 +262,11 @@ def main():
     test_features = preprocess_features(df_array[2])
     test_targets = preprocess_targets(df_array[2])
 
+    # Debugging on data: Plotting the number of each UserID given for training
+    plt.subplot(223)
+    plt.title("UserID Distribution in Training Examples")
+    train_targets['USERID'].value_counts().plot.bar()
+
     dnn_classifier = train_model(
         train_features,
         train_targets,
@@ -274,12 +282,12 @@ def main():
     eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets)
     print("Test results:", eval_test_results)
 
-    plt.subplot(313)
+    plt.subplot(224)
     plt.title("UserID vs. Timestamps")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"])
 
-    test_results = predict_model(dnn_classifier, test_features, test_targets)
-    test_result_plotter(test_results, 5)
+    test_results = predict_model(dnn_classifier, train_features, train_targets)
+    test_result_plotter(test_results, 10)
 
     plt.show()
 

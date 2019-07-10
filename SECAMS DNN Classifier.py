@@ -3,8 +3,9 @@ import pandas as pd
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn import metrics
+import shutil
 import os
+from sklearn import metrics
 
 import get_input_data
 
@@ -40,15 +41,6 @@ def preprocess_features(df):
     processed_features["MONTHOFYEAR"] = df["TIMESTAMPS"].dt.strftime("%-m")     # month of year
     processed_features["TERMINALSN"] = df["TERMINALSN"]
     processed_features["EVENTID"] = df["EVENTID"]
-
-    # # debugging:
-    # print(type(processed_features["DECHOUR"][0]))
-    # print(type(processed_features["DAYOFWEEK"][0]))
-    # print(type(processed_features["MONTHOFYEAR"][0]))
-    # print(type(processed_features["TERMINALSN"][0]))
-    # print(type(processed_features["EVENTID"][0]))
-    #
-    # print('processed features:\n', processed_features)
 
     return processed_features
 
@@ -101,11 +93,11 @@ def train_model(
         train_targets,
         val_features,
         val_targets,
-        learning_rate=0.001,
-        batch_size=1,
-        steps_per_period=50,
+        learning_rate,
+        batch_size,
+        steps,
+        hidden_units,
         periods=10,
-        hidden_units=[1024, 512, 256],
         model_dir=None
 ):
     numerical_features = ["DECHOUR"]
@@ -119,7 +111,7 @@ def train_model(
     # Get Label Vocab List
     label_vocab_list = prepare_label_vocab(train_targets["USERID"])
 
-    # Create DNN
+    # Create DNN - clip gradients?
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate) # Create optimiser - Try variable rate optimisers
     # optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, 5.0)
 
@@ -129,7 +121,7 @@ def train_model(
                                             label_vocabulary=label_vocab_list,
                                             n_classes=len(label_vocab_list),
                                             model_dir=model_dir,
-                                            # config=tf.estimator.RunConfig().replace(save_summary_steps=10)
+                                            config=tf.estimator.RunConfig().replace(save_summary_steps=10)
                                             ) # Config bit is for tensorboard
 
     # Create input functions
@@ -143,11 +135,13 @@ def train_model(
     val_loss = []
 
     # Train in periods; after every 'train', call .evaluate() and take accuracy
+    steps_per_period = steps / periods
+
     for period in range(periods):
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
 
-        eval_train_results = evaluate_model(classifier, train_features, train_targets)
-        eval_val_results = evaluate_model(classifier, val_features, val_targets)
+        eval_train_results = evaluate_model(classifier, train_features, train_targets, name="Training")
+        eval_val_results = evaluate_model(classifier, val_features, val_targets, name="Validation")
 
         train_acc.append(eval_train_results.get('accuracy'))
         train_loss.append(eval_train_results.get('average_loss'))
@@ -246,9 +240,22 @@ def test_result_plotter(result_df, num):
     fig.suptitle("Test Predict Result Percentages")
 
 
+# TO DO: This should be a function that accepts a single set of data for the model to predict on.
+def test_predict():
+    print('wank')
+
 def main():
-    raw_df = get_input_data.get_events()  # Get Raw DF
-    # raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
+
+    # defines and deletes the 'tmp' file if exists (for TensorBoard)
+    model_dir_path = "tmp/tf"
+    try:
+        if os.path.exists(model_dir_path) and os.path.isdir(model_dir_path):
+            shutil.rmtree(model_dir_path)
+    except FileNotFoundError:
+        print('Error while attempting to delete directory ' + model_dir_path)
+
+    # raw_df = get_input_data.get_events()  # Get Raw DF
+    raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
 
     df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
 
@@ -272,21 +279,20 @@ def main():
         train_targets,
         val_features,
         val_targets,
-        learning_rate=0.0001,
-        batch_size=500,
-        steps_per_period=200,
-        periods=1,
-        # model_dir="tmp/tf",
+        learning_rate=0.001,
+        batch_size=50,
+        steps=1500,
+        model_dir=model_dir_path,
         hidden_units=[1024, 512, 256])
 
-    eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets)
+    eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets, name="Test")
     print("Test results:", eval_test_results)
 
     plt.subplot(224)
     plt.title("UserID vs. Timestamps")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"], marker=".")
 
-    test_results = predict_model(dnn_classifier, train_features, train_targets)
+    test_results = predict_model(dnn_classifier, test_features, test_targets)
     print("testing finished")
     test_result_plotter(test_results, 10)
 

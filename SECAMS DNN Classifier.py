@@ -284,9 +284,10 @@ def main():
 
     plt.subplot(224)
     plt.title("UserID vs. Timestamps")
-    plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"])
+    plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"], marker=".")
 
     test_results = predict_model(dnn_classifier, train_features, train_targets)
+    print("testing finished")
     test_result_plotter(test_results, 10)
 
     plt.show()

@@ -302,6 +302,7 @@ def main():
         learning_rate=0.003,
         batch_size=20,
         steps=1500,
+        periods=1,
         model_dir=model_dir_path,
         hidden_units=[1024, 512, 256])
 

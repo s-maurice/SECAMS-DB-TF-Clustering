@@ -70,7 +70,7 @@ def construct_feature_columns(numerical_columns_list, catagorical_columns_list, 
 def create_input_function(features, targets, shuffle=True, batch_size=1, num_epochs=None):
 
     # Using tf.data (and DataSet)
-    features = {key:np.array(value) for key,value in dict(features).items()}
+    features = {key: np.array(value) for key, value in dict(features).items()}
 
     ds = tf.data.Dataset.from_tensor_slices((features, targets))
     ds = ds.batch(batch_size).repeat(num_epochs)
@@ -300,7 +300,7 @@ def main():
         val_features,
         val_targets,
         learning_rate=0.003,
-        batch_size=50,
+        batch_size=20,
         steps=1500,
         model_dir=model_dir_path,
         hidden_units=[1024, 512, 256])

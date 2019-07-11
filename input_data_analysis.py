@@ -23,10 +23,20 @@ def show_pattern(userid):
     usercount_df = pd.read_csv(csv_filename)
     usercount_df['TIMESTAMPS'] = pd.to_datetime(usercount_df['TIMESTAMPS'])
 
-    print(usercount_df.columns)
+    # Create the plot
+    fig, ax = plt.subplots()
 
-    usercount_df.plot(x='TIMESTAMPS', y='EVENTID')
+    # Set x and y
+    ax.scatter(x=usercount_df['TIMESTAMPS'],
+               y=usercount_df['EVENTID'])
 
+    # Rotate tick labels
+    plt.setp(ax.get_xticklabels(), rotation=45)
+
+    # set title and labels for axes
+    ax.set(xlabel="Date",
+           ylabel="Event ID",
+           title="Event logs for user " + str(userid));
 
 
 show_pattern(20018)

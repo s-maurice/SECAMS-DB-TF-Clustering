@@ -305,17 +305,22 @@ def main():
         model_dir=model_dir_path,
         hidden_units=[1024, 512, 256])
 
+    # --- MODEL TESTING ---
+
+    # model.evaluate() on test results
     eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets, name="Test")
     print("Test results:", eval_test_results)
 
+    # Shows the timestamps of each user in the raw dataframe made - as a comparison for how similar data entries are
     plt.subplot(224)
     plt.title("UserID vs. Timestamps")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"], marker=".")
 
+    # Plots probabilities of 10 examples from the test set to see how well the model did
     test_results = predict_model(dnn_classifier, test_features, test_targets)
-    print("testing finished")
     test_result_plotter(test_results, 10)
 
+    # Plots probabilities of a single user-defined example with given features
     test_predict(dnn_classifier, [[0.1, "6", "7", "00111DA0ED90", "OUT"]], test_targets)
     test_predict(dnn_classifier, [[0.1, "6", "7", "00111DA0ED90", "IN"]], test_targets)
 

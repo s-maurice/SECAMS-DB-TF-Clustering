@@ -10,14 +10,14 @@ def get_events_from_sql():
         sql_query_str = """
 WITH USERID_TALLIES (userid, tally)
 AS(
-SELECT TOP(100) userid, COUNT(*) AS tally
+SELECT userid, COUNT(*) AS tally
 FROM access_event_logs
 GROUP BY userid)
 
-SELECT DISTINCT USERID, EVENTID, TERMINALSN, TIMESTAMPS
+SELECT DISTINCT top(1000) USERID, EVENTID, TERMINALSN, TIMESTAMPS
 FROM access_event_logs AS l
-WHERE EXISTS (SELECT * 
-FROM USERID_TALLIES AS UT
+WHERE EXISTS 
+(SELECT * FROM USERID_TALLIES AS UT
 WHERE l.userid = ut.userid
 AND uT.tally > 100);"""
 

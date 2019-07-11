@@ -40,6 +40,7 @@ def get_events_from_csv(filename="development_data.csv"):
 
         return events
     except FileNotFoundError:
+        print("file not found error")
         return False
 
 

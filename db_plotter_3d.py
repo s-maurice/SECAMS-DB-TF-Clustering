@@ -7,7 +7,7 @@ from sklearn import preprocessing
 import get_input_data
 
 #raw_df = get_input_data.get_events_from_sql()
-raw_df = get_input_data.get_events_from_csv("entries_by_user/SECAMS_user_A0001.csv")
+raw_df = get_input_data.get_events_from_csv("Curated Data/All_USERID_begining_with_B_and_over_100_Entries.csv")
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
@@ -38,7 +38,6 @@ ax.set_yticks(list(set(eventid_encoded.tolist())))
 ax.set_yticklabels(y_ticklabels)
 
 ax.set_zlabel('Terminalsn')
-print(list(set(terminalsn_encoded.tolist())))
 ax.set_zticks(list(set(terminalsn_encoded.tolist())))
 ax.set_zticklabels(z_ticklabels)
 

@@ -192,8 +192,11 @@ def evaluate_model(model, features, targets, name=None):
 
 
 # function that directly predicts and compares all data points given, using a model
-def predict_model(model, features, targets):
-    predict_input_function = lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1)
+def predict_model(model, features, targets, single_test=False):
+    if single_test:
+        predict_input_function = lambda: create_input_function(features, targets.iloc[0], shuffle=False, num_epochs=1, batch_size=1)
+    else:
+        predict_input_function = lambda: create_input_function(features, targets, shuffle=False, num_epochs=1, batch_size=1)
     predict_results = model.predict(input_fn=predict_input_function, predict_keys="probabilities")
 
     result_df = pd.DataFrame()
@@ -203,12 +206,27 @@ def predict_model(model, features, targets):
         cur_df = cur_df.append(cur_correct_df)
         cur_df = cur_df.transpose()
         result_df = result_df.append(cur_df)
+
     column_list = prepare_label_vocab(targets["USERID"])
     column_list.append("Correct USERID")
     result_df.columns = column_list
     result_df = result_df.reset_index(drop=True)
 
     return result_df
+
+
+def plot_row(row, ax, column_list, max_value, show_actual_label=True):
+    xlabels = [str(i) for i in column_list]
+    barheight = row[0:-1]
+
+    prediction_label = np.argmax(row[:-1].values)
+    actual_label = xlabels.index(row.values[-1])
+
+    cur_plot = ax.bar(xlabels, barheight, color='gray')
+    ax.axes.set_ylim(bottom=0, top=max_value)
+    cur_plot[prediction_label].set_color('r')
+    if show_actual_label:
+        cur_plot[actual_label].set_color('b')
 
 
 def test_result_plotter(result_df, num):
@@ -220,29 +238,31 @@ def test_result_plotter(result_df, num):
     max_value = results_to_plot.iloc[[0, -1]].max()
     max_value = max_value[0:-1].max()
 
-    def plot_row(row, ax):
-        xlabels = [str(i) for i in results_to_plot.columns[0:-1]]
-        barheight = row[0:-1]
-
-        prediction_label = np.argmax(row[:-1].values)
-        actual_label = xlabels.index(row.values[-1])
-
-        cur_plot = ax.bar(xlabels, barheight, color='gray')
-        ax.axes.set_ylim(bottom=0, top=max_value)
-        cur_plot[prediction_label].set_color('r')
-        cur_plot[actual_label].set_color('b')
-
-
     fig, axes = plt.subplots(nrows=num, ncols=1, sharex=True)
     for index, row in results_to_plot.iterrows():
-        plot_row(row, axes[index])
+        plot_row(row, axes[index], results_to_plot.columns[0:-1], max_value)
     fig.canvas.set_window_title('Testing Results')
     fig.suptitle("Test Predict Result Percentages")
 
 
-# TO DO: This should be a function that accepts a single set of data for the model to predict on.
-def test_predict():
-    print('wank')
+def test_predict(model, features, labels_df):
+    # A function that accepts a single set of data for the model to predict on.
+    # Accepts the model, then a list of a lists for features, i.e. [['value1', 'value2']], then a dataframe of all labels
+    # --- FEATURES ---
+    # DECHOUR      (float between 0 and 1)
+    # DAYOFWEEK    (integer between 0 and 6, with 0 as Sunday)
+    # MONTHOFYEAR  (integer between 1 and 12)
+    # TERMINALSN   (string)
+    # EVENTID      (string)
+
+    feature_df = pd.DataFrame(features, columns=['DECHOUR', 'DAYOFWEEK', 'MONTHOFYEAR', 'TERMINALSN', 'EVENTID'])
+    test_result_df = predict_model(model, feature_df, labels_df, single_test=True)
+
+    print("test_result_df:", test_result_df)
+
+    fig, axes = plt.subplots(nrows=1, ncols=1, sharex=False)
+    plot_row(test_result_df.iloc[0], axes, test_result_df.columns[0:-1], 0.5, show_actual_label=False)
+
 
 def main():
 
@@ -257,7 +277,7 @@ def main():
     # raw_df = get_input_data.get_events()  # Get Raw DF
     raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
 
-    df_array = split_df(raw_df, [2, 2, 1])  # Split into 3 DFs
+    df_array = split_df(raw_df, [8, 1, 1])  # Split into 3 DFs
 
     # Assign train, validation and test features + targets
     train_features = preprocess_features(df_array[0])
@@ -279,7 +299,7 @@ def main():
         train_targets,
         val_features,
         val_targets,
-        learning_rate=0.001,
+        learning_rate=0.003,
         batch_size=20,
         steps=1500,
         model_dir=model_dir_path,
@@ -295,6 +315,9 @@ def main():
     test_results = predict_model(dnn_classifier, test_features, test_targets)
     print("testing finished")
     test_result_plotter(test_results, 10)
+
+    test_predict(dnn_classifier, [[0.1, "6", "7", "00111DA0ED90", "OUT"]], test_targets)
+    test_predict(dnn_classifier, [[0.1, "6", "7", "00111DA0ED90", "IN"]], test_targets)
 
     plt.show()
 

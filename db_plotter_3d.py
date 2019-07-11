@@ -7,7 +7,7 @@ from sklearn import preprocessing
 import get_input_data
 
 #raw_df = get_input_data.get_events_from_sql()
-raw_df = get_input_data.get_events_from_csv("CSV Files/Curated Data/All_USERID_beginning_with_B_and_over_100_Entries.csv")
+raw_df = get_input_data.get_events_from_csv("CSV Files/Curated Data/ALL_USERID_beginning_with_20_and_between_100_and_500_entries.csv")
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')

@@ -48,7 +48,7 @@ def show_pattern(userid_list):
             # set title and labels for axes
             ax[i].set(xlabel="Date",
                       ylabel="Event ID",
-                      title="Event logs for user " + str(userid_list[i]));
+                      title="Event logs for user " + str(userid_list[i]))
 
             # Rotate tick labels
             plt.setp(ax[i].get_xticklabels(), rotation=45)

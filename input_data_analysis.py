@@ -20,7 +20,9 @@ def show_usercounts():
 def show_pattern(userid):
     # Shows a graph of the event patterns of a particular user by time and event
     csv_filename = "entries_by_user/SECAMS_user_" + str(userid) + ".csv"
+    #csv_filename = "Curated Data/ALL_USERID_begining_with_20_and_between_100_and_500_entries.csv"
     usercount_df = pd.read_csv(csv_filename)
+    print(usercount_df)
     usercount_df['TIMESTAMPS'] = pd.to_datetime(usercount_df['TIMESTAMPS'])
 
     # Create the plot
@@ -39,5 +41,5 @@ def show_pattern(userid):
            title="Event logs for user " + str(userid));
 
 
-show_pattern(20018)
+show_pattern("Unknown_User")
 plt.show()

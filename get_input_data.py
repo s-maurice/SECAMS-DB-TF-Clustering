@@ -19,7 +19,8 @@ FROM access_event_logs AS l
 WHERE EXISTS 
 (SELECT * FROM USERID_TALLIES AS UT
 WHERE l.userid = ut.userid
-AND uT.tally > 100);"""
+AND uT.tally > 100
+AND TIMESTAMPS > 2015-01-01);"""
 
         events = pd.read_sql(sql_query_str, conn)
         return events

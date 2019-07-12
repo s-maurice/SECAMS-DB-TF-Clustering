@@ -201,11 +201,7 @@ dnn_classifier = train_model(
         steps=1500,
         hidden_units=[128, 64])
 
-# --- MODEL TESTING ---
-
-print("Classifier trained.")
-
-# model.evaluate() on test results
+# Evaluate the model
 eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets, name="Test")
 print("Test results:", eval_test_results)
 

@@ -22,38 +22,47 @@ import pandas as pd
 
 # Each user has the same daily schedule, repeated across weekdays, with the exception of a weekly meeting on Friday.
 
-def generate_daily_schedule():
+def generate_daily_schedule(total_rooms=10, break_rooms=2, lunch_period_position=3, lunch_break_rooms=1, periods=8):
     # Generates the daily schedule for each user, by creating a room array and shuffling it.
     # This avoids the same classroom being assigned to two teachers during the same period.
     schedule_df = pd.DataFrame()
 
-    # 8 rooms and 2 breaks; during any period, two teachers will be on break.
-    # The number of actual teachers in the schedule is equal to len(rooms).
-    rooms = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'B', 'B']
+    # Creates room list
+    rooms = break_rooms * ["B"]
+    [rooms.append("C"+str(i)) for i in range(total_rooms - break_rooms)]
 
-    # range(0, 6) for periods 0 through 5; add period 6 later.
-    for i in range(0, 6):
+    # Create periods, starting at period0 and ending at period(periods-1)
+    for i in range(periods):
         random.shuffle(rooms)
         schedule_df['period' + str(i)] = rooms
 
-    # Reassign rooms during period3, i.e. lunch - note that the length of this must be the same as the length of rooms
-    p3rooms = ["B", "C1", "L", "L", "L", "L", "L", "L", "L", "L"]
-    random.shuffle(p3rooms)
-    schedule_df["period3"] = p3rooms
+    # Create list of rooms to be used at lunchtime, list length must equal the length of room list above
+    lunch_rooms = (total_rooms - lunch_break_rooms) * ["L"]
+    [lunch_rooms.append("C"+str(i)) for i in range(lunch_break_rooms)]
+
+    # Shuffles and adds lunch period to df
+    random.shuffle(lunch_rooms)
+    schedule_df["period" + str(lunch_period_position)] = lunch_rooms
 
     return schedule_df
 
 
 def generate_user_weekly_schedules():
-    schedule_df = generate_daily_schedule()
-
+    # Turns daily schedule df into a list of DataFrames, with each dataframe representing a single user's weekly schedule,
+    # with each column representing a day of the week from Monday to Friday and each row representing a period.
+    schedule_df = generate_daily_schedule()  # Calls and gets schedule_df from generate_daily_schedule function
     user_df_list = []
     week_days = ["MON", "TUE", "WED", "THU", "FRI"]
+
     for index, row in schedule_df.iterrows():
-        cur_user = pd.DataFrame()
+        cur_user = pd.DataFrame()  # Generates new DataFrame for the current user
         for i in range(5):
             cur_user[week_days[i]] = row
-        cur_user.loc["period"+ str(len(cur_user.index))] = ["0", "0", "M", "0", "0"]
-        user_df_list.append(cur_user)
+        cur_user.loc["period" + str(len(cur_user.index))] = ["0", "0", "M", "0", "0"]  # After school events hard coded, in this case Wednesday is a meeting day
+        user_df_list.append(cur_user)  # Adds completed current user DataFrame to the list of DataFrames
 
-# print(user_df_list[5])
+    return user_df_list
+
+
+a = generate_user_weekly_schedules()
+print(a[5])

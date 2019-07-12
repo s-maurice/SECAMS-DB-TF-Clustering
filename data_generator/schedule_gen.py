@@ -65,3 +65,5 @@ def generate_user_weekly_schedules(schedule_df=generate_daily_schedule()):
 
 a = generate_user_weekly_schedules()
 print(a[5])
+
+#call generate_daily_schedule with less periods to generate for different archetype`

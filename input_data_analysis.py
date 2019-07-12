@@ -65,35 +65,56 @@ def show_pattern(userid_list):
                           y=usercount_df['EVENTID'])
 
 
-def plotpoints(filepath, x, y):
+def plot_points(filepath, x, y, name=None, event_color=False):
     # A method that simply plots one variable against another, given the appropriate CSV file and column names.
+    # event_color is a specific parameter that will plot different events with different colours.
     # (Takes in 3 strings.)
 
     # Read the CSV filepath for DataFrame
     df = pd.read_csv(filepath)
 
+    # Modify the DF: Turn timestamps to dates, add a column for hour of day, change user IDs to be categorical
     def get_decimal_hour(events):
         decimal_hour = (events.dt.hour + events.dt.minute / 60)
         return decimal_hour
 
-    # Fix the DF
     if "TIMESTAMPS" in df.columns:
         df["TIMESTAMPS"] = df["TIMESTAMPS"].apply(datetime64)
         df["DECHOUR"] = get_decimal_hour(df["TIMESTAMPS"])
     if "USERID" in df.columns:
         df["USERID"]=df["USERID"].apply(lambda x: str(x))
 
+    # Create the plot and set labels
     fig, ax = plt.subplots()
-    ax.set(xlabel=x,
-           ylabel=y)
+    ax.set(xlabel=x, ylabel=y)
 
-    ax.plot(df[x], df[y], marker='o', linestyle='')
+    if name is not None:
+        fig.canvas.set_window_title(name)
+        ax.set(title=name)
 
+    # Plot as scatter; split first and plot separately if event_color is true
+    if event_color:
+        df_in = df[df['EVENTID'] == "IN"]
+        df_out = df[df['EVENTID'] == "OUT"]
+        ax.plot(df_in[x], df_in[y], marker='.', linestyle='', label="in")
+        ax.plot(df_out[x], df_out[y], marker='.', linestyle='', label="out")
+        ax.legend(loc='best')
+    else:
+        ax.plot(df[x], df[y], marker='.', linestyle='')
 
 def main():
-    plotpoints(filepath="CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100up_hour_15down.csv",
-           x="DECHOUR",
-           y="USERID")
+    plot_points(filepath="CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv",
+                x="TIMESTAMPS",
+                y="USERID",
+                name="Timestamps vs UserID",
+                event_color=True)
+
+    plot_points(filepath="CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv",
+                x="DECHOUR",
+                y="USERID",
+                name="Time of Day vs UserID",
+                event_color=True)
+
     # show_pattern([20018])
 
 

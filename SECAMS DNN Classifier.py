@@ -157,7 +157,7 @@ def train_model(
     print("Classifier trained.")
 
     # Graph the accuracy + average loss over the periods
-    plt.subplot(221)
+    plt.subplot(231)
     plt.title("Accuracy vs. Periods (Learning rate: " + str(learning_rate) + ")")
     plt.xlabel("Periods")
     plt.ylabel("Accuracy")
@@ -167,7 +167,7 @@ def train_model(
     plt.plot(val_acc, label="validation")
     plt.legend()
 
-    plt.subplot(222)
+    plt.subplot(232)
     plt.title("Loss vs. Periods (Learning rate: " + str(learning_rate) + ")")
     plt.ylabel("Loss")
     plt.xlabel("Periods")
@@ -215,7 +215,7 @@ def predict_model(model, features, targets, single_test=False):
     return result_df
 
 
-def plot_row(row, ax, column_list, max_value, show_actual_label=True):
+def plot_row(row, ax, column_list, max_value, show_actual_label, event_predicted_on=False):
     xlabels = [str(i) for i in column_list]
     barheight = row[0:-1]
 
@@ -225,12 +225,14 @@ def plot_row(row, ax, column_list, max_value, show_actual_label=True):
     cur_plot = ax.bar(xlabels, barheight, color='gray')
     ax.axhline(barheight.mean(), color='k', linestyle='dashed', linewidth=1)
     ax.axes.set_ylim(bottom=0, top=max_value)
+    if type(event_predicted_on) == (str or list or pd.DataFrame):  # Doesn't work
+        ax.axes.title(event_predicted_on, loc="right")
     cur_plot[prediction_label].set_color('r')
     if show_actual_label:
         cur_plot[actual_label].set_color('b')
 
 
-def test_result_plotter(result_df, num):
+def test_result_plotter(result_df, num, features):
     result_df = result_df.sample(frac=1).reset_index(drop=True)
     results_to_plot = result_df.head(num)
     # print(results_to_plot)
@@ -241,7 +243,7 @@ def test_result_plotter(result_df, num):
 
     fig, axes = plt.subplots(nrows=num, ncols=1, sharex=True)
     for index, row in results_to_plot.iterrows():
-        plot_row(row, axes[index], results_to_plot.columns[0:-1], max_value)
+        plot_row(row, axes[index], results_to_plot.columns[0:-1], max_value, show_actual_label=True)
     fig.canvas.set_window_title('Testing Results')
     fig.suptitle("Test Predict Result Percentages")
 
@@ -303,9 +305,9 @@ def main():
         learning_rate=0.003,
         batch_size=20,
         steps=1500,
-        periods=10,
+        periods=1,
         model_dir=model_dir_path,
-        hidden_units=[1024, 256])
+        hidden_units=[512, 256, 128])
 
     # --- MODEL TESTING ---
 
@@ -314,13 +316,17 @@ def main():
     print("Test results:", eval_test_results)
 
     # Shows the timestamps of each user in the raw dataframe made - as a comparison for how similar data entries are
-    plt.subplot(224)
-    plt.title("UserID vs. Timestamps")
+    plt.subplot(234)
+    plt.title("UserID vs. TIMESTAMPS")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"], marker=".")
 
-    # Plots probabilities of 10 examples from the test set to see how well the model did
+    plt.subplot(235)
+    plt.title("UserID vs. DECHOUR")
+    plt.scatter(preprocess_features(raw_df)["DECHOUR"], raw_df["USERID"], marker=".")
+
+    # Plots probabilities of num examples from the test set to see how well the model did
     test_results = predict_model(dnn_classifier, test_features, test_targets)
-    test_result_plotter(test_results, 10)
+    test_result_plotter(test_results, 10, test_features)
 
     # Plots probabilities of a single user-defined example with given features
     test_predict(dnn_classifier, [[0.1, "6", "7", "00111DA0ED90", "OUT"]], test_targets)

@@ -22,7 +22,7 @@ import pandas as pd
 
 # Each user has the same daily schedule, repeated across weekdays, with the exception of a weekly meeting on Friday.
 
-def generate_daily_schedule(total_rooms=10, break_rooms=2, lunch_period_position=3, lunch_break_rooms=1, periods=8):
+def generate_daily_schedule(total_rooms=10, break_rooms=2, lunch_period_position=3, lunch_break_rooms=1, periods=8, period_offset=0):
     # Generates the daily schedule for each user, by creating a room array and shuffling it.
     # This avoids the same classroom being assigned to two teachers during the same period.
     schedule_df = pd.DataFrame()
@@ -34,7 +34,7 @@ def generate_daily_schedule(total_rooms=10, break_rooms=2, lunch_period_position
     # Create periods, starting at period0 and ending at period(periods-1)
     for i in range(periods):
         random.shuffle(rooms)
-        schedule_df['period' + str(i)] = rooms
+        schedule_df['period' + str(i+period_offset)] = rooms
 
     # Create list of rooms to be used at lunchtime, list length must equal the length of room list above
     lunch_rooms = (total_rooms - lunch_break_rooms) * ["L"]

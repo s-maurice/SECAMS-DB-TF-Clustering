@@ -199,7 +199,7 @@ dnn_classifier = train_model(
         learning_rate=0.003,
         batch_size=20,
         steps=1500,
-        hidden_units=[1024, 512, 256])
+        hidden_units=[128, 64])
 
 # --- MODEL TESTING ---
 

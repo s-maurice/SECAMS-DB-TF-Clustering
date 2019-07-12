@@ -223,6 +223,7 @@ def plot_row(row, ax, column_list, max_value, show_actual_label=True):
     actual_label = xlabels.index(row.values[-1])
 
     cur_plot = ax.bar(xlabels, barheight, color='gray')
+    ax.axhline(barheight.mean(), color='k', linestyle='dashed', linewidth=1)
     ax.axes.set_ylim(bottom=0, top=max_value)
     cur_plot[prediction_label].set_color('r')
     if show_actual_label:
@@ -275,7 +276,7 @@ def main():
         print('Error while attempting to delete directory ' + model_dir_path)
 
     # raw_df = get_input_data.get_events()  # Get Raw DF
-    raw_df = get_input_data.get_events_from_csv("SECAMS_common_user_id.csv")
+    raw_df = get_input_data.get_events_from_csv("CSV Files/Curated Data/ALL_USERID_beginning_with_20_and_between_100_and_500_entries.csv")
 
     df_array = split_df(raw_df, [8, 1, 1])  # Split into 3 DFs
 
@@ -302,9 +303,9 @@ def main():
         learning_rate=0.003,
         batch_size=20,
         steps=1500,
-        periods=1,
+        periods=10,
         model_dir=model_dir_path,
-        hidden_units=[1024, 512, 256])
+        hidden_units=[1024, 256])
 
     # --- MODEL TESTING ---
 
@@ -323,7 +324,7 @@ def main():
 
     # Plots probabilities of a single user-defined example with given features
     test_predict(dnn_classifier, [[0.1, "6", "7", "00111DA0ED90", "OUT"]], test_targets)
-    test_predict(dnn_classifier, [[0.1, "6", "7", "00111DA0ED90", "IN"]], test_targets)
+    test_predict(dnn_classifier, [[20, "6", "7", "00111DA0ED98", "IN"]], test_targets)
 
     plt.show()
 

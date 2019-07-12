@@ -41,15 +41,19 @@ def generate_daily_schedule():
     random.shuffle(p3rooms)
     schedule_df["period3"] = p3rooms
 
+    return schedule_df
 
 
-user_df_list = []
-week_days = ["MON", "TUE", "WED", "THU", "FRI"]
-for index,row in schedule_df.iterrows():
-    cur_user = pd.DataFrame()
-    for i in range(5):
-        cur_user[week_days[i]] = row
-    cur_user.loc["period"+ str(len(cur_user.index))] = ["0", "0", "M", "0", "0"]
-    user_df_list.append(cur_user)
+def generate_user_weekly_schedules():
+    schedule_df = generate_daily_schedule()
+
+    user_df_list = []
+    week_days = ["MON", "TUE", "WED", "THU", "FRI"]
+    for index, row in schedule_df.iterrows():
+        cur_user = pd.DataFrame()
+        for i in range(5):
+            cur_user[week_days[i]] = row
+        cur_user.loc["period"+ str(len(cur_user.index))] = ["0", "0", "M", "0", "0"]
+        user_df_list.append(cur_user)
 
 # print(user_df_list[5])

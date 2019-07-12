@@ -47,10 +47,9 @@ def generate_daily_schedule(total_rooms=10, break_rooms=2, lunch_period_position
     return schedule_df
 
 
-def generate_user_weekly_schedules():
+def generate_user_weekly_schedules(schedule_df=generate_daily_schedule()):
     # Turns daily schedule df into a list of DataFrames, with each dataframe representing a single user's weekly schedule,
     # with each column representing a day of the week from Monday to Friday and each row representing a period.
-    schedule_df = generate_daily_schedule()  # Calls and gets schedule_df from generate_daily_schedule function
     user_df_list = []
     week_days = ["MON", "TUE", "WED", "THU", "FRI"]
 

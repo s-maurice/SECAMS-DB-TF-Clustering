@@ -26,7 +26,6 @@ def generate_daily_schedule(total_rooms=20,
                             lunch_break_rooms=1,
                             period_offset=0,
                             num_part_time_users_frac=0.3,
-                            part_time_workers=True
                             ):
     random.seed()  # Without this, random isn't very random
     # Generates the daily schedule for each user, by creating a room array and shuffling it.
@@ -55,7 +54,7 @@ def generate_daily_schedule(total_rooms=20,
     # shuffle_part_time_periods is true, otherwise their start and end periods are randomised.
     # Random may also select same part time to apply to, so number of part timers may not always be the same.
 
-    if part_time_workers:
+    if num_part_time_users_frac > 0:
         part_time_rows_df = schedule_df.sample(math.floor(num_part_time_users_frac * total_rooms))  # Gets random rows, these will be the part time workers
         before_lunch = part_time_rows_df.sample(randrange(len(part_time_rows_df)+1))  # Splits the dataframe
         after_lunch = part_time_rows_df.drop(before_lunch.index)  # Gets the other side of the split

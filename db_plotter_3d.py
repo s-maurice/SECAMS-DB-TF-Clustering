@@ -4,8 +4,7 @@ import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn import preprocessing
 from numpy import datetime64
-from collections import OrderedDict
-from  more_itertools import unique_everseen
+from more_itertools import unique_everseen
 
 import get_input_data
 
@@ -20,7 +19,7 @@ def get_decimal_hour(events):
 
 
 def remove_duplicates(array):
-    return OrderedDict((x, True) for x in array).keys()
+    return list(unique_everseen(array))
 
 
 if "TIMESTAMPS" in raw_df.columns:
@@ -38,14 +37,14 @@ le_terminalsn = preprocessing.LabelEncoder()
 
 # x
 userid_encoded = le_userid.fit_transform(raw_df["USERID"])
-x_ticklabels = le_userid.inverse_transform(userid_encoded).tolist()
+x_ticklabels = remove_duplicates(le_userid.inverse_transform(userid_encoded).tolist())
 
 # y
 dechour = raw_df["DECHOUR"].values
 
 # z
 terminalsn_encoded = le_terminalsn.fit_transform(raw_df["TERMINALSN"])
-z_ticklabels = le_terminalsn.inverse_transform(terminalsn_encoded).tolist()
+z_ticklabels = remove_duplicates(le_terminalsn.inverse_transform(terminalsn_encoded).tolist())
 
 # colormap
 le_eventid = preprocessing.LabelEncoder()
@@ -58,14 +57,14 @@ p = ax.scatter(userid_encoded, dechour, terminalsn_encoded, c=eventid_encoded, c
 
 
 ax.set_xlabel("UserID")
-ax.set_xticks(list(set(userid_encoded.tolist())))
-ax.set_xticklabels(set(x_ticklabels))
+ax.set_xticks(remove_duplicates(userid_encoded.tolist()))
+ax.set_xticklabels(x_ticklabels)
 
 ax.set_ylabel("Time of day")
 
 ax.set_zlabel('TerminalSN')
-ax.set_zticks(list(set(terminalsn_encoded.tolist())))
-ax.set_zticklabels(set(z_ticklabels))
+ax.set_zticks(remove_duplicates(terminalsn_encoded.tolist()))
+ax.set_zticklabels(z_ticklabels)
 
 
 # Give the colorbar - ticks doesn't work on Mac

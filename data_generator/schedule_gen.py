@@ -1,12 +1,12 @@
 import random
 from random import randint
+from sklearn import model_selection
 from random import randrange
+import math
 import numpy as np
 import pandas as pd
 
 
-# schedule_gen creates a list of DataFrames; each DF indicates the 'schedule' of an individual user.
-# Each user created is similar to that of a 'full time' teacher in a school.
 # The schedule is defined using 'periods'; during each period, a user is in a 'room'.
 
 # Specific periods have special values:
@@ -19,10 +19,16 @@ import pandas as pd
 #   L, lunch (e.g. a canteen)
 #   M, meeting room
 #   0, away from school (home)
-
-# Each user has the same daily schedule, repeated across weekdays, with the exception of a weekly meeting on Friday.
-
-def generate_daily_schedule(total_rooms=10, break_rooms=2, lunch_period_position=3, lunch_break_rooms=1, periods=8, period_offset=0):
+def generate_daily_schedule(total_rooms=20,
+                            periods=8,
+                            break_rooms=2,
+                            lunch_period_position=3,
+                            lunch_break_rooms=1,
+                            period_offset=0,
+                            num_part_time_users_frac=0.3,
+                            part_time_workers=True
+                            ):
+    random.seed()  # Without this, random isn't very random
     # Generates the daily schedule for each user, by creating a room array and shuffling it.
     # This avoids the same classroom being assigned to two teachers during the same period.
     schedule_df = pd.DataFrame()
@@ -44,12 +50,37 @@ def generate_daily_schedule(total_rooms=10, break_rooms=2, lunch_period_position
     random.shuffle(lunch_rooms)
     schedule_df["period" + str(lunch_period_position)] = lunch_rooms
 
+    # Randomly picks part time rows according to num_part_time_frac, and replaces classroom values with 0,
+    # leaving only part_time_periods number of periods remaining. Part time workers work mornings if
+    # shuffle_part_time_periods is true, otherwise their start and end periods are randomised.
+    # Random may also select same part time to apply to, so number of part timers may not always be the same.
+
+    if part_time_workers:
+        part_time_rows_df = schedule_df.sample(math.floor(num_part_time_users_frac * total_rooms))  # Gets random rows, these will be the part time workers
+        before_lunch = part_time_rows_df.sample(randrange(len(part_time_rows_df)+1))  # Splits the dataframe
+        after_lunch = part_time_rows_df.drop(before_lunch.index)  # Gets the other side of the split
+
+        print(len(before_lunch))
+        print(len(after_lunch))
+
+        before_lunch.iloc[:, lunch_period_position:] = 0   # They don't eat lunch after morning work
+        after_lunch.iloc[:, :lunch_period_position+1] = 0  # They come after lunch
+        # In order to randomise lunch eating behaviour, need to remake this into loops,
+        # iterating through individually instead of just bulk selecting with iloc
+
+        schedule_df.update(before_lunch)
+        schedule_df.update(after_lunch)
+    print(schedule_df)
     return schedule_df
 
 
-def generate_user_weekly_schedules(schedule_df=generate_daily_schedule()):
-    # Turns daily schedule df into a list of DataFrames, with each dataframe representing a single user's weekly schedule,
-    # with each column representing a day of the week from Monday to Friday and each row representing a period.
+# Each user has the same daily schedule, repeated across weekdays, with the exception of a weekly meeting on Wednesday.
+# Turns daily schedule df into a list of DataFrames,
+# with each dataframe representing a single user's weekly schedule,
+# with each column representing a day of the week from Monday to Friday and each row representing a period.
+def generate_user_weekly_schedules(schedule_df=generate_daily_schedule(),
+                                   after_school_meeting=False
+                                   ):
     user_df_list = []
     week_days = ["MON", "TUE", "WED", "THU", "FRI"]
 
@@ -57,13 +88,12 @@ def generate_user_weekly_schedules(schedule_df=generate_daily_schedule()):
         cur_user = pd.DataFrame()  # Generates new DataFrame for the current user
         for i in range(5):
             cur_user[week_days[i]] = row
-        cur_user.loc["period" + str(len(cur_user.index))] = ["0", "0", "M", "0", "0"]  # After school events hard coded, in this case Wednesday is a meeting day
+        if after_school_meeting:
+            cur_user.loc["period" + str(len(cur_user.index))] = ["0", "0", "M", "0", "0"]  # After school events hard coded, in this case Wednesday is a meeting day
         user_df_list.append(cur_user)  # Adds completed current user DataFrame to the list of DataFrames
 
     return user_df_list
 
 
-a = generate_user_weekly_schedules()
-print(a[5])
-
-#call generate_daily_schedule with less periods to generate for different archetype`
+user_list = generate_user_weekly_schedules(after_school_meeting=True)
+print(user_list[2])

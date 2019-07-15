@@ -50,12 +50,8 @@ def generate_daily_schedule(total_rooms=20,
     random.shuffle(lunch_rooms)
     schedule_df["period" + str(lunch_period_position)] = lunch_rooms
 
-    # Randomly picks part time rows according to num_part_time_frac, and replaces classroom values with 0,
-    # leaving only part_time_periods number of periods remaining. Part time workers work mornings if
-    # shuffle_part_time_periods is true, otherwise their start and end periods are randomised.
-    # Random may also select same part time to apply to, so number of part timers may not always be the same.
-
     if num_part_time_users_frac > 0:
+        # Randomly picks part time rows according to num_part_time_frac, and replaces classroom values with 0.
         part_time_rows_df = schedule_df.sample(math.floor(num_part_time_users_frac * total_rooms))  # Gets random rows, these will be the part time workers
         before_lunch = part_time_rows_df.sample(randrange(len(part_time_rows_df)+1))  # Splits the dataframe
         after_lunch = part_time_rows_df.drop(before_lunch.index)  # Gets the other side of the split

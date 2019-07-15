@@ -102,6 +102,10 @@ def plot_points(filepath, x, y, name=None, event_color=False):
     else:
         ax.plot(df[x], df[y], marker='.', linestyle='')
 
+
+# Note: Best to make a scratch file of your own instead, then import the methods defined above:
+# import matplotlib.pyplot as plt
+# import input_data_analysis
 def main():
     plot_points(filepath="CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv",
                 x="TIMESTAMPS",

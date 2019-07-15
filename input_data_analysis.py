@@ -102,6 +102,7 @@ def plot_points(filepath, x, y, name=None, event_color=False):
     else:
         ax.plot(df[x], df[y], marker='.', linestyle='')
 
+
 def main():
     plot_points(filepath="CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv",
                 x="TIMESTAMPS",

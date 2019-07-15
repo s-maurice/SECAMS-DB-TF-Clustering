@@ -5,6 +5,7 @@ from random import randrange
 import math
 import numpy as np
 import pandas as pd
+import datetime
 
 
 # The schedule is defined using 'periods'; during each period, a user is in a 'room'.
@@ -59,9 +60,6 @@ def generate_daily_schedule(total_rooms=20,
         before_lunch = part_time_rows_df.sample(randrange(len(part_time_rows_df)+1))  # Splits the dataframe
         after_lunch = part_time_rows_df.drop(before_lunch.index)  # Gets the other side of the split
 
-        print(len(before_lunch))
-        print(len(after_lunch))
-
         before_lunch.iloc[:, lunch_period_position:] = 0   # They don't eat lunch after morning work
         after_lunch.iloc[:, :lunch_period_position+1] = 0  # They come after lunch
         # In order to randomise lunch eating behaviour, need to remake this into loops,
@@ -69,7 +67,6 @@ def generate_daily_schedule(total_rooms=20,
 
         schedule_df.update(before_lunch)
         schedule_df.update(after_lunch)
-    print(schedule_df)
     return schedule_df
 
 
@@ -77,7 +74,7 @@ def generate_daily_schedule(total_rooms=20,
 # Turns daily schedule df into a list of DataFrames,
 # with each dataframe representing a single user's weekly schedule,
 # with each column representing a day of the week from Monday to Friday and each row representing a period.
-def generate_user_weekly_schedules(schedule_df=generate_daily_schedule(),
+def generate_user_weekly_schedules(schedule_df,
                                    after_school_meeting=False
                                    ):
     user_df_list = []
@@ -94,5 +91,19 @@ def generate_user_weekly_schedules(schedule_df=generate_daily_schedule(),
     return user_df_list
 
 
-user_list = generate_user_weekly_schedules(after_school_meeting=True)
-print(user_list[2])
+def generate_timestamps(user_list):
+    for i in user_list:  # Iterate through users
+        # First generate user biases
+        lateness_bias = 0
+        level_of_randomness_bias = 0
+        absence_bias = 0
+
+        a = datetime.datetime(2011, 1, 1, 4, 5, 6)
+    print(a)
+    print(user_list[0])
+
+
+daily_schedule = generate_daily_schedule()
+#print(daily_schedule)
+user_list = generate_user_weekly_schedules(daily_schedule, after_school_meeting=True)
+generate_timestamps(user_list)

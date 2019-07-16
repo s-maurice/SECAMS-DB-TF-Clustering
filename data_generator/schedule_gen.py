@@ -102,9 +102,12 @@ def generator_by_period_remove_classrooms_from_list(lunch_period=3):
             part_time_df.loc["period" + str(i), "part_time" + str(iii)] = current_room  # Add classroom to Data Frame
     # Chop out part time morning/afternoons here
 
-
     print(full_time_df)
     print(part_time_df)
+
+
+
+
 
 
 
@@ -183,4 +186,4 @@ for df, idx in zip(user_df_list, range(len(user_df_list))):
 # print(user_list[1])
 #generate_timestamps(user_list)
 
-generator_by_period_remove_classrooms_from_list()
+# generator_by_period_remove_classrooms_from_list()

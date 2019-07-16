@@ -88,7 +88,7 @@ def generate_user_df(full_time,
     # For the other_rooms, create a list of non_unique_rooms; randomly assign a set of them to each full_time user
     # Give an offset of full_time; e.g. if there are 5 FT teachers, unique rooms go up to C4, so begin non_unique rooms at C5
     non_unique_room_list = ["C" + str(i) for i in range(full_time, full_time + non_unique_rooms)] # ['C4', 'C5', ...]
-    other_room_list = []
+    other_rooms_list = []
     other_room_bias_list = []
     main_room_bias_list = []
     for i in range(full_time):
@@ -96,7 +96,7 @@ def generate_user_df(full_time,
         room_count = random.randint(ft_assign_range[0], ft_assign_range[1])     # how many rooms
         rooms = random.sample(non_unique_room_list, room_count)                 # get rooms by sampling from room list
         rooms.sort()
-        other_room_list.append(rooms)
+        other_rooms_list.append(rooms)
 
         # Get bias for each user
         # Non-main rooms
@@ -107,7 +107,7 @@ def generate_user_df(full_time,
         main_room_bias = sum(other_rooms_bias) * main_bias_multiplier
         main_room_bias_list.append(main_room_bias)
 
-    ft_user_df['other_rooms'] = other_room_list
+    ft_user_df['other_rooms'] = other_rooms_list
     ft_user_df['other_room_bias'] = other_room_bias_list
     ft_user_df['main_room_bias'] = main_room_bias_list
 
@@ -119,25 +119,53 @@ def generate_user_df(full_time,
     ft_user_df['lunch_other_rooms'] = ft_user_df['main_room'].apply(lambda x: [x] + ["B"])
     ft_user_df["lunch_other_room_bias"] = [[1, 1]] * full_time
 
-    return ft_user_df
+
+    # print(ft_user_df)
+    # return ft_user_df
 
     # --- GENERATE PT DATAFRAME ---
+    # Generate indexes
     pt_user_list = [("PT" + str(i)) for i in range(part_time)]  # append ['PT0', 'PT1', ...]
     pt_user_df['user'] = pt_user_list
     pt_user_df.set_index('user', inplace=True)
 
-    # print(pt_user_df)
+    # For other_rooms, take the list of non_unique_rooms; randomly assign a set of them to each part_time user
+    other_rooms_list = []
+    other_room_bias_list = []
+    for i in range(part_time):
+        # Get rooms for each user
+        room_count = random.randint(pt_assign_range[0], pt_assign_range[1])     # how many rooms
+        rooms = random.sample(non_unique_room_list, room_count)                 # get rooms by sampling from room list
+        rooms.sort()
+        other_rooms_list.append(rooms)
+
+        # Get bias for each user
+        # Non-main rooms
+        other_rooms_bias = np.random.randint(1, 3, size=room_count)  # give a preference of anywhere from 1 to 3
+        other_room_bias_list.append(other_rooms_bias)
+
+    pt_user_df['other_rooms'] = other_rooms_list
+    pt_user_df['other_room_bias'] = other_room_bias_list
+
+    # Turn all NaNs into 0s
+    pt_user_df.fillna(0, inplace=True)
+
+    return ft_user_df, pt_user_df
 
 
 pd.set_option('display.max_rows', 10)
 pd.set_option('display.max_columns', 10)
-ft_sched_df = generate_user_df(full_time=4,
-                          part_time=3,
-                          ft_assign_range=(3, 4),
-                          pt_assign_range=(1, 2),
-                          extra_rooms=2,
-                          main_bias_multiplier=2)
+ft_sched_df, pt_sched_df = generate_user_df(full_time=4,
+                                            part_time=3,
+                                            ft_assign_range=(3, 4),
+                                            pt_assign_range=(1, 2),
+                                            extra_rooms=2,
+                                            main_bias_multiplier=2)
+
+print(ft_sched_df)
+print(pt_sched_df)
 
 ft_list = generate_from_user_room_weighting(ft_sched_df, lunch_period=True, end_period_meeting_day="Wednesday")
 pt_list = generate_from_user_room_weighting(pt_sched_df, lunch_period=False)
 print(ft_list[2])
+print(pt_list[2])

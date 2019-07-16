@@ -20,13 +20,13 @@ import datetime
 #   L, lunch (e.g. a canteen)
 #   M, meeting room
 #   0, away from school (home)
-def generate_daily_schedule(total_rooms=15,
-                            periods=8,
+def generate_daily_schedule(total_rooms=10,
+                            periods=6,
                             break_rooms=2,
                             lunch_period_position=3,
                             lunch_break_rooms=1,
                             period_offset=0,
-                            num_part_time_users_frac=0.3,
+                            num_part_time_users_frac=0,
                             ):
     random.seed()  # Without this, random isn't very random
     # Generates the daily schedule for each user, by creating a room array and shuffling it.
@@ -114,19 +114,43 @@ def generator_by_period_remove_classrooms_from_list(lunch_period=3):
 # Turns daily schedule df into a list of DataFrames,
 # with each dataframe representing a single user's weekly schedule,
 # with each column representing a day of the week from Monday to Friday and each row representing a period.
-def generate_user_weekly_schedules(schedule_df,
-                                   after_school_meeting=False
-                                   ):
-    user_df_list = []
+def generate_user_weekly_schedules(users, periods, break_rooms, after_school_meeting=False):
     week_days = ["MON", "TUE", "WED", "THU", "FRI"]
 
-    for index, row in schedule_df.iterrows():
-        cur_user = pd.DataFrame()  # Generates new DataFrame for the current user
-        for i in range(5):
-            cur_user[week_days[i]] = row
-        if after_school_meeting:
-            cur_user.loc["period" + str(len(cur_user.index))] = ["0", "0", "M", "0", "0"]  # After school events hard coded, in this case Wednesday is a meeting day
-        user_df_list.append(cur_user)  # Adds completed current user DataFrame to the list of DataFrames
+    # weekly_schedule as a dict, holding the schedule for each user per day
+    daily_schedules = dict()
+
+    for i in range(len(week_days)):
+        daily_schedules[week_days[i]] = generate_daily_schedule(total_rooms=users, periods=periods, break_rooms=break_rooms)
+
+    # Creating a list to hold the weekly schedules of all users
+    user_df_list = []
+    # iterate through all users to generate a weekly schedule for them
+    for user_num in range(users):
+
+        # generate a weekly schedule for a user
+        user_schedule = pd.DataFrame()
+        for day in week_days:
+            # take the appropriate row from the daily schedule DataFrame, as a Series
+            day_schedule = daily_schedules[day].iloc[user_num]
+
+            # If a friday, append a meeting to it, else set to 0
+            if day == "FRI":
+                day_schedule = day_schedule.append(pd.Series(['M'], index=["end"]))
+            else:
+                day_schedule = day_schedule.append(pd.Series(['0'], index=["end"]))
+
+            user_schedule[day] = day_schedule
+
+        user_df_list.append(user_schedule)
+
+    # for index, row in schedule_df.iterrows():
+    #     cur_user = pd.DataFrame()  # Generates new DataFrame for the current user
+    #     for i in range(5):
+    #         cur_user[week_days[i]] = row
+    #     if after_school_meeting:
+    #         cur_user.loc["period" + str(len(cur_user.index))] = ["0", "0", "M", "0", "0"]  # After school events hard coded, in this case Wednesday is a meeting day
+    #     user_df_list.append(cur_user)  # Adds completed current user DataFrame to the list of DataFrames
 
     return user_df_list
 
@@ -142,6 +166,16 @@ def generate_timestamps(user_list):
     print(a)
     print(user_list[0])
 
+
+# daily_schedule = generate_daily_schedule()
+# print(daily_schedule)
+user_df_list = generate_user_weekly_schedules(users=20, periods=7, break_rooms=4, after_school_meeting=True)
+
+for df, idx in zip(user_df_list, range(len(user_df_list))):
+    print("--- User " + str(idx) + " ---")
+    print(df)
+    print()
+# generate_timestamps(user_list)
 #
 # daily_schedule = generate_daily_schedule()
 # print(daily_schedule)

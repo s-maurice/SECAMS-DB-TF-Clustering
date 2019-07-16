@@ -131,12 +131,13 @@ def generate_user_df(full_time,
 
 pd.set_option('display.max_rows', 10)
 pd.set_option('display.max_columns', 10)
-gay_df = generate_user_df(full_time=4,
+ft_sched_df = generate_user_df(full_time=4,
                           part_time=3,
                           ft_assign_range=(3, 4),
                           pt_assign_range=(1, 2),
                           extra_rooms=2,
                           main_bias_multiplier=2)
 
-a = generate_from_user_room_weighting(gay_df, lunch_period=True, end_period_meeting_day="Wednesday")
-print(a[2])
+ft_list = generate_from_user_room_weighting(ft_sched_df, lunch_period=True, end_period_meeting_day="Wednesday")
+pt_list = generate_from_user_room_weighting(pt_sched_df, lunch_period=False)
+print(ft_list[2])

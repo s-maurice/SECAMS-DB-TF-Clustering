@@ -3,7 +3,7 @@ import pandas as pd
 import random
 
 
-def generate_from_user_room_weighting(full_time_weighting_df):
+def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False):
     # Call once with both full and part time, or call twice and generalise?
     week_day_list = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']  # List of days, replace with iterweekdays?
     period_list = ["Period"+str(i) for i in range(5)]  # Creates list of periods
@@ -34,16 +34,15 @@ def generate_from_user_room_weighting(full_time_weighting_df):
                     row["main_room_bias"],
                     row["other_rooms"],
                     row["other_room_bias"])
-            current_user_df.loc[day, "Lunch"] = room_selector(
-                row["lunch_main_room"],
-                row["lunch_main_room_bias"],
-                row["lunch_other_rooms"],
-                row["lunch_other_room_bias"])
+            if lunch_period:
+                current_user_df.loc[day, "Lunch"] = room_selector(
+                    row["lunch_main_room"],
+                    row["lunch_main_room_bias"],
+                    row["lunch_other_rooms"],
+                    row["lunch_other_room_bias"])
 
         user_df_list.append(current_user_df)  # Appends completed Data Frame to list of Data Frames
-
-    print('murc gay')
-    print(user_df_list[0])
+    return user_df_list
 
 
 def generate_user_df(full_time,
@@ -138,4 +137,5 @@ gay_df = generate_user_df(full_time=4,
                           extra_rooms=2,
                           main_bias_multiplier=2)
 
-generate_from_user_room_weighting(gay_df)
+a = generate_from_user_room_weighting(gay_df, lunch_period=True)
+print(a[2])

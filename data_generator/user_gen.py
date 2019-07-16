@@ -3,11 +3,11 @@ import pandas as pd
 import random
 
 
-def generate_from_user_room_weighting(full_time_weighting_df):  # Call once with both full and part time, or call twice and generalise?
+def generate_from_user_room_weighting(full_time_weighting_df):
+    # Call once with both full and part time, or call twice and generalise?
     week_day_list = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']  # List of days, replace with iterweekdays?
     period_list = ["Period"+str(i) for i in range(5)]  # Creates list of periods
     user_df_list = []
-    # Define room selector function, which creates a pool of rooms to pick from, and returns a single room
 
     # Check that the room lists and the biases are equal
     # Need to update assertions to assert for all items in the df, not just index 1
@@ -16,6 +16,7 @@ def generate_from_user_room_weighting(full_time_weighting_df):  # Call once with
     assert (len(full_time_weighting_df["lunch_other_room"][0]) == len(full_time_weighting_df["lunch_other_room)_bias"][0])), (
         "Length of lunch_other_rooms did not match length of bias")
 
+    # Define room selector function, which creates a pool of rooms to pick from, and returns a single room
     def room_selector(main_room, main_room_bias, other_rooms, other_room_bias):
         # Create the list of rooms to draw from, weighted by the bias
         # Draws and returns single room

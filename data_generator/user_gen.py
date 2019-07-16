@@ -6,7 +6,7 @@ import random
 def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False, end_period_meeting_day="", drop_half=False):
     # Call once with both full and part time, or call twice and generalise?
     week_day_list = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']  # List of days, replace with iterweekdays?
-    period_list = ["Period"+str(i) for i in range(5)]  # Creates list of periods
+    period_list = [" Period " + str(i) for i in range(5)]  # Creates list of periods
     user_df_list = []
 
     # Check that the room lists and the biases are equal
@@ -72,9 +72,6 @@ def generate_user_df(full_time,
     #   lunch_bias_multiplier: How many more times likely to choose the 'lunch room' over other rooms, during lunch.
     #   main_room_overlap: Not yet implemented. Whether the 'main rooms' of FT teachers overlap or not.
 
-    # Create the number of non-unique (shared) rooms
-    non_unique_rooms = max(ft_assign_range + pt_assign_range) + extra_rooms
-
     ft_user_df = pd.DataFrame(columns=['user', 'main_room', 'other_rooms', 'lunch_main_room', 'lunch_other_rooms', 'main_room_bias', 'other_room_bias', 'lunch_main_room_bias', 'lunch_other_room_bias'])
     pt_user_df = pd.DataFrame(columns=['user', 'main_room', 'other_rooms', 'lunch_main_room', 'lunch_other_rooms', 'main_room_bias', 'other_room_bias', 'lunch_main_room_bias', 'lunch_other_room_bias'])
 
@@ -90,7 +87,10 @@ def generate_user_df(full_time,
     main_room_list = ["C" + str(i) for i in range(full_time)]   # ['C0', 'C1', ...]
     ft_user_df['main_room'] = main_room_list
 
-    # For the other_rooms, create a list of non_unique_rooms; randomly assign a set of them to each full_time user
+    # For other_rooms, find the number of non-unique (shared) rooms
+    non_unique_rooms = max(max(ft_assign_range) + extra_rooms, max(pt_assign_range))
+
+    # Create a list of non_unique_rooms; randomly assign a set of them to each full_time user
     # Give an offset of full_time; e.g. if there are 5 FT teachers, unique rooms go up to C4, so begin non_unique rooms at C5
     non_unique_room_list = ["C" + str(i) for i in range(full_time, full_time + non_unique_rooms)] # ['C4', 'C5', ...]
     other_rooms_list = []
@@ -152,7 +152,7 @@ def generate_user_df(full_time,
     pt_user_df['other_rooms'] = other_rooms_list
     pt_user_df['other_room_bias'] = other_room_bias_list
 
-    # Turn all NaNs into 0s
+        # Turn all NaNs into 0s
     pt_user_df.fillna(0, inplace=True)
 
     return ft_user_df, pt_user_df
@@ -163,12 +163,19 @@ pd.set_option('display.max_columns', 10)
 ft_sched_df, pt_sched_df = generate_user_df(full_time=4,
                                             part_time=3,
                                             ft_assign_range=(3, 4),
-                                            pt_assign_range=(1, 2),
+                                            pt_assign_range=(4, 5),
                                             extra_rooms=2,
                                             main_bias_multiplier=2)
 
 ft_list = generate_from_user_room_weighting(ft_sched_df, lunch_period=True, end_period_meeting_day="Wednesday")
 pt_list = generate_from_user_room_weighting(pt_sched_df, drop_half=True)
 
-print(ft_list[0])
-print(pt_list[0])
+print("Full-timers: ")
+for df in ft_list:
+    print(df)
+    print()
+
+print("Part-timers: ")
+for df in pt_list:
+    print(df)
+    print()

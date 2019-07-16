@@ -3,7 +3,7 @@ import pandas as pd
 import random
 
 
-def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False, end_period_meeting_day=""):
+def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False, end_period_meeting_day="", drop_half=False):
     # Call once with both full and part time, or call twice and generalise?
     week_day_list = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']  # List of days, replace with iterweekdays?
     period_list = ["Period"+str(i) for i in range(5)]  # Creates list of periods
@@ -11,10 +11,10 @@ def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False
 
     # Check that the room lists and the biases are equal
     # Need to update assertions to assert for all items in the df, not just index 1
-    assert (len(full_time_weighting_df["other_rooms"][0]) == len(full_time_weighting_df["other_room_bias"][0])), (
-        "Length of other_rooms did not match length of bias")
-    assert (len(full_time_weighting_df["lunch_other_rooms"][0]) == len(full_time_weighting_df["lunch_other_room_bias"][0])), (
-        "Length of lunch_other_rooms did not match length of bias")
+    # assert (len(full_time_weighting_df["other_rooms"][0]) == len(full_time_weighting_df["other_room_bias"][0])), (
+    #     "Length of other_rooms did not match length of bias")
+    # assert (len(full_time_weighting_df["lunch_other_rooms"][0]) == len(full_time_weighting_df["lunch_other_room_bias"][0])), (
+    #     "Length of lunch_other_rooms did not match length of bias")
 
     # Define room selector function, which creates a pool of rooms to pick from, and returns a single room
     def room_selector(main_room, main_room_bias, other_rooms, other_room_bias):
@@ -42,8 +42,13 @@ def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False
                     row["lunch_other_room_bias"])
             if day == end_period_meeting_day:
                 current_user_df.loc[day, "End"] = "M"
+        if drop_half:  # Removes before/after lunch randomly, used for part timers
+            if bool(random.getrandbits(1)):
+                current_user_df.iloc[:, 3:] = 0
+            else:
+                current_user_df.iloc[:, :3] = 0
 
-        current_user_df.fillna(0, inplace=True)  # FIlls NAs as 0
+        current_user_df.fillna(0, inplace=True)  # Fills NAs as 0
         user_df_list.append(current_user_df)  # Appends completed Data Frame to list of Data Frames
     return user_df_list
 
@@ -162,10 +167,8 @@ ft_sched_df, pt_sched_df = generate_user_df(full_time=4,
                                             extra_rooms=2,
                                             main_bias_multiplier=2)
 
-print(ft_sched_df)
-print(pt_sched_df)
-
 ft_list = generate_from_user_room_weighting(ft_sched_df, lunch_period=True, end_period_meeting_day="Wednesday")
-pt_list = generate_from_user_room_weighting(pt_sched_df, lunch_period=False)
-print(ft_list[2])
-print(pt_list[2])
+pt_list = generate_from_user_room_weighting(pt_sched_df, drop_half=True)
+
+print(ft_list[0])
+print(pt_list[0])

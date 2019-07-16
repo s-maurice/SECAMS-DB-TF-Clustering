@@ -3,7 +3,7 @@ import pandas as pd
 import random
 
 
-def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False):
+def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False, end_period_meeting_day=""):
     # Call once with both full and part time, or call twice and generalise?
     week_day_list = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']  # List of days, replace with iterweekdays?
     period_list = ["Period"+str(i) for i in range(5)]  # Creates list of periods
@@ -40,7 +40,10 @@ def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False
                     row["lunch_main_room_bias"],
                     row["lunch_other_rooms"],
                     row["lunch_other_room_bias"])
+            if day == end_period_meeting_day:
+                current_user_df.loc[day, "End"] = "M"
 
+        current_user_df.fillna(0, inplace=True)  # FIlls NAs as 0
         user_df_list.append(current_user_df)  # Appends completed Data Frame to list of Data Frames
     return user_df_list
 
@@ -116,8 +119,6 @@ def generate_user_df(full_time,
     ft_user_df['lunch_other_rooms'] = ft_user_df['main_room'].apply(lambda x: [x] + ["B"])
     ft_user_df["lunch_other_room_bias"] = [[1, 1]] * full_time
 
-
-    print(ft_user_df)
     return ft_user_df
 
     # --- GENERATE PT DATAFRAME ---
@@ -137,5 +138,5 @@ gay_df = generate_user_df(full_time=4,
                           extra_rooms=2,
                           main_bias_multiplier=2)
 
-a = generate_from_user_room_weighting(gay_df, lunch_period=True)
+a = generate_from_user_room_weighting(gay_df, lunch_period=True, end_period_meeting_day="Wednesday")
 print(a[2])

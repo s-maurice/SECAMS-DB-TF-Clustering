@@ -21,7 +21,7 @@ def generate_from_user_room_weighting(full_time_weighting_df):
         # Create the list of rooms to draw from, weighted by the bias
         # Draws and returns single room
         current_period_room_pool = main_room * main_room_bias
-        current_period_room_pool.append([j * k for j, k in zip(other_rooms, other_room_bias)])
+        current_period_room_pool.append([j * k for j, k in zip(other_rooms, other_room_bias)])  # Multiplies two lists
         return random.choice(current_period_room_pool)
 
     for index, row in full_time_weighting_df.itterrows():

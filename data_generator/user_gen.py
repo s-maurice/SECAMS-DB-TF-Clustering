@@ -135,7 +135,6 @@ def generate_user_df(full_time,
         time_offset_bias_list.append(time_offset_bias)
         absence_bias_list.append(absence_bias)
 
-
     ft_user_df['other_rooms'] = other_rooms_list
     ft_user_df['other_room_bias'] = other_room_bias_list
     ft_user_df['main_room_bias'] = main_room_bias_list
@@ -241,14 +240,14 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
         user_event_df = pd.DataFrame()
         for week in range(num_weeks):
             for index, row in user_df.iterrows():  # every entry: week - day - room - time - event
-                cur_user_event_day_df = generate_day_sched(row, index, week)
-                # Check if user is absent before appending the current day to their event list
-                if row.loc["absence_bias"] < np.random.random:
+                # Check if user is absent before creating and appending the current day to their event list
+                if bias_df["absence_bias"][user_df_index] < np.random.random():
+                    cur_user_event_day_df = generate_day_sched(row, index, week)
                     user_event_df = user_event_df.append(cur_user_event_day_df)
 
             # Add how early/late each event is as a new column, "Early/Lateness"
             for index, row in user_event_df.iterrows():
-                user_event_df.loc[index, "Early/Lateness"] = np.clip(np.random.normal(loc=bias_df.loc["time_offset_bias", user_df_index], scale=1), -1, 1)
+                user_event_df.loc[index, "Early/Lateness"] = np.clip(np.random.normal(loc=bias_df["time_offset_bias"][user_df_index], scale=0.25), -1, 1)
 
         user_event_df_list.append(user_event_df)
 

@@ -186,7 +186,7 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
         day_sched_df['Week'] = week
         day_sched_df['Day'] = day
 
-        # Add entering and exiting school events
+        # Add entering and exiting school events, doesn't currently work for part timers
         if time_list[-1] == "End":  # Check if they have after school meeting, if so shift time
             school_exit_time = "Late End"
         else:

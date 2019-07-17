@@ -6,7 +6,7 @@ import random
 def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False, end_period_meeting_day="", drop_half=False):
     # Call once with both full and part time, or call twice and generalise?
     week_day_list = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']  # List of days, replace with iterweekdays?
-    period_list = [" Period " + str(i) for i in range(5)]  # Creates list of periods
+    period_list = ["Period" + str(i) for i in range(5)]  # Creates list of periods
     user_df_list = []
 
     # Check that the room lists and the biases are equal
@@ -48,7 +48,10 @@ def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False
             else:
                 current_user_df.iloc[:, :3] = 0
 
-        current_user_df.fillna(0, inplace=True)  # Fills NAs as 0
+        # Reorder + fill NAs as 0
+        current_user_df = current_user_df.reindex(columns=["Period0", "Period1", "Period2", "Lunch", "Period3", "Period4", "End"])
+        current_user_df.fillna("0", inplace=True)
+
         user_df_list.append(current_user_df)  # Appends completed Data Frame to list of Data Frames
     return user_df_list
 
@@ -152,10 +155,51 @@ def generate_user_df(full_time,
     pt_user_df['other_rooms'] = other_rooms_list
     pt_user_df['other_room_bias'] = other_room_bias_list
 
-        # Turn all NaNs into 0s
+    # Turn all NaNs into 0s
     pt_user_df.fillna(0, inplace=True)
 
     return ft_user_df, pt_user_df
+
+
+def generate_event_list(schedule_df_list, num_weeks):
+
+    def generate_day_sched(day_series, day, week):
+        day_sched_df = pd.DataFrame(columns=["Week", "Day", "Room", "Time", "Event"])
+
+        room_list = []
+        time_list = []
+        event_list = []
+        for i in range(len(day_series)):
+            if day_series[i] != "0":
+                if (i - 1 < 0) or (i - 1 >= 0 and day_series.iloc[i-1] != day_series.iloc[i]):
+                    event_list.append('In')
+                    room_list.append(day_series[i])
+                    time_list.append(day_series.index[i])
+                if (i + 1 >= len(day_series)) or (i + 1 < len(day_series) and day_series.iloc[i+1] != day_series.iloc[i]):
+                    event_list.append('Out')
+                    room_list.append(day_series[i])
+                    time_list.append(day_series.index[i])
+
+        day_sched_df['Room'] = room_list
+        day_sched_df['Time'] = time_list
+        day_sched_df['Event'] = event_list
+        day_sched_df['Week'] = week
+        day_sched_df['Day'] = day
+        day_sched_df.set_index("Time", drop=True, inplace=True)
+        return day_sched_df
+
+    user_event_df_list = []
+
+    for user_df in schedule_df_list:
+        user_event_df = pd.DataFrame()
+        for week in range(num_weeks):
+            for index, row in user_df.iterrows():  # every entry: week - day - room - time - event
+                cur_user_event_day_df = generate_day_sched(row, index, week)
+                #user_event_df = pd.concat([user_event_df, cur_user_event_day_df])
+                user_event_df =user_event_df.append(cur_user_event_day_df)
+        user_event_df_list.append(user_event_df)
+
+    return user_event_df_list
 
 
 pd.set_option('display.max_rows', 10)
@@ -169,13 +213,18 @@ ft_sched_df, pt_sched_df = generate_user_df(full_time=4,
 
 ft_list = generate_from_user_room_weighting(ft_sched_df, lunch_period=True, end_period_meeting_day="Wednesday")
 pt_list = generate_from_user_room_weighting(pt_sched_df, drop_half=True)
+#
+# # Test prints
+# print("Full-timers: ")
+# for df in ft_list:
+#     print(df)
+#     print()
+#
+# print("Part-timers: ")
+# for df in pt_list:
+#     print(df)
+#     print()
 
-print("Full-timers: ")
-for df in ft_list:
-    print(df)
-    print()
+gay_df_list = generate_event_list(ft_list, 2)
 
-print("Part-timers: ")
-for df in pt_list:
-    print(df)
-    print()
+print(gay_df_list[2])

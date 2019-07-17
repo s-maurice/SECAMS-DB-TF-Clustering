@@ -64,19 +64,30 @@ def generate_user_df(full_time,
                      main_bias_multiplier=1,
                      lunch_bias_multiplier=3,
                      main_room_overlap=False):
-    # Generates a DataFrame of users.
+    # Generates a DataFrame of users + their characteristics.
     # Args:
     #   full_time: Number of FT teachers
     #   part_time: Number of PT teachers (generally less than FT)
     #   ft_assign_range: Tuple. How many non-unique rooms each FT teacher is assigned
     #   pt_assign_range: Tuple. How many non-unique rooms each PT teacher is assigned (generally less than FT)
-    #   extra_rooms: Number of additional 'shared' rooms (the number of 'shared' rooms is usually set to the minimum required)
+    #   extra_rooms: Number of additional 'shared' rooms (if default, then set to the minimum required)
     #   main_bias_multiplier: How many more times likely to choose the 'main room' over any other rooms.
     #   lunch_bias_multiplier: How many more times likely to choose the 'lunch room' over other rooms, during lunch.
     #   main_room_overlap: Not yet implemented. Whether the 'main rooms' of FT teachers overlap or not.
 
-    ft_user_df = pd.DataFrame(columns=['user', 'main_room', 'other_rooms', 'lunch_main_room', 'lunch_other_rooms', 'main_room_bias', 'other_room_bias', 'lunch_main_room_bias', 'lunch_other_room_bias'])
-    pt_user_df = pd.DataFrame(columns=['user', 'main_room', 'other_rooms', 'lunch_main_room', 'lunch_other_rooms', 'main_room_bias', 'other_room_bias', 'lunch_main_room_bias', 'lunch_other_room_bias'])
+    # NOTE: The 'bias' columns represent 'characteristics' of each user. In particular:
+    #   time_offset_bias (-1 to 1) refers to generally how early or late a user comes in (uses normal distribution)
+    #   absence_bias (0 to 1) represents the chance that the user is absent.
+    df_columns = ['user', 'main_room', 'other_rooms', 'lunch_main_room', 'lunch_other_rooms',
+                  'main_room_bias', 'other_room_bias', 'lunch_main_room_bias', 'lunch_other_room_bias',
+                  'time_offset_bias', 'absence_bias']
+
+    # Hyperparameters that decide the spread of time_offset and absence_bias (specifically, standard deviation).
+    time_offset_bias_spread = 0.4
+    absence_bias_spread = 0.02
+
+    ft_user_df = pd.DataFrame(columns=df_columns)
+    pt_user_df = pd.DataFrame(columns=df_columns)
 
     # --- GENERATE FT DATAFRAME ---
     # First generate the indexes; 'user' should be a list of full_time and part_time teachers, like so:
@@ -99,6 +110,8 @@ def generate_user_df(full_time,
     other_rooms_list = []
     other_room_bias_list = []
     main_room_bias_list = []
+    time_offset_bias_list = []
+    absence_bias_list = []
     for i in range(full_time):
         # Get rooms for each user
         room_count = random.randint(ft_assign_range[0], ft_assign_range[1])     # how many rooms
@@ -115,9 +128,20 @@ def generate_user_df(full_time,
         main_room_bias = sum(other_rooms_bias) * main_bias_multiplier
         main_room_bias_list.append(main_room_bias)
 
+        # Get other biases through a normal distribution. Uses the hyperparameters defined at the start of the method.
+        time_offset_bias = np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread), -1, 1)
+        absence_bias = np.clip(abs(np.random.normal(loc=0, scale=absence_bias_spread)), 0, 1)
+
+        time_offset_bias_list.append(time_offset_bias)
+        absence_bias_list.append(absence_bias)
+
+
     ft_user_df['other_rooms'] = other_rooms_list
     ft_user_df['other_room_bias'] = other_room_bias_list
     ft_user_df['main_room_bias'] = main_room_bias_list
+
+    ft_user_df['time_offset_bias'] = time_offset_bias_list
+    ft_user_df['absence_bias'] = absence_bias_list
 
     # lunch_main_room: lunch room (L); set bias to lunch main room bias
     ft_user_df['lunch_main_room'] = "L"
@@ -140,6 +164,9 @@ def generate_user_df(full_time,
     # For other_rooms, take the list of non_unique_rooms; randomly assign a set of them to each part_time user
     other_rooms_list = []
     other_room_bias_list = []
+    time_offset_bias_list = []
+    absence_bias_list = []
+
     for i in range(part_time):
         # Get rooms for each user
         room_count = random.randint(pt_assign_range[0], pt_assign_range[1])     # how many rooms
@@ -152,8 +179,17 @@ def generate_user_df(full_time,
         other_rooms_bias = np.random.randint(1, 3, size=room_count)  # give a preference of anywhere from 1 to 3
         other_room_bias_list.append(other_rooms_bias)
 
+        time_offset_bias = np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread), -1, 1)
+        absence_bias = np.clip(abs(np.random.normal(loc=0, scale=absence_bias_spread)), 0, 1)
+
+        time_offset_bias_list.append(time_offset_bias)
+        absence_bias_list.append(absence_bias)
+
     pt_user_df['other_rooms'] = other_rooms_list
     pt_user_df['other_room_bias'] = other_room_bias_list
+
+    pt_user_df['time_offset_bias'] = time_offset_bias_list
+    pt_user_df['absence_bias'] = absence_bias_list
 
     # Turn all NaNs into 0s
     pt_user_df.fillna(0, inplace=True)

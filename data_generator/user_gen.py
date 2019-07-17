@@ -76,15 +76,17 @@ def generate_user_df(full_time,
     #   main_room_overlap: Not yet implemented. Whether the 'main rooms' of FT teachers overlap or not.
 
     # NOTE: The 'bias' columns represent 'characteristics' of each user. In particular:
+    #   randomness_bias determines how much variation a user exhibits in their activity
     #   time_offset_bias (-1 to 1) refers to generally how early or late a user comes in (uses normal distribution)
     #   absence_bias (0 to 1) represents the chance that the user is absent.
     df_columns = ['user', 'main_room', 'other_rooms', 'lunch_main_room', 'lunch_other_rooms',
                   'main_room_bias', 'other_room_bias', 'lunch_main_room_bias', 'lunch_other_room_bias',
-                  'time_offset_bias', 'absence_bias']
+                  'randomness_bias', 'time_offset_bias', 'absence_bias']
 
-    # Hyperparameters that decide the spread of time_offset and absence_bias (specifically, standard deviation).
-    time_offset_bias_spread = 0.4
-    absence_bias_spread = 0.02
+    # Hyperparameters on biases. Note 'time_offset_bias_spread' and 'absence_bias_spread' are generated using np.random.normal().
+    randomness_bias_limit = 0.5      # limit: max value
+    time_offset_bias_spread = 0.3    # spread: standard deviation
+    absence_bias_spread = 0.03       # spread: standard deviation
 
     ft_user_df = pd.DataFrame(columns=df_columns)
     pt_user_df = pd.DataFrame(columns=df_columns)
@@ -105,11 +107,12 @@ def generate_user_df(full_time,
     non_unique_rooms = max(max(ft_assign_range) + extra_rooms, max(pt_assign_range))
 
     # Create a list of non_unique_rooms; randomly assign a set of them to each full_time user
-    # Give an offset of full_time; e.g. if there are 5 FT teachers, unique rooms go up to C4, so begin non_unique rooms at C5
+    # Non-unique rooms have an offset of full_time; e.g. with 5 FT teachers, unique rooms go up to C4, so non-unique begins at C5
     non_unique_room_list = ["C" + str(i) for i in range(full_time, full_time + non_unique_rooms)] # ['C4', 'C5', ...]
     other_rooms_list = []
     other_room_bias_list = []
     main_room_bias_list = []
+    randomness_bias_list = []
     time_offset_bias_list = []
     absence_bias_list = []
     for i in range(full_time):
@@ -129,9 +132,11 @@ def generate_user_df(full_time,
         main_room_bias_list.append(main_room_bias)
 
         # Get other biases through a normal distribution. Uses the hyperparameters defined at the start of the method.
+        randomness_bias = np.random.random() * randomness_bias_limit
         time_offset_bias = np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread), -1, 1)
         absence_bias = np.clip(abs(np.random.normal(loc=0, scale=absence_bias_spread)), 0, 1)
 
+        randomness_bias_list.append(randomness_bias)
         time_offset_bias_list.append(time_offset_bias)
         absence_bias_list.append(absence_bias)
 
@@ -139,6 +144,7 @@ def generate_user_df(full_time,
     ft_user_df['other_room_bias'] = other_room_bias_list
     ft_user_df['main_room_bias'] = main_room_bias_list
 
+    ft_user_df['randomness_bias'] = randomness_bias_list
     ft_user_df['time_offset_bias'] = time_offset_bias_list
     ft_user_df['absence_bias'] = absence_bias_list
 
@@ -150,10 +156,6 @@ def generate_user_df(full_time,
     ft_user_df['lunch_other_rooms'] = ft_user_df['main_room'].apply(lambda x: [x] + ["B"])
     ft_user_df["lunch_other_room_bias"] = [[1, 1]] * full_time
 
-
-    # print(ft_user_df)
-    # return ft_user_df
-
     # --- GENERATE PT DATAFRAME ---
     # Generate indexes
     pt_user_list = [("PT" + str(i)) for i in range(part_time)]  # append ['PT0', 'PT1', ...]
@@ -163,6 +165,7 @@ def generate_user_df(full_time,
     # For other_rooms, take the list of non_unique_rooms; randomly assign a set of them to each part_time user
     other_rooms_list = []
     other_room_bias_list = []
+    randomness_bias_list = []
     time_offset_bias_list = []
     absence_bias_list = []
 
@@ -178,15 +181,18 @@ def generate_user_df(full_time,
         other_rooms_bias = np.random.randint(1, 3, size=room_count)  # give a preference of anywhere from 1 to 3
         other_room_bias_list.append(other_rooms_bias)
 
+        randomness_bias = np.random.random() * randomness_bias_limit
         time_offset_bias = np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread), -1, 1)
         absence_bias = np.clip(abs(np.random.normal(loc=0, scale=absence_bias_spread)), 0, 1)
 
+        randomness_bias_list.append(randomness_bias)
         time_offset_bias_list.append(time_offset_bias)
         absence_bias_list.append(absence_bias)
 
     pt_user_df['other_rooms'] = other_rooms_list
     pt_user_df['other_room_bias'] = other_room_bias_list
 
+    pt_user_df['randomness_bias'] = randomness_bias_list
     pt_user_df['time_offset_bias'] = time_offset_bias_list
     pt_user_df['absence_bias'] = absence_bias_list
 
@@ -247,7 +253,7 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
 
             # Add how early/late each event is as a new column, "Early/Lateness"
             for index, row in user_event_df.iterrows():
-                user_event_df.loc[index, "Early/Lateness"] = np.clip(np.random.normal(loc=bias_df["time_offset_bias"][user_df_index], scale=0.25), -1, 1)
+                user_event_df.loc[index, "Early/Lateness"] = np.clip(np.random.normal(loc=bias_df["time_offset_bias"][user_df_index], scale=bias_df["randomness_bias"][user_df_index]), -1, 1)
 
         user_event_df_list.append(user_event_df)
 
@@ -265,7 +271,7 @@ ft_sched_df, pt_sched_df = generate_user_df(full_time=4,
 
 ft_list = generate_from_user_room_weighting(ft_sched_df, lunch_period=True, end_period_meeting_day="Wednesday")
 pt_list = generate_from_user_room_weighting(pt_sched_df, drop_half=True)
-#
+
 # # Test prints
 # print("Full-timers: ")
 # for df in ft_list:
@@ -279,4 +285,10 @@ pt_list = generate_from_user_room_weighting(pt_sched_df, drop_half=True)
 
 gay_df_list = generate_event_list(ft_list, 2, ft_sched_df)
 
+pd.set_option('display.max_rows', 1000)
+pd.set_option('display.max_columns', 10)
+
+print("Relevant user: ")
+print(ft_sched_df.iloc[2])
+print("User eventlist:")
 print(gay_df_list[2])

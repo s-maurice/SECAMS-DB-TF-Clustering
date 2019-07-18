@@ -107,14 +107,16 @@ def generate_user_df(full_time,
     non_unique_rooms = max(max(ft_assign_range) + extra_rooms, max(pt_assign_range))
 
     # Create a list of non_unique_rooms; randomly assign a set of them to each full_time user
-    # Non-unique rooms have an offset of full_time; e.g. with 5 FT teachers, unique rooms go up to C4, so non-unique begins at C5
-    non_unique_room_list = ["C" + str(i) for i in range(full_time, full_time + non_unique_rooms)] # ['C4', 'C5', ...]
+    # Non-unique rooms have an offset of full_time;
+    # e.g. with 5 FT teachers, unique rooms go up to C4, so non-unique begins at C5
+    non_unique_room_list = ["C" + str(i) for i in range(full_time, full_time + non_unique_rooms)]  # ['C4', 'C5', ...]
     other_rooms_list = []
     other_room_bias_list = []
     main_room_bias_list = []
     randomness_bias_list = []
     time_offset_bias_list = []
     absence_bias_list = []
+
     for i in range(full_time):
         # Get rooms for each user
         room_count = random.randint(ft_assign_range[0], ft_assign_range[1])     # how many rooms

@@ -1,3 +1,5 @@
+import datetime
+
 import numpy as np
 import pandas as pd
 import random
@@ -41,7 +43,7 @@ def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False
                     row["lunch_other_rooms"],
                     row["lunch_other_room_bias"])
             if day == end_period_meeting_day:
-                current_user_df.loc[day, "End"] = "M"
+                current_user_df.loc[day, "Normal_End"] = "M"
         if drop_half:  # Removes before/after lunch randomly, used for part timers
             if bool(random.getrandbits(1)):
                 current_user_df.iloc[:, 3:] = "O"
@@ -49,7 +51,7 @@ def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False
                 current_user_df.iloc[:, :3] = "O"
 
         # Reorder + fill NAs as Os
-        current_user_df = current_user_df.reindex(columns=["Period0", "Period1", "Period2", "Lunch", "Period3", "Period4", "End"])
+        current_user_df = current_user_df.reindex(columns=["Period0", "Period1", "Period2", "Lunch", "Period3", "Period4", "Normal_End"])
         current_user_df.fillna("O", inplace=True)
 
         user_df_list.append(current_user_df)  # Appends completed Data Frame to list of Data Frames
@@ -122,7 +124,8 @@ def generate_user_df(full_time,
     non_unique_rooms = max(max(ft_assign_range) + extra_rooms, max(pt_assign_range))
 
     # Create a list of non_unique_rooms; randomly assign a set of them to each full_time user
-    # Non-unique rooms have an offset of full_time; e.g. with 5 FT teachers, unique rooms go up to C4, so non-unique begins at C5
+    # Non-unique rooms have an offset of full_time;
+    # e.g. with 5 FT teachers, unique rooms go up to C4, so non-unique begins at C5
     non_unique_room_list = ["C" + str(i) for i in range(full_time, full_time + non_unique_rooms)] # ['C4', 'C5', ...]
 
     # Create one list for each column; this holds their values. Doing so is much better than
@@ -238,7 +241,7 @@ def generate_event_list(schedule_df_list, bias_df, num_weeks):
             print("error, start not found, Error_Start appended, first time_List value was: " + time_list[0])
 
         # School exit event timing
-        if time_list[-1] == "End":  # Check if they have after school meeting, if so shift time
+        if time_list[-1] == "Normal_End":  # Check if they have after school meeting, if so shift time
             school_exit_time = "Late_End"
         elif time_list[-1] == "Period2":  # Check if they end school at lunch
             school_exit_time = "Early_End"
@@ -274,11 +277,50 @@ def generate_event_list(schedule_df_list, bias_df, num_weeks):
                                                                scale=bias_df["randomness_bias"][user_df_index],
                                                                size=len(user_event_df))
 
+            # Add user_df_index to column for easy identification of user_ids
+            user_event_df["UserID"] = user_df_index
         user_event_df_list.append(user_event_df)
 
     return user_event_df_list
 
 
+def generate_timestamps(user_event_df_list):  # Generates timestamps and event_logs from the list of user_event_dfs
+    # Create dict for period to datetime lookup
+    period_to_timestamp_dict = {"Normal_Start": datetime.time(8, 30),
+                                "Period0": datetime.time(9),
+                                "Period1": datetime.time(10),
+                                "Period2": datetime.time(11),
+                                "Early_End": datetime.time(11, 30),
+                                "Lunch": datetime.time(12),
+                                "Late_Start": datetime.time(12, 30),
+                                "Period3": datetime.time(13),
+                                "Period4": datetime.time(14),
+                                "Normal_End": datetime.time(15),
+                                "Late_End": datetime.time(16)}
+    complete_event_df = pd.concat(user_event_df_list)  # First combine all the DFs from the list
+
+    complete_event_df["Timestamps"] = complete_event_df.index  # Copies index column (Time/Period) to new column
+    complete_event_df.replace({"Timestamps": period_to_timestamp_dict}, inplace=True)  # Applies dict
+    complete_event_df.sort_index(inplace=True)  # Groups by Time Period (not needed)
+
+    # Convert Early/Lateness column into timedelta minutes
+    complete_event_df["Early/Lateness"] = complete_event_df["Early/Lateness"].apply(lambda x: datetime.timedelta(minutes=(x * 30)))
+
+    print(type(complete_event_df["Early/Lateness"].iloc[5]))
+    print(type(complete_event_df["Timestamps"].iloc[5]))
+    print(complete_event_df)
+
+    # Add timedelta to Timestamps
+    def create_timestamps(row):  # TODO
+        print(row)
+
+    # Applies created func
+    complete_event_df["Timestamps"] = complete_event_df[["Day", "Week", "Early/Lateness", "Timestamps"]].apply(create_timestamps, axis=1)
+
+
+
+
+pd.set_option('expand_frame_repr', False)
 pd.set_option('display.max_rows', 1000)
 pd.set_option('display.max_columns', 10)
 
@@ -294,41 +336,35 @@ ft_bias_list, pt_bias_list = generate_user_df(full_time=4,
 ft_week_sched_list = generate_from_user_room_weighting(ft_bias_list, lunch_period=True, end_period_meeting_day="Wednesday")
 pt_week_sched_list = generate_from_user_room_weighting(pt_bias_list, drop_half=True)
 
-# # Test prints
-# print("Full-timers: ")
-# for df in ft_list:
-#     print(df)
-#     print()
-#
-# print("Part-timers: ")
-# for df in pt_list:
-#     print(df)
-#     print()
-
 # From the weekly schedules of each user, generate a DF holding all their usual logging events (with respect to biases)
-ft_event_list_list = generate_event_list(ft_week_sched_list, ft_bias_list, num_weeks=2)
-pt_event_list_list = generate_event_list(pt_week_sched_list, pt_bias_list, num_weeks=2)
+ft_event_df_list = generate_event_list(ft_week_sched_list, ft_bias_list, num_weeks=2)
+pt_event_df_list = generate_event_list(pt_week_sched_list, pt_bias_list, num_weeks=2)
+
+# From the list of DFs containing each user's list of events, generate a DF with all the timestamps of each event
+ft_event_log_df = generate_timestamps(ft_event_df_list)
+
 
 pd.set_option('display.max_rows', 1000)
 pd.set_option('display.max_columns', 10)
 
-
 # Print Function
 print_user_type = "ft"
 print_index = 2
+to_print = False
 
-if print_user_type == "ft":
-    bias_list_print = ft_bias_list.iloc[print_index]
-    week_sched_list_print = ft_week_sched_list[print_index]
-    event_list_print = ft_event_list_list[print_index]
-elif print_user_type == "pt":
-    bias_list_print = pt_bias_list.iloc[print_index]
-    week_sched_list_print = pt_week_sched_list[print_index]
-    event_list_print = pt_event_list_list[print_index]
+if to_print:
+    if print_user_type == "ft":
+        bias_list_print = ft_bias_list.iloc[print_index]
+        week_sched_list_print = ft_week_sched_list[print_index]
+        event_list_print = ft_event_df_list[print_index]
+    elif print_user_type == "pt":
+        bias_list_print = pt_bias_list.iloc[print_index]
+        week_sched_list_print = pt_week_sched_list[print_index]
+        event_list_print = pt_event_df_list[print_index]
 
-print("Relevant user: ")
-print(bias_list_print)
-print("User Schedule:")
-print(week_sched_list_print)
-print("User eventlist:")
-print(event_list_print)
+    print("Relevant user: ")
+    print(bias_list_print)
+    print("User Schedule:")
+    print(week_sched_list_print)
+    print("User eventlist:")
+    print(event_list_print)

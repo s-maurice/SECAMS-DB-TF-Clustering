@@ -229,12 +229,13 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
 
         # Add entering and exiting school events, doesn't currently work for part timers
         # School entry event timing
-        if time_list[0] == "Period0":
+        if time_list[0] == "Period0":  # Check if they come in at normal time
             school_entry_time = "Normal_Start"
-        elif time_list[0] == "Period3":
+        elif time_list[0] == "Period3":  # Check if they come in after lunch
             school_entry_time = "Late_Start"
-        else:
-            print("error, start not found, no start appended, first time_List value was: " + time_list[0])
+        else:  # Catch Errors
+            school_entry_time = "Error_Start"
+            print("error, start not found, Error_Start appended, first time_List value was: " + time_list[0])
 
         # School exit event timing
         if time_list[-1] == "End":  # Check if they have after school meeting, if so shift time
@@ -244,7 +245,8 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
         elif time_list[-1] == "Period4":  # Check if they end normally
             school_exit_time = "Normal_End"
         else:  # Catch errors
-            print("error, ending not found, no end appended, final time_list value was: " + time_list[-1])
+            school_exit_time = "Error_End"
+            print("error, ending not found, Error_End appended, final time_list value was: " + time_list[-1])
 
         day_sched_df.loc[-1] = [week, day, "Main Gate", school_entry_time, "In"]  # Enter School, appends to bottom
         day_sched_df.index = day_sched_df.index + 1  # Shifts index by 1

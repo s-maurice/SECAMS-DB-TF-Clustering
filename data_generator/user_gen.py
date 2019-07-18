@@ -76,7 +76,7 @@ def generate_user_df(full_time,
     #   main_room_overlap: Not yet implemented. Whether the 'main rooms' of FT teachers overlap or not.
 
     # NOTE: The 'bias' columns represent 'characteristics' of each user. In particular:
-    #   randomness_bias determines how much variation a user exhibits in their activity
+    #   randomness_bias determines how much variation a user exhibits in their activity; DETERMINES OTHER BIASES
     #   time_offset_bias (-1 to 1) refers to generally how early or late a user comes in (uses normal distribution)
     #   absence_bias (0 to 1) represents the chance that the user is absent.
     df_columns = ['user', 'main_room', 'other_rooms', 'lunch_main_room', 'lunch_other_rooms',
@@ -84,8 +84,8 @@ def generate_user_df(full_time,
                   'randomness_bias', 'time_offset_bias', 'absence_bias']
 
     # Hyperparameters on biases. Note 'time_offset_bias_spread' and 'absence_bias_spread' are generated using np.random.normal().
-    randomness_bias_limit = 0.5      # limit: max value
-    time_offset_bias_spread = 0.3    # spread: standard deviation
+    randomness_bias_limit = 0.8      # limit: max value
+    time_offset_bias_spread = 0.5    # spread: standard deviation
     absence_bias_spread = 0.03       # spread: standard deviation
 
     ft_user_df = pd.DataFrame(columns=df_columns)
@@ -133,7 +133,7 @@ def generate_user_df(full_time,
 
         # Get other biases through a normal distribution. Uses the hyperparameters defined at the start of the method.
         randomness_bias = np.random.random() * randomness_bias_limit
-        time_offset_bias = np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread), -1, 1)
+        time_offset_bias = np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread), -1, 1) * randomness_bias_limit
         absence_bias = np.clip(abs(np.random.normal(loc=0, scale=absence_bias_spread)), 0, 1)
 
         randomness_bias_list.append(randomness_bias)
@@ -170,21 +170,22 @@ def generate_user_df(full_time,
     absence_bias_list = []
 
     for i in range(part_time):
-        # Get rooms for each user
+        # Rooms
         room_count = random.randint(pt_assign_range[0], pt_assign_range[1])     # how many rooms
         rooms = random.sample(non_unique_room_list, room_count)                 # get rooms by sampling from room list
         rooms.sort()
-        other_rooms_list.append(rooms)
 
-        # Get bias for each user
-        # Non-main rooms
+        # Room biases
         other_rooms_bias = np.random.randint(1, 3, size=room_count)  # give a preference of anywhere from 1 to 3
-        other_room_bias_list.append(other_rooms_bias)
 
+        # Other biases
         randomness_bias = np.random.random() * randomness_bias_limit
-        time_offset_bias = np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread), -1, 1)
+        time_offset_bias = np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread), -1, 1) * randomness_bias_limit
         absence_bias = np.clip(abs(np.random.normal(loc=0, scale=absence_bias_spread)), 0, 1)
 
+        # Append to lists
+        other_rooms_list.append(rooms)
+        other_room_bias_list.append(other_rooms_bias)
         randomness_bias_list.append(randomness_bias)
         time_offset_bias_list.append(time_offset_bias)
         absence_bias_list.append(absence_bias)
@@ -271,8 +272,9 @@ def generate_event_list(schedule_df_list, bias_df, num_weeks):
                     user_event_df = user_event_df.append(cur_user_event_day_df)
 
             # Add how early/late each event is as a new column, "Early/Lateness"
-            for index, row in user_event_df.iterrows():
-                user_event_df.loc[index, "Early/Lateness"] = np.clip(np.random.normal(loc=bias_df["time_offset_bias"][user_df_index], scale=bias_df["randomness_bias"][user_df_index]), -1, 1)
+            user_event_df["Early/Lateness"] = np.random.normal(loc=bias_df["time_offset_bias"][user_df_index],
+                                                               scale=bias_df["randomness_bias"][user_df_index],
+                                                               size=len(user_event_df))
 
         user_event_df_list.append(user_event_df)
 

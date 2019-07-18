@@ -233,7 +233,9 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
         else:
             school_exit_time = "End"
 
-        day_sched_df.loc[0] = [week, day, "Main Gate", "Start", "In"]  # Enter School
+        day_sched_df.loc[-1] = [week, day, "Main Gate", "Start", "In"]  # Enter School, appends to bottom
+        day_sched_df.index = day_sched_df.index + 1  # Shifts index by 1
+        day_sched_df.sort_index(inplace=True)  # Sorts so that school entry is at top
         day_sched_df.loc[-1] = [week, day, "Main Gate", school_exit_time, "Out"]  # Exit School
 
         day_sched_df.set_index("Time", drop=True, inplace=True)
@@ -253,7 +255,7 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
 
             # Add how early/late each event is as a new column, "Early/Lateness"
             for index, row in user_event_df.iterrows():
-                user_event_df.loc[index, "Early/Lateness"] = np.clip(np.random.normal(loc=bias_df["time_offset_bias"][user_df_index], scale=bias_df["randomness_bias"][user_df_index]), -1, 1)
+                user_event_df.loc[index, "Early/Lateness"] = np.clip(np.random.normal(loc=bias_df["time_offset_bias"][user_df_index] , scale=bias_df["randomness_bias"][user_df_index]), -1, 1)
 
         user_event_df_list.append(user_event_df)
 
@@ -262,15 +264,15 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
 
 pd.set_option('display.max_rows', 10)
 pd.set_option('display.max_columns', 10)
-ft_sched_df, pt_sched_df = generate_user_df(full_time=4,
-                                            part_time=3,
-                                            ft_assign_range=(3, 4),
-                                            pt_assign_range=(4, 5),
-                                            extra_rooms=2,
-                                            main_bias_multiplier=2)
+ft_bias_list, pt_bias_list = generate_user_df(full_time=4,
+                                              part_time=3,
+                                              ft_assign_range=(3, 4),
+                                              pt_assign_range=(4, 5),
+                                              extra_rooms=2,
+                                              main_bias_multiplier=2)
 
-ft_list = generate_from_user_room_weighting(ft_sched_df, lunch_period=True, end_period_meeting_day="Wednesday")
-pt_list = generate_from_user_room_weighting(pt_sched_df, drop_half=True)
+ft_week_sched_list = generate_from_user_room_weighting(ft_bias_list, lunch_period=True, end_period_meeting_day="Wednesday")
+pt_week_sched_list = generate_from_user_room_weighting(pt_bias_list, drop_half=True)
 
 # # Test prints
 # print("Full-timers: ")
@@ -283,12 +285,15 @@ pt_list = generate_from_user_room_weighting(pt_sched_df, drop_half=True)
 #     print(df)
 #     print()
 
-gay_df_list = generate_event_list(ft_list, 2, ft_sched_df)
+ft_event_list_list = generate_event_list(ft_week_sched_list, 2, ft_bias_list)
+pt_event_list_list = generate_event_list(pt_week_sched_list, 2, pt_bias_list)
 
 pd.set_option('display.max_rows', 1000)
 pd.set_option('display.max_columns', 10)
 
 print("Relevant user: ")
-print(ft_sched_df.iloc[2])
+print(pt_bias_list.iloc[2])
+print("User Schedule:")
+print(pt_week_sched_list[2])
 print("User eventlist:")
-print(gay_df_list[2])
+print(pt_event_list_list[2])

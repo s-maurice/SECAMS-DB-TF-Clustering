@@ -202,7 +202,7 @@ def generate_user_df(full_time,
     return ft_user_df, pt_user_df
 
 
-def generate_event_list(schedule_df_list, num_weeks, bias_df):
+def generate_event_list(schedule_df_list, bias_df, num_weeks):
 
     def generate_day_sched(day_series, day, week):
         day_sched_df = pd.DataFrame(columns=["Week", "Day", "Room", "Time", "Event"])
@@ -224,6 +224,7 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
         day_sched_df['Room'] = room_list
         day_sched_df['Time'] = time_list
         day_sched_df['Event'] = event_list
+        # Set 'Week' and 'Day' columns only after setting other columns.
         day_sched_df['Week'] = week
         day_sched_df['Day'] = day
 
@@ -254,13 +255,14 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
         day_sched_df.set_index("Time", drop=True, inplace=True)
         return day_sched_df
 
+    # Define a list to hold the weekly schedule DFs; one for each user
     user_event_df_list = []
 
     for user_df_index, user_df in enumerate(schedule_df_list):
         # Convert Schedule into list of events
         user_event_df = pd.DataFrame()
         for week in range(num_weeks):
-            for index, row in user_df.iterrows():  # every entry: week - day - room - time - event
+            for index, row in user_df.iterrows():
                 # Check if user is absent before creating and appending the current day to their event list
                 if bias_df["absence_bias"][user_df_index] < np.random.random():
                     cur_user_event_day_df = generate_day_sched(row, index, week)
@@ -268,15 +270,17 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
 
             # Add how early/late each event is as a new column, "Early/Lateness"
             for index, row in user_event_df.iterrows():
-                user_event_df.loc[index, "Early/Lateness"] = np.clip(np.random.normal(loc=bias_df["time_offset_bias"][user_df_index] , scale=bias_df["randomness_bias"][user_df_index]), -1, 1)
+                user_event_df.loc[index, "Early/Lateness"] = np.clip(np.random.normal(loc=bias_df["time_offset_bias"][user_df_index], scale=bias_df["randomness_bias"][user_df_index]), -1, 1)
 
         user_event_df_list.append(user_event_df)
 
     return user_event_df_list
 
 
-pd.set_option('display.max_rows', 10)
+pd.set_option('display.max_rows', 1000)
 pd.set_option('display.max_columns', 10)
+
+# First generate a user DataFrame, creating characteristics of Full and Part-time staff
 ft_bias_list, pt_bias_list = generate_user_df(full_time=4,
                                               part_time=3,
                                               ft_assign_range=(3, 4),
@@ -284,6 +288,7 @@ ft_bias_list, pt_bias_list = generate_user_df(full_time=4,
                                               extra_rooms=2,
                                               main_bias_multiplier=2)
 
+# From the user characteristics, generate a list of DataFrames that hold each user's weekly schedule
 ft_week_sched_list = generate_from_user_room_weighting(ft_bias_list, lunch_period=True, end_period_meeting_day="Wednesday")
 pt_week_sched_list = generate_from_user_room_weighting(pt_bias_list, drop_half=True)
 
@@ -298,15 +303,22 @@ pt_week_sched_list = generate_from_user_room_weighting(pt_bias_list, drop_half=T
 #     print(df)
 #     print()
 
-ft_event_list_list = generate_event_list(ft_week_sched_list, 2, ft_bias_list)
-pt_event_list_list = generate_event_list(pt_week_sched_list, 2, pt_bias_list)
+# From the weekly schedules of each user, generate a DF holding all their usual logging events (with respect to biases)
+ft_event_list_list = generate_event_list(ft_week_sched_list, ft_bias_list, num_weeks=2)
+pt_event_list_list = generate_event_list(pt_week_sched_list, pt_bias_list, num_weeks=2)
 
-pd.set_option('display.max_rows', 1000)
-pd.set_option('display.max_columns', 10)
-
-print("Relevant user: ")
+print("--- Relevant user ---")
 print(pt_bias_list.iloc[2])
-print("User Schedule:")
+print("--- User Schedule ---")
 print(pt_week_sched_list[2])
-print("User eventlist:")
+print("--- User eventlist ---")
 print(pt_event_list_list[2])
+
+print("----------------------")
+
+print("--- Relevant user ---")
+print(ft_bias_list.iloc[2])
+print("--- User Schedule ---")
+print(ft_week_sched_list[2])
+print("--- User eventlist ---")
+print(ft_event_list_list[2])

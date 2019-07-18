@@ -44,13 +44,13 @@ def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False
                 current_user_df.loc[day, "End"] = "M"
         if drop_half:  # Removes before/after lunch randomly, used for part timers
             if bool(random.getrandbits(1)):
-                current_user_df.iloc[:, 3:] = 0
+                current_user_df.iloc[:, 3:] = "O"
             else:
-                current_user_df.iloc[:, :3] = 0
+                current_user_df.iloc[:, :3] = "O"
 
-        # Reorder + fill NAs as 0
+        # Reorder + fill NAs as Os
         current_user_df = current_user_df.reindex(columns=["Period0", "Period1", "Period2", "Lunch", "Period3", "Period4", "End"])
-        current_user_df.fillna(0, inplace=True)
+        current_user_df.fillna("O", inplace=True)
 
         user_df_list.append(current_user_df)  # Appends completed Data Frame to list of Data Frames
     return user_df_list
@@ -196,7 +196,7 @@ def generate_user_df(full_time,
     pt_user_df['time_offset_bias'] = time_offset_bias_list
     pt_user_df['absence_bias'] = absence_bias_list
 
-    # Turn all NaNs into 0s
+    # Turn all NaN biases into 0s
     pt_user_df.fillna(0, inplace=True)
 
     return ft_user_df, pt_user_df
@@ -211,7 +211,7 @@ def generate_event_list(schedule_df_list, bias_df, num_weeks):
         time_list = []
         event_list = []
         for i in range(len(day_series)):
-            if day_series[i] != 0:
+            if day_series[i] != "O":
                 if (i - 1 < 0) or (i - 1 >= 0 and day_series.iloc[i-1] != day_series.iloc[i]):
                     event_list.append('In')
                     room_list.append(day_series[i])

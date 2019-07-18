@@ -242,7 +242,7 @@ def generate_event_list(schedule_df_list, bias_df, num_weeks):
             school_exit_time = "Late_End"
         elif time_list[-1] == "Period2":  # Check if they end school at lunch
             school_exit_time = "Early_End"
-        elif time_list[-1] == "Period4":  # Check if they end normallu
+        elif time_list[-1] == "Period4":  # Check if they end normally
             school_exit_time = "Normal_End"
         else:  # Catch errors
             print("error, ending not found, no end appended, final time_list value was: " + time_list[-1])
@@ -307,18 +307,26 @@ pt_week_sched_list = generate_from_user_room_weighting(pt_bias_list, drop_half=T
 ft_event_list_list = generate_event_list(ft_week_sched_list, ft_bias_list, num_weeks=2)
 pt_event_list_list = generate_event_list(pt_week_sched_list, pt_bias_list, num_weeks=2)
 
-print("--- Relevant user ---")
-print(pt_bias_list.iloc[2])
-print("--- User Schedule ---")
-print(pt_week_sched_list[2])
-print("--- User eventlist ---")
-print(pt_event_list_list[2])
+pd.set_option('display.max_rows', 1000)
+pd.set_option('display.max_columns', 10)
 
-print("----------------------")
 
-print("--- Relevant user ---")
-print(ft_bias_list.iloc[2])
-print("--- User Schedule ---")
-print(ft_week_sched_list[2])
-print("--- User eventlist ---")
-print(ft_event_list_list[2])
+# Print Function
+print_user_type = "ft"
+print_index = 2
+
+if print_user_type == "ft":
+    bias_list_print = ft_bias_list.iloc[print_index]
+    week_sched_list_print = ft_week_sched_list[print_index]
+    event_list_print = ft_event_list_list[print_index]
+elif print_user_type == "pt":
+    bias_list_print = pt_bias_list.iloc[print_index]
+    week_sched_list_print = pt_week_sched_list[print_index]
+    event_list_print = pt_event_list_list[print_index]
+
+print("Relevant user: ")
+print(bias_list_print)
+print("User Schedule:")
+print(week_sched_list_print)
+print("User eventlist:")
+print(event_list_print)

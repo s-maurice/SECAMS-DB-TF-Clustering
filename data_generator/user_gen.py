@@ -50,7 +50,7 @@ def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False
 
         # Reorder + fill NAs as 0
         current_user_df = current_user_df.reindex(columns=["Period0", "Period1", "Period2", "Lunch", "Period3", "Period4", "End"])
-        current_user_df.fillna("0", inplace=True)
+        current_user_df.fillna(0, inplace=True)
 
         user_df_list.append(current_user_df)  # Appends completed Data Frame to list of Data Frames
     return user_df_list
@@ -211,7 +211,7 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
         time_list = []
         event_list = []
         for i in range(len(day_series)):
-            if day_series[i] != "0":
+            if day_series[i] != 0:
                 if (i - 1 < 0) or (i - 1 >= 0 and day_series.iloc[i-1] != day_series.iloc[i]):
                     event_list.append('In')
                     room_list.append(day_series[i])
@@ -228,12 +228,25 @@ def generate_event_list(schedule_df_list, num_weeks, bias_df):
         day_sched_df['Day'] = day
 
         # Add entering and exiting school events, doesn't currently work for part timers
-        if time_list[-1] == "End":  # Check if they have after school meeting, if so shift time
-            school_exit_time = "Late End"
+        # School entry event timing
+        if time_list[0] == "Period0":
+            school_entry_time = "Normal_Start"
+        elif time_list[0] == "Period3":
+            school_entry_time = "Late_Start"
         else:
-            school_exit_time = "End"
+            print("error, start not found, no start appended, first time_List value was: " + time_list[0])
 
-        day_sched_df.loc[-1] = [week, day, "Main Gate", "Start", "In"]  # Enter School, appends to bottom
+        # School exit event timing
+        if time_list[-1] == "End":  # Check if they have after school meeting, if so shift time
+            school_exit_time = "Late_End"
+        elif time_list[-1] == "Period2":  # Check if they end school at lunch
+            school_exit_time = "Early_End"
+        elif time_list[-1] == "Period4":  # Check if they end normallu
+            school_exit_time = "Normal_End"
+        else:  # Catch errors
+            print("error, ending not found, no end appended, final time_list value was: " + time_list[-1])
+
+        day_sched_df.loc[-1] = [week, day, "Main Gate", school_entry_time, "In"]  # Enter School, appends to bottom
         day_sched_df.index = day_sched_df.index + 1  # Shifts index by 1
         day_sched_df.sort_index(inplace=True)  # Sorts so that school entry is at top
         day_sched_df.loc[-1] = [week, day, "Main Gate", school_exit_time, "Out"]  # Exit School

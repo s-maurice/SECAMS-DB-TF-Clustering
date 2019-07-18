@@ -306,7 +306,7 @@ def generate_timestamps(user_event_df_list):  # Generates timestamps and event_l
     complete_event_df.replace({"Timestamps": period_to_timestamp_dict}, inplace=True)  # Applies dict
     complete_event_df.sort_index(inplace=True)  # Groups by Time Period (not needed)
 
-    # Convert Early/Lateness column into timedelta minutes
+    # Convert Early/Lateness column into timedelta, 30min limit for now, param TODO
     complete_event_df["Early/Lateness"] = complete_event_df["Early/Lateness"].apply(lambda x: datetime.timedelta(minutes=(x * 30)))
 
     print(type(complete_event_df["Early/Lateness"].iloc[5]))
@@ -314,7 +314,7 @@ def generate_timestamps(user_event_df_list):  # Generates timestamps and event_l
     print(complete_event_df)
 
     # Add timedelta to Timestamps
-    def create_timestamps(row): # TODO
+    def create_timestamps(row):  # TODO
         print(row)
 
     # Applies created func

@@ -81,14 +81,29 @@ def generate_user_df(full_time,
     #   randomness_bias determines how much variation a user exhibits in their activity; DETERMINES OTHER BIASES
     #   time_offset_bias (-1 to 1) refers to generally how early or late a user comes in (uses normal distribution)
     #   absence_bias (0 to 1) represents the chance that the user is absent.
+    #   mistake_bias (0 to 1) represents the chance that a user makes a mistake in entry (wrong in/out, buddy punched)
     df_columns = ['user', 'main_room', 'other_rooms', 'lunch_main_room', 'lunch_other_rooms',
                   'main_room_bias', 'other_room_bias', 'lunch_main_room_bias', 'lunch_other_room_bias',
-                  'randomness_bias', 'time_offset_bias', 'absence_bias']
+                  'randomness_bias', 'time_offset_bias', 'absence_bias', 'mistake_bias']
 
-    # Hyperparameters on biases. Note 'time_offset_bias_spread' and 'absence_bias_spread' are generated using np.random.normal().
-    randomness_bias_limit = 0.8      # limit: max value
-    time_offset_bias_spread = 0.5    # spread: standard deviation
-    absence_bias_spread = 0.03       # spread: standard deviation
+    # Hyperparameters on biases. Time_offset changes the centre of the early/late distribution, when calling np.random.normal().
+    # 'Flaw' biases (absences, mistakes) are generated using (1 - np.random.power(2)) * limit; ensures that most values are generally lower.
+    randomness_bias_limit = 0.8
+    time_offset_bias_spread = 0.5
+    absence_bias_limit = 0.05
+    mistake_bias_limit = 0.05
+
+    def gen_randomness_bias(size):
+        return np.random.random(size) * randomness_bias_limit
+
+    def gen_time_offset_bias(size):
+        return np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread, size=size), -1, 1) * randomness_bias_limit
+
+    def gen_absence_bias(size):
+        return (1 - np.random.power(2, size)) * absence_bias_limit
+
+    def gen_mistake_bias(size):
+        return (1 - np.random.power(2, size)) * mistake_bias_limit
 
     ft_user_df = pd.DataFrame(columns=df_columns)
     pt_user_df = pd.DataFrame(columns=df_columns)
@@ -111,13 +126,12 @@ def generate_user_df(full_time,
     # Create a list of non_unique_rooms; randomly assign a set of them to each full_time user
     # Non-unique rooms have an offset of full_time;
     # e.g. with 5 FT teachers, unique rooms go up to C4, so non-unique begins at C5
-    non_unique_room_list = ["C" + str(i) for i in range(full_time, full_time + non_unique_rooms)]  # ['C4', 'C5', ...]
+    non_unique_room_list = ["C" + str(i) for i in range(full_time, full_time + non_unique_rooms)] # ['C4', 'C5', ...]
+
+    # Create one list for each column; this holds their values. Doing so is much better than
     other_rooms_list = []
     other_room_bias_list = []
     main_room_bias_list = []
-    randomness_bias_list = []
-    time_offset_bias_list = []
-    absence_bias_list = []
 
     for i in range(full_time):
         # Get rooms for each user
@@ -126,31 +140,24 @@ def generate_user_df(full_time,
         rooms.sort()
         other_rooms_list.append(rooms)
 
-        # Get bias for each user
-        # Non-main rooms
+        # Non-main room biases
         other_rooms_bias = np.random.randint(1, 3, size=room_count)  # give a preference of anywhere from 1 to 3
         other_room_bias_list.append(other_rooms_bias)
 
-        # Main room: Sum of other biases * main_bias_multiplier
+        # Main room bias: Sum of other biases * main_bias_multiplier
         main_room_bias = sum(other_rooms_bias) * main_bias_multiplier
         main_room_bias_list.append(main_room_bias)
 
-        # Get other biases through a normal distribution. Uses the hyperparameters defined at the start of the method.
-        randomness_bias = np.random.random() * randomness_bias_limit
-        time_offset_bias = np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread), -1, 1) * randomness_bias_limit
-        absence_bias = np.clip(abs(np.random.normal(loc=0, scale=absence_bias_spread)), 0, 1)
-
-        randomness_bias_list.append(randomness_bias)
-        time_offset_bias_list.append(time_offset_bias)
-        absence_bias_list.append(absence_bias)
-
+    # Assign the lists defined above
     ft_user_df['other_rooms'] = other_rooms_list
     ft_user_df['other_room_bias'] = other_room_bias_list
     ft_user_df['main_room_bias'] = main_room_bias_list
 
-    ft_user_df['randomness_bias'] = randomness_bias_list
-    ft_user_df['time_offset_bias'] = time_offset_bias_list
-    ft_user_df['absence_bias'] = absence_bias_list
+    # Generate other user biases
+    ft_user_df['randomness_bias'] = gen_randomness_bias(size=full_time)
+    ft_user_df['time_offset_bias'] = gen_time_offset_bias(size=full_time)
+    ft_user_df['absence_bias'] = gen_absence_bias(size=full_time)
+    ft_user_df['mistake_bias'] = gen_mistake_bias(size=full_time)
 
     # lunch_main_room: lunch room (L); set bias to lunch main room bias
     ft_user_df['lunch_main_room'] = "L"
@@ -169,37 +176,27 @@ def generate_user_df(full_time,
     # For other_rooms, take the list of non_unique_rooms; randomly assign a set of them to each part_time user
     other_rooms_list = []
     other_room_bias_list = []
-    randomness_bias_list = []
-    time_offset_bias_list = []
-    absence_bias_list = []
 
     for i in range(part_time):
-        # Rooms
+        # Get rooms for each user
         room_count = random.randint(pt_assign_range[0], pt_assign_range[1])     # how many rooms
         rooms = random.sample(non_unique_room_list, room_count)                 # get rooms by sampling from room list
         rooms.sort()
-
-        # Room biases
-        other_rooms_bias = np.random.randint(1, 3, size=room_count)  # give a preference of anywhere from 1 to 3
-
-        # Other biases
-        randomness_bias = np.random.random() * randomness_bias_limit
-        time_offset_bias = np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread), -1, 1) * randomness_bias_limit
-        absence_bias = np.clip(abs(np.random.normal(loc=0, scale=absence_bias_spread)), 0, 1)
-
-        # Append to lists
         other_rooms_list.append(rooms)
-        other_room_bias_list.append(other_rooms_bias)
-        randomness_bias_list.append(randomness_bias)
-        time_offset_bias_list.append(time_offset_bias)
-        absence_bias_list.append(absence_bias)
 
+        # Other room biases
+        other_rooms_bias = np.random.randint(1, 3, size=room_count)  # give a preference of anywhere from 1 to 3
+        other_room_bias_list.append(other_rooms_bias)
+
+    # Assign the lists defined above
     pt_user_df['other_rooms'] = other_rooms_list
     pt_user_df['other_room_bias'] = other_room_bias_list
 
-    pt_user_df['randomness_bias'] = randomness_bias_list
-    pt_user_df['time_offset_bias'] = time_offset_bias_list
-    pt_user_df['absence_bias'] = absence_bias_list
+    # Generate other user biases
+    pt_user_df['randomness_bias'] = gen_randomness_bias(size=part_time)
+    pt_user_df['time_offset_bias'] = gen_time_offset_bias(size=part_time)
+    pt_user_df['absence_bias'] = gen_absence_bias(size=part_time)
+    pt_user_df['mistake_bias'] = gen_mistake_bias(size=part_time)
 
     # Turn all NaN biases into 0s
     pt_user_df.fillna(0, inplace=True)

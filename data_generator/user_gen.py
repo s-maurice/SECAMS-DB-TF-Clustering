@@ -353,13 +353,13 @@ pt_event_df_list = generate_event_list(pt_week_sched_list, pt_bias_list, num_wee
 
 # From the list of DFs containing each user's list of events, generate a DF with all the timestamps of each event
 ft_event_log_df = generate_timestamps(ft_event_df_list, datetime.datetime(2019, 7, 1))
-
+pt_event_log_df = generate_timestamps(ft_event_df_list, datetime.datetime(2019, 7, 1))
 
 pd.set_option('display.max_rows', 1000)
 pd.set_option('display.max_columns', 10)
 
 # Print Function
-print_user_type = "ft"
+print_user_type = "pt"
 print_index = 2
 to_print = True
 
@@ -368,10 +368,12 @@ if to_print:
         bias_list_print = ft_bias_list.iloc[print_index]
         week_sched_list_print = ft_week_sched_list[print_index]
         event_list_print = ft_event_df_list[print_index]
+        event_log_df = ft_event_log_df
     elif print_user_type == "pt":
         bias_list_print = pt_bias_list.iloc[print_index]
         week_sched_list_print = pt_week_sched_list[print_index]
         event_list_print = pt_event_df_list[print_index]
+        event_log_df = pt_event_log_df
 
     print("Relevant user: ")
     print(bias_list_print)
@@ -379,18 +381,19 @@ if to_print:
     print(week_sched_list_print)
     print("User eventlist:")
     print(event_list_print)
-    print(ft_event_log_df)
+    print(event_log_df)
 
 
 # Debugging
-for userid in ft_event_log_df['UserID'].unique():
-    user_df = ft_event_log_df[ft_event_log_df['UserID'] == userid]
-    user_df.reset_index(drop=True, inplace=True)
-    user_df['Time_delta'] = datetime.timedelta(seconds=0)
+def to_timedeltas(ft_event_log_df):
+    for userid in ft_event_log_df['UserID'].unique():
+        user_df = ft_event_log_df[ft_event_log_df['UserID'] == userid]
+        user_df.reset_index(drop=True, inplace=True)
+        user_df['Time_delta'] = datetime.timedelta(seconds=0)
 
-    for index, row in user_df.iterrows():
-        if index >= 1:
-            user_df['Time_delta'][index] = row['Timestamps'] - user_df['Timestamps'][index-1]
+        for index, row in user_df.iterrows():
+            if index >= 1:
+                user_df['Time_delta'][index] = row['Timestamps'] - user_df['Timestamps'][index-1]
+        print(user_df)
 
-    print(user_df)
-
+to_timedeltas(pt_event_log_df)

@@ -88,22 +88,22 @@ def generate_user_df(full_time,
 
     # Hyperparameters on biases. Time_offset changes the centre of the early/late distribution, when calling np.random.normal().
     # 'Flaw' biases (absences, mistakes) are generated using (1 - np.random.power(2)) * limit; ensures that most values are generally lower.
-    randomness_bias_limit = 0.8
-    time_offset_bias_spread = 0.5
-    absence_bias_limit = 0.05
-    mistake_bias_limit = 0.05
+    randomness_bias_limit = 0.5
+    time_offset_bias_spread = 0.25
+    absence_bias_limit = 0.2
+    mistake_bias_limit = 0.2
 
     def gen_randomness_bias(size):
-        return np.random.random(size) * randomness_bias_limit
+        return (1 - np.random.power(4, size)) * randomness_bias_limit
 
     def gen_time_offset_bias(size):
         return np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread, size=size), -1, 1) * randomness_bias_limit
 
     def gen_absence_bias(size):
-        return (1 - np.random.power(2, size)) * absence_bias_limit
+        return (1 - np.random.power(8, size)) * absence_bias_limit
 
     def gen_mistake_bias(size):
-        return (1 - np.random.power(2, size)) * mistake_bias_limit
+        return (1 - np.random.power(8, size)) * mistake_bias_limit
 
     ft_user_df = pd.DataFrame(columns=df_columns)
     pt_user_df = pd.DataFrame(columns=df_columns)
@@ -277,8 +277,9 @@ def generate_event_list(schedule_df_list, bias_df, num_weeks):
                                                                scale=bias_df["randomness_bias"][user_df_index],
                                                                size=len(user_event_df))
 
-            # Add user_df_index to column for easy identification of user_ids
-            user_event_df["UserID"] = user_df_index
+        # Add user_df_index to column for easy identification of user_ids
+        user_event_df["UserID"] = user_df_index
+
         user_event_df_list.append(user_event_df)
 
     return user_event_df_list
@@ -295,29 +296,38 @@ def generate_timestamps(user_event_df_list, start_datetime):  # Generates timest
                                 "Late_Start": datetime.timedelta(hours=12, minutes=30),
                                 "Period3": datetime.timedelta(hours=13),
                                 "Period4": datetime.timedelta(hours=14),
-                                "Normal_End": datetime.timedelta(hours=15),
-                                "Late_End": datetime.timedelta(hours=16)}
+                                "Normal_End": datetime.timedelta(hours=14, minutes=10),
+                                "Late_End": datetime.timedelta(hours=15, minutes=10)}
     complete_event_df = pd.concat(user_event_df_list)  # First combine all the DFs from the list
 
-    complete_event_df["Timestamps"] = complete_event_df.index  # Copies index column (Time/Period) to new column
-    complete_event_df.replace({"Timestamps": period_to_timestamp_dict}, inplace=True)  # Applies dict
-    complete_event_df.sort_index(inplace=True)  # Groups by Time Period (not needed)
+    complete_event_df.index = complete_event_df.index.map(period_to_timestamp_dict)  # Applies dict
 
-    # Convert Early/Lateness column into timedelta, 1 = 30 minutes for now
-    complete_event_df["Early/Lateness"] = complete_event_df["Early/Lateness"].apply(lambda x: datetime.timedelta(minutes=(x * 30)))
+    # # Convert Early/Lateness column into timedelta, 1 = 30 minutes for now
+    # complete_event_df["Early/Lateness"] = complete_event_df["Early/Lateness"].apply(lambda x: datetime.timedelta(minutes=(x * 30)))
 
     # Convert to complete datetime timestamp
     def create_complete_datetime_timestamps(row):
         week_day_list = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]  # Create a list of weeks for index lookup
-        current_timestamp = start_datetime + row["Timestamps"]  # Add the start_timestamp offset
+        current_timestamp = start_datetime + row.name  # Add the start_timestamp offset
         current_timestamp += datetime.timedelta(weeks=row["Week"], days=week_day_list.index(row["Day"]))  # Add the week and day timedelta
-        current_timestamp += row["Early/Lateness"]
+        current_timestamp += datetime.timedelta(minutes=row["Early/Lateness"] * 30)
+
+        # if 'OUT' event or meeting event, add 50 minutes
+        if row["Event"] == "Out":
+            current_timestamp += datetime.timedelta(minutes=50)
+        if row["Room"] == "M":
+            current_timestamp += datetime.timedelta(minutes=50)
+
         return current_timestamp
 
     # Applies created func
-    complete_event_df["Timestamps"] = complete_event_df[["Timestamps", "Day", "Week", "Early/Lateness"]].apply(create_complete_datetime_timestamps, axis=1)
-    print(complete_event_df)
+    complete_event_df["Timestamps"] = complete_event_df[["Day", "Week", "Early/Lateness", "Event", "Room"]].apply(create_complete_datetime_timestamps, axis=1)
 
+    # Drop other time columns
+    complete_event_df.drop(["Week", "Day", "Early/Lateness"], axis=1, inplace=True)
+    complete_event_df.reset_index(drop=True, inplace=True)
+
+    return complete_event_df
 
 
 
@@ -351,7 +361,7 @@ pd.set_option('display.max_columns', 10)
 # Print Function
 print_user_type = "ft"
 print_index = 2
-to_print = False
+to_print = True
 
 if to_print:
     if print_user_type == "ft":
@@ -369,3 +379,18 @@ if to_print:
     print(week_sched_list_print)
     print("User eventlist:")
     print(event_list_print)
+    print(ft_event_log_df)
+
+
+# Debugging
+for userid in ft_event_log_df['UserID'].unique():
+    user_df = ft_event_log_df[ft_event_log_df['UserID'] == userid]
+    user_df.reset_index(drop=True, inplace=True)
+    user_df['Time_delta'] = datetime.timedelta(seconds=0)
+
+    for index, row in user_df.iterrows():
+        if index >= 1:
+            user_df['Time_delta'][index] = row['Timestamps'] - user_df['Timestamps'][index-1]
+
+    print(user_df)
+

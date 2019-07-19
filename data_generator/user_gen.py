@@ -287,38 +287,38 @@ def generate_event_list(schedule_df_list, bias_df, num_weeks):
     return user_event_df_list
 
 
-def generate_timestamps(user_event_df_list):  # Generates timestamps and event_logs from the list of user_event_dfs
+def generate_timestamps(user_event_df_list, start_datetime):  # Generates timestamps and event_logs from the list of user_event_dfs
     # Create dict for period to datetime lookup
-    period_to_timestamp_dict = {"Normal_Start": datetime.time(8, 30),
-                                "Period0": datetime.time(9),
-                                "Period1": datetime.time(10),
-                                "Period2": datetime.time(11),
-                                "Early_End": datetime.time(11, 30),
-                                "Lunch": datetime.time(12),
-                                "Late_Start": datetime.time(12, 30),
-                                "Period3": datetime.time(13),
-                                "Period4": datetime.time(14),
-                                "Normal_End": datetime.time(15),
-                                "Late_End": datetime.time(16)}
+    period_to_timestamp_dict = {"Normal_Start": datetime.timedelta(hours=8, minutes=30),
+                                "Period0": datetime.timedelta(hours=9),
+                                "Period1": datetime.timedelta(hours=10),
+                                "Period2": datetime.timedelta(hours=11),
+                                "Early_End": datetime.timedelta(hours=11, minutes=30),
+                                "Lunch": datetime.timedelta(hours=12),
+                                "Late_Start": datetime.timedelta(hours=12, minutes=30),
+                                "Period3": datetime.timedelta(hours=13),
+                                "Period4": datetime.timedelta(hours=14),
+                                "Normal_End": datetime.timedelta(hours=15),
+                                "Late_End": datetime.timedelta(hours=16)}
     complete_event_df = pd.concat(user_event_df_list)  # First combine all the DFs from the list
 
     complete_event_df["Timestamps"] = complete_event_df.index  # Copies index column (Time/Period) to new column
     complete_event_df.replace({"Timestamps": period_to_timestamp_dict}, inplace=True)  # Applies dict
     complete_event_df.sort_index(inplace=True)  # Groups by Time Period (not needed)
 
-    # Convert Early/Lateness column into timedelta, 30min limit for now, param TODO
+    # Convert Early/Lateness column into timedelta, 1 = 30 minutes for now
     complete_event_df["Early/Lateness"] = complete_event_df["Early/Lateness"].apply(lambda x: datetime.timedelta(minutes=(x * 30)))
 
-    print(type(complete_event_df["Early/Lateness"].iloc[5]))
-    print(type(complete_event_df["Timestamps"].iloc[5]))
-    print(complete_event_df)
-
-    # Add timedelta to Timestamps
-    def create_timestamps(row):  # TODO
-        print(row)
+    # Convert to complete datetime timestamp
+    def create_complete_datetime_timestamps(row):
+        week_day_list = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]  # Create a list of weeks for index lookup
+        current_timestamp = start_datetime + row["Timestamps"]  # Add the start_timestamp offset
+        current_timestamp += datetime.timedelta(weeks=row["Week"], days=week_day_list.index(row["Day"]))  # Add the week and day timedelta
+        return current_timestamp
 
     # Applies created func
-    complete_event_df["Timestamps"] = complete_event_df[["Day", "Week", "Early/Lateness", "Timestamps"]].apply(create_timestamps, axis=1)
+    complete_event_df["Timestamps"] = complete_event_df[["Timestamps", "Day", "Week"]].apply(create_complete_datetime_timestamps, axis=1)
+    print(complete_event_df)
 
 
 
@@ -344,7 +344,7 @@ ft_event_df_list = generate_event_list(ft_week_sched_list, ft_bias_list, num_wee
 pt_event_df_list = generate_event_list(pt_week_sched_list, pt_bias_list, num_weeks=2)
 
 # From the list of DFs containing each user's list of events, generate a DF with all the timestamps of each event
-ft_event_log_df = generate_timestamps(ft_event_df_list)
+ft_event_log_df = generate_timestamps(ft_event_df_list, datetime.datetime(2019, 7, 1))
 
 
 pd.set_option('display.max_rows', 1000)

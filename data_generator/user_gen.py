@@ -314,10 +314,11 @@ def generate_timestamps(user_event_df_list, start_datetime):  # Generates timest
         week_day_list = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]  # Create a list of weeks for index lookup
         current_timestamp = start_datetime + row["Timestamps"]  # Add the start_timestamp offset
         current_timestamp += datetime.timedelta(weeks=row["Week"], days=week_day_list.index(row["Day"]))  # Add the week and day timedelta
+        current_timestamp += row["Early/Lateness"]
         return current_timestamp
 
     # Applies created func
-    complete_event_df["Timestamps"] = complete_event_df[["Timestamps", "Day", "Week"]].apply(create_complete_datetime_timestamps, axis=1)
+    complete_event_df["Timestamps"] = complete_event_df[["Timestamps", "Day", "Week", "Early/Lateness"]].apply(create_complete_datetime_timestamps, axis=1)
     print(complete_event_df)
 
 

@@ -3,6 +3,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import random
+import scipy
 
 
 def generate_from_user_room_weighting(full_time_weighting_df, lunch_period=False, end_period_meeting_day="", drop_half=False):
@@ -94,10 +95,15 @@ def generate_user_df(full_time,
     mistake_bias_limit = 0.2
 
     def gen_randomness_bias(size):
-        return (1 - np.random.power(4, size)) * randomness_bias_limit
+        return (1 - np.random.power(2, size)) * randomness_bias_limit
 
     def gen_time_offset_bias(size):
         return np.clip(np.random.normal(loc=0, scale=time_offset_bias_spread, size=size), -1, 1) * randomness_bias_limit
+
+    def gen_time_offset_bias_alt(lower, upper, loc, std, size):
+        X = scipy.stats.truncnorm((lower - loc) / std, (upper - loc) / std, loc=loc, scale=std)
+        points = X.rvs(size)
+        return points
 
     def gen_absence_bias(size):
         return (1 - np.random.power(8, size)) * absence_bias_limit
@@ -312,6 +318,8 @@ def generate_timestamps(user_event_df_list, start_datetime):  # Generates timest
         current_timestamp += datetime.timedelta(weeks=row["Week"], days=week_day_list.index(row["Day"]))  # Add the week and day timedelta
         current_timestamp += datetime.timedelta(minutes=row["Early/Lateness"] * 30)
 
+
+
         # if 'OUT' event or meeting event, add 50 minutes
         if row["Event"] == "Out":
             current_timestamp += datetime.timedelta(minutes=50)
@@ -359,8 +367,8 @@ pd.set_option('display.max_rows', 1000)
 pd.set_option('display.max_columns', 10)
 
 # Print Function
-print_user_type = "pt"
-print_index = 2
+print_user_type = "ft"
+print_index = slice(0,-1)
 to_print = True
 
 if to_print:
@@ -396,4 +404,4 @@ def to_timedeltas(ft_event_log_df):
                 user_df['Time_delta'][index] = row['Timestamps'] - user_df['Timestamps'][index-1]
         print(user_df)
 
-to_timedeltas(pt_event_log_df)
+to_timedeltas(ft_event_log_df)

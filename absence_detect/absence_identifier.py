@@ -39,7 +39,7 @@ def main():
 
     absence_df['Day'] = in_days * len(absence_users)
     absence_df['Weekday'] = absence_df['Day'].apply(lambda x: x.weekday() < 5)
-    absence_df.reset_index(drop=True)
+    # absence_df.reset_index(drop=True, inplace=True)
     print(absence_df)
     absence_df.to_csv("absence_df.csv")
 

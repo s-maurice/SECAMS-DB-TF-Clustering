@@ -39,7 +39,31 @@ def create_input_function(features, targets, batch_size=1, num_epochs=None, shuf
     return features, labels
 
 
-def train_model()
+# Hard-code feature columns for now
+def feature_columns(df):
+
+    feature_column_list = []
+
+    feature_column_list.append(tf.feature_column.indicator_column(
+        categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="USERID", vocabulary_list=df["USERID"].unique())))
+
+    feature_column_list.append(tf.feature_column.indicator_column(
+        categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="Present", vocabulary_list=['True', 'False'])))
+
+    feature_column_list.append(tf.feature_column.indicator_column(
+        categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="Day_of_week", vocabulary_list=df["Day_of_week"].unique())))
+
+    feature_column_list.append(tf.feature_column.indicator_column(
+        categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="Day_of_month", vocabulary_list=df["Day_of_month"].unique())))
+
+    feature_column_list.append(tf.feature_column.indicator_column(
+        categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="Month_of_year", vocabulary_list=df["Month_of_year"].unique())))
+
+    return feature_column_list
+
+
+def train_model(train_features, train_targets, test_features, test_targets, steps, batch_size):
+    # TODO make train_model()
 
 
 def main():
@@ -57,7 +81,6 @@ def main():
     train_targets = pp_targets(df_train)
     test_targets = pp_targets(df_test)
 
-    train_if = create_input_function(train_features, train_targets, batch_size)
 
     print(train_features)
     print(train_targets)

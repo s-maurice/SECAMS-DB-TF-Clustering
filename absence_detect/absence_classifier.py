@@ -4,6 +4,8 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow import data
+import os
+import shutil
 
 
 def pp_feature(df):
@@ -40,7 +42,7 @@ def create_input_function(features, targets, batch_size=1, num_epochs=None, shuf
 
 
 # Hard-code feature columns for now
-def feature_columns(df):
+def create_feature_columns(df):
 
     feature_column_list = []
 
@@ -62,11 +64,55 @@ def feature_columns(df):
     return feature_column_list
 
 
-def train_model(train_features, train_targets, test_features, test_targets, steps, batch_size):
-    # TODO make train_model()
+def train_model(train_features, train_targets, test_features, test_targets, learning_rate, steps, batch_size, hidden_units, model_dir):
+    feature_columns = create_feature_columns(train_features)
+    label_vocab_list = train_targets['Reason'].unique()
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+
+    # Create the DNN
+    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns, 
+                                            hidden_units=hidden_units,
+                                            optimizer=optimizer,
+                                            label_vocabulary=label_vocab_list,
+                                            num_classes=len(label_vocab_list), 
+                                            model_dir=model_dir,
+                                            config=tf.estimator.RunConfig().replace(save_summary_steps=10))
+    
+    # Input functions
+    train_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, shuffle=True)
+    
+    predict_train_fn = lambda: create_input_function(train_features, train_targets, batch_size=1, num_epochs=1)
+    predict_test_fn = lambda: create_input_function(test_features, test_targets, batch_size=1, num_epochs=1)
+
+    periods = 10  # Training periods
+    steps_per_period = steps // 10
+
+    for period in range(periods):
+        classifier.train(input_fn=train_fn, steps=steps)
+
+        classifier.evaluate(predict_train_fn, name="Train")
+        classifier.evaluate(predict_test_fn, name="Test")
+
+    return classifier
+
+
+def predict_model(classifier, features, targets):
+    predict_input_fn = create_input_function(features, targets, batch_size=1, num_epochs=1)
+
+    predict_results = classifier.predict(predict_input_fn, predict_keys="probabilities")
+
+    print(predict_results.get("probabilities"))
 
 
 def main():
+    # defines and deletes the 'tmp' file if exists (for TensorBoard)
+    model_dir_path = "tmp/tf"
+    try:
+        if os.path.exists(model_dir_path) and os.path.isdir(model_dir_path):
+            shutil.rmtree(model_dir_path)
+    except FileNotFoundError:
+        print('Error while attempting to delete directory ' + model_dir_path)
+
     raw_df = pd.read_csv("reason_df.csv")
     raw_df['Day'] = pd.to_datetime(raw_df['Day'])
     raw_df = raw_df.reindex(np.random.permutation(raw_df.index))
@@ -81,9 +127,17 @@ def main():
     train_targets = pp_targets(df_train)
     test_targets = pp_targets(df_test)
 
+    classifier = train_model(train_features=train_features,
+                             train_targets=train_targets,
+                             test_features=test_features,
+                             test_targets=test_targets,
+                             learning_rate=0.0003,
+                             steps=1000,
+                             batch_size=1,
+                             hidden_units=[5, 1],
+                             model_dir=model_dir_path)
 
-    print(train_features)
-    print(train_targets)
+    predict_model(classifier, test_targets, test_targets)
 
 
 main()

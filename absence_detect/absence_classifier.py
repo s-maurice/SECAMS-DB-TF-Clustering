@@ -53,8 +53,8 @@ def create_feature_columns(df):
 
     feature_column_list = []
 
-    feature_column_list.append(tf.feature_column.indicator_column(
-        categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="USERID", vocabulary_list=df["USERID"].unique())))
+    # feature_column_list.append(tf.feature_column.indicator_column(
+    #     categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="USERID", vocabulary_list=df["USERID"].unique())))
 
     feature_column_list.append(tf.feature_column.indicator_column(
         categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="Present", vocabulary_list=['True', 'False'])))
@@ -71,19 +71,18 @@ def create_feature_columns(df):
     return feature_column_list
 
 
-def train_model(train_features, train_targets, test_features, test_targets, learning_rate, steps, batch_size, hidden_units, model_dir):
+def train_model(train_features, train_targets, test_features, test_targets, learning_rate, steps, batch_size, model_dir):
     feature_columns = create_feature_columns(train_features)
     label_vocab_list = train_targets['Reason'].unique().tolist()
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
 
     # Create the DNN
-    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns, 
-                                            hidden_units=hidden_units,
-                                            optimizer=optimizer,
-                                            label_vocabulary=label_vocab_list,
-                                            n_classes=len(label_vocab_list),
-                                            model_dir=model_dir,
-                                            config=tf.estimator.RunConfig().replace(save_summary_steps=10))
+    classifier = tf.estimator.LinearClassifier(feature_columns=feature_columns,
+                                               optimizer=optimizer,
+                                               label_vocabulary=label_vocab_list,
+                                               n_classes=len(label_vocab_list),
+                                               model_dir=model_dir,
+                                               config=tf.estimator.RunConfig().replace(save_summary_steps=10))
     
     # Input functions
     train_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, shuffle=True)
@@ -119,6 +118,23 @@ def predict_model(classifier, features, targets):
     predict_results = classifier.predict(predict_input_fn, predict_keys="probabilities")
 
     print(predict_results.get("probabilities"))
+    return predict_results
+
+
+def test_result_plotter(result_df, num):
+    result_df = result_df.sample(frac=1).reset_index(drop=True)
+    results_to_plot = result_df.head(num)
+    # print(results_to_plot)
+
+    # Get highest probability predicted and lock all figures's y axis to that
+    max_value = results_to_plot.iloc[[0, -1]].max()
+    max_value = max_value[0:-1].max()
+
+    fig, axes = plt.subplots(nrows=num, ncols=1, sharex=True)
+    for index, row in results_to_plot.iterrows():
+        plot_row(row, axes[index], results_to_plot.columns[0:-1], max_value, show_actual_label=True)
+    fig.canvas.set_window_title('Testing Results')
+    fig.suptitle("Test Predict Result Percentages")
 
 
 def main():
@@ -132,11 +148,18 @@ def main():
 
     raw_df = pd.read_csv("reason_df.csv")
     raw_df['Day'] = pd.to_datetime(raw_df['Day'])
+
+    print(raw_df.head(100))
+
     raw_df = raw_df.reindex(np.random.permutation(raw_df.index))
     raw_df.reset_index(inplace=True)
 
-    df_train = raw_df.head(math.floor(len(raw_df) * 0.7))
-    df_test = raw_df.tail(math.floor(len(raw_df) * 0.3))
+    # df_train = raw_df.head(math.floor(len(raw_df) * 0.7))
+    # df_test = raw_df.tail(math.floor(len(raw_df) * 0.3))
+
+    # Take a proportion of the data - there are just too many points to analyse
+    df_train = raw_df.head(20000)
+    df_test = raw_df.tail(10000)
 
     train_features = pp_feature(df_train)
     test_features = pp_feature(df_test)
@@ -148,13 +171,15 @@ def main():
                              train_targets=train_targets,
                              test_features=test_features,
                              test_targets=test_targets,
-                             learning_rate=0.003,
-                             steps=1000,
+                             learning_rate=0.0008,
+                             steps=500,
                              batch_size=50,
-                             hidden_units=[5, 1],
                              model_dir=model_dir_path)
 
     predict_model(classifier, test_targets, test_targets)
+
+
+
 
 
 main()

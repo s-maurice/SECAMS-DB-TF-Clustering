@@ -18,16 +18,16 @@ def get_event(present, weekday):
 
 
 # Obtains the reason for a particular event; day in datetime // event as String
-# In particular:
-#   Absent on a Monday - Hungover
-#   Absent on a Friday - Skiving
+# In particular (given Friday/Saturday as the weekend):
+#   Absent on a Sunday - Hungover
+#   Absent on a Thursday - Skiving
 #   Absent on other days - Car broke down / Sick / Other activities
 #   Absent on specific days - Holidays
 def get_reason(day, event):
     if event == "Absent":
-        if day.weekday() == 0:
+        if day.weekday() == 6:
             return "Hungover"
-        elif day.weekday() == 4:
+        elif day.weekday() == 3:
             return "Skiving"
         else:
             return "Sick"

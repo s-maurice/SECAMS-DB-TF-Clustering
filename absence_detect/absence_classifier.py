@@ -96,16 +96,11 @@ def train_model(train_features, train_targets, test_features, test_targets, lear
     print("Training...")
 
     for period in range(periods):
+        print('period ' + str(period) + ':')
+
         classifier.train(input_fn=train_fn, steps=steps_per_period)
-        print('train')
-
-        classifier.evaluate(predict_train_fn, name="Train")
-        print('eval 1')
-
-        classifier.evaluate(predict_test_fn, name="Test")
-        print('eval 2')
-
-        print('period ' + str(period) + ' finished')
+        print(classifier.evaluate(predict_train_fn, name="Train"))
+        print(classifier.evaluate(predict_test_fn, name="Test"))
 
     print("Training ended.")
 
@@ -117,24 +112,25 @@ def predict_model(classifier, features, targets):
 
     predict_results = classifier.predict(predict_input_fn, predict_keys="probabilities")
 
-    print(predict_results.get("probabilities"))
+    print(predict_results)
+    print(type(predict_results))
     return predict_results
 
 
-def test_result_plotter(result_df, num):
-    result_df = result_df.sample(frac=1).reset_index(drop=True)
-    results_to_plot = result_df.head(num)
-    # print(results_to_plot)
-
-    # Get highest probability predicted and lock all figures's y axis to that
-    max_value = results_to_plot.iloc[[0, -1]].max()
-    max_value = max_value[0:-1].max()
-
-    fig, axes = plt.subplots(nrows=num, ncols=1, sharex=True)
-    for index, row in results_to_plot.iterrows():
-        plot_row(row, axes[index], results_to_plot.columns[0:-1], max_value, show_actual_label=True)
-    fig.canvas.set_window_title('Testing Results')
-    fig.suptitle("Test Predict Result Percentages")
+# def test_result_plotter(result_df, num):
+#     result_df = result_df.sample(frac=1).reset_index(drop=True)
+#     results_to_plot = result_df.head(num)
+#     # print(results_to_plot)
+# 
+#     # Get highest probability predicted and lock all figures's y axis to that
+#     max_value = results_to_plot.iloc[[0, -1]].max()
+#     max_value = max_value[0:-1].max()
+# 
+#     fig, axes = plt.subplots(nrows=num, ncols=1, sharex=True)
+#     for index, row in results_to_plot.iterrows():
+#         plot_row(row, axes[index], results_to_plot.columns[0:-1], max_value, show_actual_label=True)
+#     fig.canvas.set_window_title('Testing Results')
+#     fig.suptitle("Test Predict Result Percentages")
 
 
 def main():
@@ -178,8 +174,8 @@ def main():
 
     predict_model(classifier, test_targets, test_targets)
 
-
-
+    predict_test_fn = lambda: create_input_function(test_features, test_targets, batch_size=1, num_epochs=1)
+    print(classifier.evaluate(predict_test_fn, name="test"))
 
 
 main()

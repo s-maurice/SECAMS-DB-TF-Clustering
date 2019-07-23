@@ -9,10 +9,17 @@ import shutil
 
 
 def pp_feature(df):
+
+    def one_hot_encode(boolean):
+        if boolean:
+            return "1"
+        else:
+            return "0"
+
     feature_df = pd.DataFrame()
     # Take the following features of the DF: USERID, Day, Present
-    feature_df['USERID'] = df['USERID']
-    feature_df['Present'] = df['Present']
+    feature_df['USERID'] = [str(i) for i in df['USERID']]
+    feature_df['Present'] = [one_hot_encode(i) for i in df['Present']]
 
     # For 'Day', convert to Give it synthetic features: Day_of_week (0 = Monday, 6 = Sunday) // Day_of_month // Month_of_year
     feature_df['Day_of_week'] = [day.weekday() for day in df['Day']]
@@ -66,7 +73,7 @@ def create_feature_columns(df):
 
 def train_model(train_features, train_targets, test_features, test_targets, learning_rate, steps, batch_size, hidden_units, model_dir):
     feature_columns = create_feature_columns(train_features)
-    label_vocab_list = train_targets['Reason'].unique()
+    label_vocab_list = train_targets['Reason'].unique().tolist()
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
 
     # Create the DNN
@@ -74,7 +81,7 @@ def train_model(train_features, train_targets, test_features, test_targets, lear
                                             hidden_units=hidden_units,
                                             optimizer=optimizer,
                                             label_vocabulary=label_vocab_list,
-                                            num_classes=len(label_vocab_list), 
+                                            n_classes=len(label_vocab_list),
                                             model_dir=model_dir,
                                             config=tf.estimator.RunConfig().replace(save_summary_steps=10))
     
@@ -87,11 +94,21 @@ def train_model(train_features, train_targets, test_features, test_targets, lear
     periods = 10  # Training periods
     steps_per_period = steps // 10
 
+    print("Training...")
+
     for period in range(periods):
-        classifier.train(input_fn=train_fn, steps=steps)
+        classifier.train(input_fn=train_fn, steps=steps_per_period)
+        print('train')
 
         classifier.evaluate(predict_train_fn, name="Train")
+        print('eval 1')
+
         classifier.evaluate(predict_test_fn, name="Test")
+        print('eval 2')
+
+        print('period ' + str(period) + ' finished')
+
+    print("Training ended.")
 
     return classifier
 
@@ -131,9 +148,9 @@ def main():
                              train_targets=train_targets,
                              test_features=test_features,
                              test_targets=test_targets,
-                             learning_rate=0.0003,
+                             learning_rate=0.003,
                              steps=1000,
-                             batch_size=1,
+                             batch_size=50,
                              hidden_units=[5, 1],
                              model_dir=model_dir_path)
 

@@ -42,8 +42,8 @@ df['Event'] = [get_event(present, weekday) for present, weekday in zip(df['Prese
 df['Reason'] = [get_reason(day, event) for day, event in zip(df['Day'], df['Event'])]
 
 holiday = dt.date(year=2016, month=5, day=18)
-df[df['Day'] == holiday]['Present'] = False
-df[df['Day'] == holiday]['Reason'] = "Holiday"
+df.loc[df['Day'] == holiday, 'Present'] = False
+df.loc[df['Day'] == holiday, 'Reason'] = "Holiday"
 
 pd.set_option('display.max_rows', 100)
 print(df)

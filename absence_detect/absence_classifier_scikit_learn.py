@@ -3,7 +3,7 @@ from sklearn import preprocessing
 import pandas as pd
 from sklearn import tree
 import matplotlib.pyplot as plt
-# import graphviz
+import graphviz
 
 
 pd.set_option('display.max_columns', None)
@@ -67,14 +67,19 @@ print("Accuracy:", test_accuracy)
 # Display the tree
 
 # Doesn't use Graphvis
-plt.figure("Tree Graph", dpi=200)
-tree.plot_tree(classifier.fit(train_features, train_labels),
-               fontsize=2,
-               feature_names=preprocessed_features.columns,
-               class_names=reason_label_encoder.classes_)
-plt.show()
+# plt.figure("Tree Graph")
+# tree.plot_tree(classifier.fit(train_features, train_labels),
+#                rounded=True,
+#                feature_names=preprocessed_features.columns,
+#                class_names=reason_label_encoder.classes_)
+#
+# plt.show()
 
 # Uses Graphvis - need to both download and pip
-# tree_plot = tree.export_graphviz(classifier, out_file=None)
-# tree_graph = graphviz.Source(tree_plot)
-# tree_graph.render("Classifier_Tree")
+tree_plot = tree.export_graphviz(classifier,
+                                 feature_names=preprocessed_features.columns,
+                                 class_names=reason_label_encoder.classes_,
+                                 rounded=True,
+                                 out_file=None)
+tree_graph = graphviz.Source(tree_plot)
+tree_graph.render("Classifier_Tree")

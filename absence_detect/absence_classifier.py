@@ -123,13 +123,14 @@ def predict_model(classifier, features, targets):
 
     predict_results = classifier.predict(predict_input_fn)
 
-    i = 0
-    for idx, prediction in enumerate(predict_results):
-        if i == 10:
-            break
-        for key, value in prediction.items():
-            print(key, ":", value)
-        i += 1
+    # # debug code
+    # i = 0
+    # for idx, prediction in enumerate(predict_results):
+    #     if i == 10:
+    #         break
+    #     for key, value in prediction.items():
+    #         print(key, ":", value)
+    #     i += 1
 
     return predict_results
 

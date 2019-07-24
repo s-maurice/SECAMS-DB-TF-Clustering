@@ -27,20 +27,49 @@ def main():
     in_days_series = pd.Series(in_days)
     absence_users = []
 
+    i = 0
+
     for userid in df['USERID'].unique():
-        user_df = df[df['USERID'] == userid]
+        user_df = df.loc[df['USERID'] == userid]
 
-        cur_absence_df = pd.DataFrame(columns=['USERID', 'Day', 'Present', 'Weekday'])
+        cur_absence_df = pd.DataFrame(columns=['USERID', 'Day', 'Present', 'Weekday', 'Prev_absences'])
 
-        cur_absence_df['Present'] = in_days_series.isin(user_df['DOY'])
+        isin_list = in_days_series.isin(user_df['DOY'])
+
+        prev_abs_list = []
+        for index in range(len(isin_list)):
+            if index == 0:
+                prev_abs_list.append(0)
+            elif isin_list[index] == True or isin_list[index-1] == True:
+                    prev_abs_list.append(0)
+            else:
+                prev_abs_list.append(isin_list[index-1] + 1)
+
         cur_absence_df['USERID'] = userid
+        cur_absence_df['Present'] = isin_list
+        cur_absence_df['Prev_Absences'] = prev_abs_list
 
+
+        # for index, row in cur_absence_df.iterrows():
+        #     if index == 0:
+        #         cur_absence_df['Prev_absences'][index] = 0
+        #     elif row['Present'] == True or cur_absence_df['Present'][index-1] == True:
+        #         cur_absence_df['Prev_absences'][index] = 0
+        #     else:
+        #         cur_absence_df['Prev_absences'][index] = cur_absence_df['Prev_absences'][index-1] + 1
+
+        print(cur_absence_df)
+
+        if i == 10:
+            break
+        i += 1
         absence_users.append(cur_absence_df)
 
     absence_df = pd.concat(absence_users, sort=False)
 
     absence_df['Day'] = in_days * len(absence_users)
     absence_df['Weekday'] = absence_df['Day'].apply(lambda x: is_weekday(x))
+    absence_df.index.rename("index", inplace=True)
     # absence_df.reset_index(drop=True, inplace=True)
     print(absence_df)
     absence_df.to_csv("absence_df.csv")

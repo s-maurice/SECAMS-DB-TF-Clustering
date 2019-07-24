@@ -36,6 +36,7 @@ def get_reason(day, event):
 
 
 def gen_holiday(df, holidate):
+    # Generates a holiday; on all 'holidate' events, people are absent due to the reason 'Holiday'
     df.loc[df['Day'] == holidate, 'Present'] = False
     df.loc[df['Day'] == holidate, 'Reason'] = "Holiday"
 
@@ -46,9 +47,9 @@ df.set_index("index", inplace=True)
 df['Event'] = [get_event(present, weekday) for present, weekday in zip(df['Present'], df['Weekday'])]
 df['Reason'] = [get_reason(day, event) for day, event in zip(df['Day'], df['Event'])]
 
-gen_holiday(df, dt.date(year=2016, month=5, day=18))
+gen_holiday(df, pd.Timestamp(dt.date(year=2016, month=5, day=18)))
 
-pd.set_option('display.max_rows', 100)
+pd.set_option('display.max_rows', 1000)
 print(df)
 
 df.to_csv("reason_df.csv")

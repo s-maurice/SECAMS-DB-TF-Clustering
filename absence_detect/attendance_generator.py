@@ -40,10 +40,9 @@ def gen_holiday(df, holidate):
     df.loc[df['Day'] == holidate, 'Reason'] = "Holiday"
 
 
-
 df = pd.read_csv("absence_df.csv")
 df['Day'] = pd.to_datetime(df['Day'])
-# df.set_index("index", inplace=True)
+df.set_index("index", inplace=True)
 df['Event'] = [get_event(present, weekday) for present, weekday in zip(df['Present'], df['Weekday'])]
 df['Reason'] = [get_reason(day, event) for day, event in zip(df['Day'], df['Event'])]
 

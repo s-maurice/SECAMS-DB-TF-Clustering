@@ -245,6 +245,9 @@ def main():
     # df_train = raw_df.head(20000)
     # df_test = raw_df.tail(10000)
 
+    print("--- Training DF ---\n", df_train.head(50))
+    print("--- Testing DF ---\n", df_test.head(50))
+
     train_features = pp_feature(df_train)
     test_features = pp_feature(df_test)
     

@@ -25,8 +25,6 @@ def get_event(present, weekday):
 #   Absent on specific days - Holidays
 def get_reason(day, event):
     if event == "Absent":
-        print(day)
-        print(day.weekday())
         if day.weekday() == 6:
             return "Hungover"
         elif day.weekday() == 3:
@@ -37,15 +35,9 @@ def get_reason(day, event):
         return event
 
 
-def gen_holiday(df, holidate):
-    df[df['Day'] == holidate]['Present'] = False
-    df[df['Day'] == holidate]['Reason'] = "Holiday"
-
-
-
 df = pd.read_csv("absence_df.csv")
 df['Day'] = pd.to_datetime(df['Day'])
-# df.set_index("index", inplace=True)
+df.set_index("index", inplace=True)
 df['Event'] = [get_event(present, weekday) for present, weekday in zip(df['Present'], df['Weekday'])]
 df['Reason'] = [get_reason(day, event) for day, event in zip(df['Day'], df['Event'])]
 

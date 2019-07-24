@@ -74,16 +74,18 @@ def create_feature_columns(df):
 def train_model(train_features, train_targets, test_features, test_targets, learning_rate, steps, batch_size, model_dir):
     feature_columns = create_feature_columns(train_features)
     label_vocab_list = train_targets['Reason'].unique().tolist()
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-    # optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, 5.0)
+
+    optimizer = lambda: tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+#   optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, 5.0)
 
     # Create the DNN
-    classifier = tf.estimator.LinearClassifier(feature_columns=feature_columns,
+    classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
+                                                hidden_units=[128, 64, 16],
                                                optimizer=optimizer,
                                                label_vocabulary=label_vocab_list,
                                                n_classes=len(label_vocab_list),
                                                model_dir=model_dir,
-                                               config=tf.estimator.RunConfig().replace(save_summary_steps=10))
+                                               config=tf.estimator.RunConfig().replace(save_summary_steps=50))
     
     # Input functions
     train_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, shuffle=True)
@@ -236,12 +238,12 @@ def main():
     raw_df = raw_df.reindex(np.random.permutation(raw_df.index))
     raw_df.reset_index(inplace=True)
 
-    # df_train = raw_df.head(math.floor(len(raw_df) * 0.7))
-    # df_test = raw_df.tail(math.floor(len(raw_df) * 0.3))
+    df_train = raw_df.head(math.floor(len(raw_df) * 0.7))
+    df_test = raw_df.tail(math.floor(len(raw_df) * 0.3))
 
     # Take a proportion of the data - there are just too many points to analyse
-    df_train = raw_df.head(20000)
-    df_test = raw_df.tail(10000)
+    # df_train = raw_df.head(20000)
+    # df_test = raw_df.tail(10000)
 
     train_features = pp_feature(df_train)
     test_features = pp_feature(df_test)
@@ -253,14 +255,13 @@ def main():
                              train_targets=train_targets,
                              test_features=test_features,
                              test_targets=test_targets,
-                             learning_rate=0.0008,
-                             steps=500,
-                             batch_size=50,
+                             learning_rate=0.0001,  # 0.003 works
+                             steps=3000,
+                             batch_size=100,  # 100 works
                              model_dir=model_dir_path)
 
     predictions = predict_model(classifier, test_features, test_targets)
     test_result_plotter(predictions, 4)
-
 
 
 main()

@@ -36,8 +36,8 @@ def get_reason(day, event):
 
 
 def gen_holiday(df, holidate):
-    df[df['Day'] == holidate]['Present'] = False
-    df[df['Day'] == holidate]['Reason'] = "Holiday"
+    df.loc[df['Day'] == holidate, 'Present'] = False
+    df.loc[df['Day'] == holidate, 'Reason'] = "Holiday"
 
 
 
@@ -47,9 +47,7 @@ df['Day'] = pd.to_datetime(df['Day'])
 df['Event'] = [get_event(present, weekday) for present, weekday in zip(df['Present'], df['Weekday'])]
 df['Reason'] = [get_reason(day, event) for day, event in zip(df['Day'], df['Event'])]
 
-holiday = dt.date(year=2016, month=5, day=18)
-df.loc[df['Day'] == holiday, 'Present'] = False
-df.loc[df['Day'] == holiday, 'Reason'] = "Holiday"
+gen_holiday(df, dt.date(year=2016, month=5, day=18))
 
 pd.set_option('display.max_rows', 100)
 print(df)

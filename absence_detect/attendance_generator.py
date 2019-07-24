@@ -25,8 +25,6 @@ def get_event(present, weekday):
 #   Absent on specific days - Holidays
 def get_reason(day, event):
     if event == "Absent":
-        print(day)
-        print(day.weekday())
         if day.weekday() == 6:
             return "Hungover"
         elif day.weekday() == 3:
@@ -50,8 +48,8 @@ df['Event'] = [get_event(present, weekday) for present, weekday in zip(df['Prese
 df['Reason'] = [get_reason(day, event) for day, event in zip(df['Day'], df['Event'])]
 
 holiday = dt.date(year=2016, month=5, day=18)
-df[df['Day'] == holiday]['Present'] = False
-df[df['Day'] == holiday]['Reason'] = "Holiday"
+df.loc[df['Day'] == holiday, 'Present'] = False
+df.loc[df['Day'] == holiday, 'Reason'] = "Holiday"
 
 pd.set_option('display.max_rows', 100)
 print(df)

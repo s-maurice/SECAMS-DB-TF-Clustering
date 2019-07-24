@@ -14,6 +14,7 @@ preprocessed_features = pd.DataFrame()
 preprocessed_features['Day_of_week'] = [day.weekday() for day in raw_df['Day']]
 preprocessed_features['Day_of_month'] = [day.day for day in raw_df['Day']]
 preprocessed_features['Month_of_year'] = [day.month for day in raw_df['Day']]
+# Possibly use one hot encoding here, however these are discrete but still linear, so encoding may not be too applicable
 
 present_label_encoder = preprocessing.LabelEncoder()
 preprocessed_features['Present'] = present_label_encoder.fit_transform(raw_df['Present'])  

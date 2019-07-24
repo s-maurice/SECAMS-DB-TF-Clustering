@@ -18,7 +18,7 @@ def pp_feature(df):
 
     feature_df = pd.DataFrame()
     # Take the following features of the DF: USERID, Day, Present
-    feature_df['USERID'] = [str(i) for i in df['USERID']]
+    # feature_df['USERID'] = [str(i) for i in df['USERID']]
     feature_df['Present'] = [one_hot_encode(i) for i in df['Present']]
 
     # For 'Day', convert to Give it synthetic features: Day_of_week (0 = Monday, 6 = Sunday) // Day_of_month // Month_of_year

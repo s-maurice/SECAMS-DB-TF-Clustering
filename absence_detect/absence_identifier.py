@@ -49,15 +49,6 @@ def main():
         cur_absence_df['Present'] = isin_list
         cur_absence_df['Prev_Absences'] = prev_abs_list
 
-
-        # for index, row in cur_absence_df.iterrows():
-        #     if index == 0:
-        #         cur_absence_df['Prev_absences'][index] = 0
-        #     elif row['Present'] == True or cur_absence_df['Present'][index-1] == True:
-        #         cur_absence_df['Prev_absences'][index] = 0
-        #     else:
-        #         cur_absence_df['Prev_absences'][index] = cur_absence_df['Prev_absences'][index-1] + 1
-
         print(cur_absence_df)
 
         if i == 10:

@@ -1,9 +1,11 @@
+from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 import pandas as pd
 from sklearn import tree
+from sklearn import neural_network
 import matplotlib.pyplot as plt
-import graphviz
+# import graphviz
 
 
 pd.set_option('display.max_columns', None)
@@ -25,7 +27,7 @@ userid_label_encoder = preprocessing.LabelEncoder()
 preprocessed_features['USERID'] = userid_label_encoder.fit_transform(preprocessed_features['USERID'])
 
 present_label_encoder = preprocessing.LabelEncoder()
-preprocessed_features['Present'] = present_label_encoder.fit_transform(raw_df['Present'])  
+preprocessed_features['Present'] = present_label_encoder.fit_transform(raw_df['Present'])
 # Be aware it assigns the first value it sees to 0, so present may not always be 1
 
 # print(preprocessed_features)
@@ -44,21 +46,33 @@ train_labels, test_labels, train_features, test_features = train_test_split(prep
                                                                             test_size=0.2)
 
 # Begin Training
-classifier = tree.DecisionTreeClassifier()  # Create Classifier, doesn't even need any of the params changed
-classifier.fit(train_features, train_labels)  # Fit Model
+# Try to load the model if True
+if True:
+    classifier = joblib.load('saved_model.pkl')
+else:
+    # classifier = tree.DecisionTreeClassifier()  # Create Classifier, doesn't even need any of the params changed
+    classifier = neural_network.MLPClassifier(verbose=True)  # DNN Classifier
+    classifier.fit(train_features, train_labels)  # Fit Model
+
+# Save Model
+# Output a pickle file for the model
+joblib.dump(classifier, 'saved_model.pkl')
 
 # Begin Testing
 # Test model on test data set - can use .predict_proba instead, but the probability is always 1
 test_predict_results = classifier.predict(test_features)
+test_predict_results_proba = classifier.predict_proba(test_features)
 
 # Convert into a Data Frame with matching features and actual_labels for easy analysis
 test_result_df = test_features.copy()
 
-test_result_df["Present"] = present_label_encoder.inverse_transform(test_result_df["Present"])  # Invert encoding back into str
+test_result_df["Present"] = present_label_encoder.inverse_transform(test_result_df["Present"])  # Invert encoding
 test_result_df["USERID"] = userid_label_encoder.inverse_transform(test_result_df["USERID"])
 
 test_result_df["Actual Labels"] = reason_label_encoder.inverse_transform(test_labels)  # Invert encoding back into str
 test_result_df["Predicted Labels"] = reason_label_encoder.inverse_transform(test_predict_results)
+test_result_proba_df = pd.DataFrame.from_records(test_predict_results_proba)
+print(test_result_proba_df)
 print(test_result_df)
 
 test_accuracy = classifier.score(test_features, test_labels)  # Gets mean accuracy of test data set
@@ -67,19 +81,14 @@ print("Accuracy:", test_accuracy)
 # Display the tree
 
 # Doesn't use Graphvis
-# plt.figure("Tree Graph")
+# plt.figure("Tree Graph", dpi=200)
 # tree.plot_tree(classifier.fit(train_features, train_labels),
-#                rounded=True,
+#                fontsize=2,
 #                feature_names=preprocessed_features.columns,
 #                class_names=reason_label_encoder.classes_)
-#
 # plt.show()
 
 # Uses Graphvis - need to both download and pip
-tree_plot = tree.export_graphviz(classifier,
-                                 feature_names=preprocessed_features.columns,
-                                 class_names=reason_label_encoder.classes_,
-                                 rounded=True,
-                                 out_file=None)
-tree_graph = graphviz.Source(tree_plot)
-tree_graph.render("Classifier_Tree")
+# tree_plot = tree.export_graphviz(classifier, out_file=None)
+# tree_graph = graphviz.Source(tree_plot)
+# tree_graph.render("Classifier_Tree")

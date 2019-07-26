@@ -2,6 +2,7 @@ from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 import pandas as pd
+import os
 from sklearn import tree
 from sklearn import neural_network
 import matplotlib.pyplot as plt
@@ -9,6 +10,7 @@ import matplotlib.pyplot as plt
 
 
 pd.set_option('display.max_columns', None)
+pd.set_option('display.width', None)
 
 
 #  Read csv
@@ -21,6 +23,7 @@ preprocessed_features['USERID'] = [str(i) for i in raw_df['USERID']]
 preprocessed_features['Day_of_week'] = [day.weekday() for day in raw_df['Day']]
 preprocessed_features['Day_of_month'] = [day.day for day in raw_df['Day']]
 preprocessed_features['Month_of_year'] = [day.month for day in raw_df['Day']]
+preprocessed_features['Prev_absences'] = raw_df['Prev_absences']
 # Possibly use one hot encoding here, however these are discrete but still linear, so encoding may not be too applicable
 
 userid_label_encoder = preprocessing.LabelEncoder()
@@ -47,16 +50,16 @@ train_labels, test_labels, train_features, test_features = train_test_split(prep
 
 # Begin Training
 # Try to load the model if True
-if True:
+if os.path.isfile('saved_model.pkl'):
     classifier = joblib.load('saved_model.pkl')
 else:
     # classifier = tree.DecisionTreeClassifier()  # Create Classifier, doesn't even need any of the params changed
     classifier = neural_network.MLPClassifier(verbose=True)  # DNN Classifier
     classifier.fit(train_features, train_labels)  # Fit Model
+    # Save Model
+    # Output a pickle file for the model
+    joblib.dump(classifier, 'saved_model.pkl')
 
-# Save Model
-# Output a pickle file for the model
-joblib.dump(classifier, 'saved_model.pkl')
 
 # Begin Testing
 # Test model on test data set - can use .predict_proba instead, but the probability is always 1
@@ -71,12 +74,48 @@ test_result_df["USERID"] = userid_label_encoder.inverse_transform(test_result_df
 
 test_result_df["Actual Labels"] = reason_label_encoder.inverse_transform(test_labels)  # Invert encoding back into str
 test_result_df["Predicted Labels"] = reason_label_encoder.inverse_transform(test_predict_results)
+
+test_result_df.reset_index(drop=True, inplace=True)
+
 test_result_proba_df = pd.DataFrame.from_records(test_predict_results_proba)
+test_result_proba_df.columns = reason_label_encoder.inverse_transform(test_result_proba_df.columns)
+
 print(test_result_proba_df)
 print(test_result_df)
 
 test_accuracy = classifier.score(test_features, test_labels)  # Gets mean accuracy of test data set
 print("Accuracy:", test_accuracy)
+
+print()
+print("0-0-0-0-0-0-0-0-0-0")
+print()
+
+wrong_df = test_result_df[test_result_df['Actual Labels'] != test_result_df['Predicted Labels']]
+
+wrong_proba_df = test_result_proba_df.loc[wrong_df.index]
+wrong_proba_df['Actual Labels'] = wrong_df['Actual Labels']
+wrong_proba_df['Predicted Labels'] = wrong_df['Predicted Labels']
+
+print(wrong_proba_df)
+
+num_cols = 5
+num_rows = 5
+fig, ax = plt.subplots(nrows=num_rows, ncols=num_cols, sharex=True, sharey=True)
+for idx, row in wrong_proba_df.head(num_rows * num_cols).reset_index(drop=True).iterrows():
+    bars = ax[idx // 5][idx % 5].bar(row.index[:-2], row[:-2], color='gray')
+
+    predicted_label = reason_label_encoder.transform([row[-1]])[0]
+    actual_label = reason_label_encoder.transform([row[-2]])[0]
+
+    bars[predicted_label].set_color('r')
+    bars[actual_label].set_color('b')
+
+    mean = sum(row[:-2]) / len(row[:-2])
+    ax[idx // 5][idx % 5].axhline(mean, color='k', linestyle='dashed', linewidth=1)
+
+
+[plt.setp(item.get_xticklabels(), ha="right", rotation=90) for row in ax for item in row]
+plt.show()
 
 # Display the tree
 

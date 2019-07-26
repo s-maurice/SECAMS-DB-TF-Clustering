@@ -11,7 +11,7 @@ def get_event(present, weekday):
         return "Normal"
     # Present on a weekend
     elif present:
-        return "Weekend"
+        return "Weekend_Work"
     # Absent on a weekday
     elif not present:
         return "Absent"
@@ -23,17 +23,14 @@ def get_event(present, weekday):
 #   Absent on a Thursday - Skiving
 #   Absent on other days - Car broke down / Sick / Other activities
 #   Absent on specific days - Holidays
-def get_reason(day, event, prev_abs):
+def get_reason(day, event):
     if event == "Absent":
-        if prev_abs > 1:
-            return "Leave"
+        if day.weekday() == 6:
+            return "Hungover"
+        elif day.weekday() == 3:
+            return "Skiving"
         else:
-            if day.weekday() == 6:
-                return "Hungover"
-            elif day.weekday() == 3:
-                return "Skiving"
-            else:
-                return "Sick"
+            return "Sick"
     else:
         return event
 
@@ -44,12 +41,30 @@ def gen_holiday(df, holidate):
     df.loc[df['Day'] == holidate, 'Reason'] = "Holiday"
 
 
+def gen_leave(df, leave_threshold=2):
+    # Generate 'leave' reasons (as applied leave), with a threshold
+    start_time = time.time()
+    for idx, row in df.iterrows():
+        # Check that index doesn't overflow OR Check if prev_abs of next is lower
+        if idx + 1 == len(df.index) or df.loc[idx, 'Prev_absences'] > df.loc[idx + 1, 'Prev_absences']:
+            # Check if prev_abs hits leave_threshold
+            if df.loc[idx, 'Prev_absences'] >= leave_threshold:
+                # Set the last few lines to 'Leave', if a weekday
+                for i in range(df['Prev_absences'][idx] + 1):
+                    if df.loc[idx-i, 'Day'].weekday() != 4 and df.loc[idx-i, 'Day'].weekday() != 5:
+                        df.loc[idx-i, 'Reason'] = 'Leave'
+        if idx % 5000 == 0:
+            time_taken = time.time() - start_time
+            print(str(idx) + ' reached ; ' + str(time_taken) + ' seconds')
+            start_time = time.time()
+
 df = pd.read_csv("absence_df.csv")
 df['Day'] = pd.to_datetime(df['Day'])
 df.set_index("index", inplace=True)
 df['Event'] = [get_event(present, weekday) for present, weekday in zip(df['Present'], df['Weekday'])]
-df['Reason'] = [get_reason(day, event, prev_abs) for day, event, prev_abs in zip(df['Day'], df['Event'], df['Prev_absences'])]
+df['Reason'] = [get_reason(day, event) for day, event in zip(df['Day'], df['Event'])]
 
+gen_leave(df)
 gen_holiday(df, pd.Timestamp(dt.date(year=2016, month=5, day=18)))
 
 pd.set_option('display.max_rows', 1000)

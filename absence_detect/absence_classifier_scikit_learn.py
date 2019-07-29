@@ -18,12 +18,15 @@ raw_df = pd.read_csv("reason_df.csv")
 raw_df['Day'] = pd.to_datetime(raw_df['Day'])
 
 # Process raw_df Features
+# features = ['USERID', 'Day_of_week', '']
+
 preprocessed_features = pd.DataFrame()
 preprocessed_features['USERID'] = [str(i) for i in raw_df['USERID']]
 preprocessed_features['Day_of_week'] = [day.weekday() for day in raw_df['Day']]
 preprocessed_features['Day_of_month'] = [day.day for day in raw_df['Day']]
 preprocessed_features['Month_of_year'] = [day.month for day in raw_df['Day']]
 preprocessed_features['Prev_absences'] = raw_df['Prev_absences']
+
 # Possibly use one hot encoding here, however these are discrete but still linear, so encoding may not be too applicable
 
 userid_label_encoder = preprocessing.LabelEncoder()
@@ -33,7 +36,9 @@ present_label_encoder = preprocessing.LabelEncoder()
 preprocessed_features['Present'] = present_label_encoder.fit_transform(raw_df['Present'])
 # Be aware it assigns the first value it sees to 0, so present may not always be 1
 
-# print(preprocessed_features)
+for day in pd.to_datetime(raw_df['Day'].unique()):
+    preprocessed_features.loc[(preprocessed_features['Day_of_month'] == day.day) & (preprocessed_features['Month_of_year'] == day.month), 'Users_absent'] = \
+        len(preprocessed_features[(preprocessed_features['Day_of_month'] == day.day) & (preprocessed_features['Month_of_year'] == day.month) & (preprocessed_features['Present'] == present_label_encoder.transform([False])[0])]) / len(preprocessed_features['USERID'].unique())
 
 # Process raw_df Labels
 preprocessed_labels = pd.DataFrame()

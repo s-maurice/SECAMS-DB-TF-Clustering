@@ -30,16 +30,16 @@ def random(sick_weight=0,
     # Method that chooses a random item from 'choice' depending on the weights.
     # Uses np.random.choice(), but allows weights to add up to any total value.
 
-    events = ["Sick", "Car", "Train", "Skiving", "Hungover"]    # Specific weights
-    other_events = ["Dentist", "Court Appointment", "Meeting"]  # 'Other' weights
-    rare_events = ["Funeral", "Hospital"]                       # 'Rare' weights
+    events = ["Sick", "Car Broke", "Train Failure", "Skiving", "Hungover"]    # Specific weights
+    other_events = ["Dentist", "Court Appointment", "Meeting"]                # 'Other' weights
+    rare_events = ["Funeral", "Hospital"]                                     # 'Rare' weights
 
     weights = [sick_weight, car_weight, train_weight, skiving_weight, hungover_weight] + [other_weight] * len(other_events) + [rare_weight] * len(rare_events)
 
     all_events = events + other_events + rare_events
     normalised_weights = [weight / sum(weights) for weight in weights]
 
-    return np.random.choice(all_events, normalised_weights)
+    return np.random.choice(all_events, p=normalised_weights)
 
 
 # Obtains the reason for a particular event; day in datetime // event as String

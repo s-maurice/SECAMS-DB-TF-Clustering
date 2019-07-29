@@ -5,6 +5,8 @@ import pandas as pd
 import os
 from sklearn import tree
 from sklearn import neural_network
+from sklearn import gaussian_process
+from sklearn.gaussian_process.kernels import RBF
 import matplotlib.pyplot as plt
 # import graphviz
 
@@ -58,8 +60,16 @@ train_labels, test_labels, train_features, test_features = train_test_split(prep
 if os.path.isfile('saved_model.pkl'):
     classifier = joblib.load('saved_model.pkl')
 else:
+    # Different classifiers:
+    # -- Tree
     # classifier = tree.DecisionTreeClassifier()  # Create Classifier, doesn't even need any of the params changed
-    classifier = neural_network.MLPClassifier(verbose=True)  # DNN Classifier
+
+    # -- DNN
+    # classifier = neural_network.MLPClassifier(verbose=True)
+
+    # -- Gaussian
+    classifier = gaussian_process.GaussianProcessClassifier(kernel=1.0*RBF(1.0))
+
     classifier.fit(train_features, train_labels)  # Fit Model
     # Save Model
     # Output a pickle file for the model

@@ -7,6 +7,7 @@ from sklearn import tree
 from sklearn import neural_network
 from sklearn import gaussian_process
 from sklearn.gaussian_process.kernels import RBF
+from sklearn import discriminant_analysis
 import matplotlib.pyplot as plt
 # import graphviz
 
@@ -29,11 +30,6 @@ preprocessed_features['Day_of_month'] = [day.day for day in raw_df['Day']]
 preprocessed_features['Month_of_year'] = [day.month for day in raw_df['Day']]
 preprocessed_features['Prev_absences'] = raw_df['Prev_absences']
 
-# Possibly use one hot encoding here, however these are discrete but still linear, so encoding may not be too applicable
-
-userid_label_encoder = preprocessing.LabelEncoder()
-preprocessed_features['USERID'] = userid_label_encoder.fit_transform(preprocessed_features['USERID'])
-
 present_label_encoder = preprocessing.LabelEncoder()
 preprocessed_features['Present'] = present_label_encoder.fit_transform(raw_df['Present'])
 # Be aware it assigns the first value it sees to 0, so present may not always be 1
@@ -41,6 +37,14 @@ preprocessed_features['Present'] = present_label_encoder.fit_transform(raw_df['P
 for day in pd.to_datetime(raw_df['Day'].unique()):
     preprocessed_features.loc[(preprocessed_features['Day_of_month'] == day.day) & (preprocessed_features['Month_of_year'] == day.month), 'Users_absent'] = \
         len(preprocessed_features[(preprocessed_features['Day_of_month'] == day.day) & (preprocessed_features['Month_of_year'] == day.month) & (preprocessed_features['Present'] == present_label_encoder.transform([False])[0])]) / len(preprocessed_features['USERID'].unique())
+
+# One-hot encode USERID through get_dummies; concat this to DF and drop original USERID column
+userid_encoded_df = pd.get_dummies(preprocessed_features['USERID'].to_list())
+preprocessed_features = pd.concat([preprocessed_features, userid_encoded_df], axis=1)
+preprocessed_features.drop(["USERID"], inplace=True, axis=1)
+
+pd.set_option('display.max_columns', 10)
+print(preprocessed_features)
 
 # Process raw_df Labels
 preprocessed_labels = pd.DataFrame()
@@ -65,10 +69,13 @@ else:
     # classifier = tree.DecisionTreeClassifier()  # Create Classifier, doesn't even need any of the params changed
 
     # -- DNN
-    # classifier = neural_network.MLPClassifier(verbose=True)
+    classifier = neural_network.MLPClassifier(verbose=True)
 
     # -- Gaussian
-    classifier = gaussian_process.GaussianProcessClassifier(kernel=1.0*RBF(1.0))
+    # classifier = gaussian_process.GaussianProcessClassifier(kernel=1.0*RBF(1.0))
+
+    # -- Discriminant Analysis
+    # classifier = discriminant_analysis.QuadraticDiscriminantAnalysis(store_covariance=True)
 
     classifier.fit(train_features, train_labels)  # Fit Model
     # Save Model
@@ -78,6 +85,7 @@ else:
 
 # Begin Testing
 # Test model on test data set - can use .predict_proba instead, but the probability is always 1
+print(test_features)
 test_predict_results = classifier.predict(test_features)
 test_predict_results_proba = classifier.predict_proba(test_features)
 
@@ -85,7 +93,7 @@ test_predict_results_proba = classifier.predict_proba(test_features)
 test_result_df = test_features.copy()
 
 test_result_df["Present"] = present_label_encoder.inverse_transform(test_result_df["Present"])  # Invert encoding
-test_result_df["USERID"] = userid_label_encoder.inverse_transform(test_result_df["USERID"])
+test_result_df["USERID"] = userid_one_hot_encoder.inverse_transform(test_result_df["USERID"])
 
 test_result_df["Actual Labels"] = reason_label_encoder.inverse_transform(test_labels)  # Invert encoding back into str
 test_result_df["Predicted Labels"] = reason_label_encoder.inverse_transform(test_predict_results)

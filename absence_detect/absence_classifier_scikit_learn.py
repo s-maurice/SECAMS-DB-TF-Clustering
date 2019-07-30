@@ -93,7 +93,7 @@ test_predict_results_proba = classifier.predict_proba(test_features)
 test_result_df = test_features.copy()
 
 test_result_df["Present"] = present_label_encoder.inverse_transform(test_result_df["Present"])  # Invert encoding
-test_result_df["USERID"] = userid_one_hot_encoder.inverse_transform(test_result_df["USERID"])
+# test_result_df["USERID"] = userid_one_hot_encoder.inverse_transform(test_result_df["USERID"])
 
 test_result_df["Actual Labels"] = reason_label_encoder.inverse_transform(test_labels)  # Invert encoding back into str
 test_result_df["Predicted Labels"] = reason_label_encoder.inverse_transform(test_predict_results)
@@ -113,19 +113,24 @@ print()
 print("0-0-0-0-0-0-0-0-0-0")
 print()
 
-wrong_df = test_result_df[test_result_df['Actual Labels'] != test_result_df['Predicted Labels']]
+test_results = pd.concat([test_result_proba_df, test_result_df], axis=1)
 
-wrong_proba_df = test_result_proba_df.loc[wrong_df.index]
-wrong_proba_df['Actual Labels'] = wrong_df['Actual Labels']
-wrong_proba_df['Predicted Labels'] = wrong_df['Predicted Labels']
+# DF for all the wrong entries
+wrong_proba_df = test_results[test_results['Actual Labels'] != test_results['Predicted Labels']]
 
-print(wrong_proba_df)
+
+# DF for a random set of entries, apart from 'Normal' labels
+no_normal_proba_df = test_results[test_results['Actual Labels'] != "Normal"]
 
 num_cols = 5
 num_rows = 5
 fig, ax = plt.subplots(nrows=num_rows, ncols=num_cols, sharex=True, sharey=True)
-for idx, row in wrong_proba_df.head(num_rows * num_cols).reset_index(drop=True).iterrows():
-    bars = ax[idx // 5][idx % 5].bar(row.index[:-2], row[:-2], color='gray')
+for idx, row in no_normal_proba_df.head(num_rows * num_cols).reset_index(drop=True).iterrows():
+
+    labels = row.index[:14]
+    heights = row[:14]
+
+    bars = ax[idx // 5][idx % 5].bar(labels, heights, color='gray')
 
     predicted_label = reason_label_encoder.transform([row[-1]])[0]
     actual_label = reason_label_encoder.transform([row[-2]])[0]
@@ -133,9 +138,25 @@ for idx, row in wrong_proba_df.head(num_rows * num_cols).reset_index(drop=True).
     bars[predicted_label].set_color('r')
     bars[actual_label].set_color('b')
 
-    mean = sum(row[:-2]) / len(row[:-2])
+    mean = sum(heights) / len(heights)
     ax[idx // 5][idx % 5].axhline(mean, color='k', linestyle='dashed', linewidth=1)
 
+fig, ax = plt.subplots(nrows=num_rows, ncols=num_cols, sharex=True, sharey=True)
+for idx, row in wrong_proba_df.head(num_rows * num_cols).reset_index(drop=True).iterrows():
+
+    labels = row.index[:14]
+    heights = row[:14]
+
+    bars = ax[idx // 5][idx % 5].bar(labels, heights, color='gray')
+
+    predicted_label = reason_label_encoder.transform([row[-1]])[0]
+    actual_label = reason_label_encoder.transform([row[-2]])[0]
+
+    bars[predicted_label].set_color('r')
+    bars[actual_label].set_color('b')
+
+    mean = sum(heights) / len(heights)
+    ax[idx // 5][idx % 5].axhline(mean, color='k', linestyle='dashed', linewidth=1)
 
 [plt.setp(item.get_xticklabels(), ha="right", rotation=90) for row in ax for item in row]
 plt.show()

@@ -47,8 +47,8 @@ userid_encoded_df = pd.get_dummies(preprocessed_features['USERID'].to_list())
 preprocessed_features = pd.concat([preprocessed_features, userid_encoded_df], axis=1)
 preprocessed_features.drop(["USERID"], inplace=True, axis=1)
 
-pd.set_option('display.max_columns', 10)
-print(preprocessed_features)
+    pd.set_option('display.max_columns', 10)
+    print("Preprocessed feature sample:\n", preprocessed_features.head(10))
 
 # Process raw_df Labels
 preprocessed_labels = pd.DataFrame()
@@ -63,22 +63,20 @@ if os.path.isfile('saved_model.pkl'):
     classifier = joblib.load('saved_model.pkl')
     test_labels = pd.read_csv('test_labels.csv')
     test_features = pd.read_csv('test_features.csv')
-    
+
 else:
     # Split the training and testing data sets
-    train_labels, test_labels, train_features, test_features = train_test_split(preprocessed_labels,
-                                                                                preprocessed_features,
-                                                                                test_size=0.2)
+    train_labels, test_labels, train_features, test_features = train_test_split(preprocessed_labels, preprocessed_features, test_size=0.2)
 
     test_features.to_csv("test_features.csv")
     test_labels.to_csv("test_labels.csv")
     
-    # Different classifiers:
+    # Create one of the following classifiers:
     # -- Tree
     # classifier = tree.DecisionTreeClassifier()  # Create Classifier, doesn't even need any of the params changed
 
     # -- DNN
-    classifier = neural_network.MLPClassifier(verbose=True)
+    classifier = neural_network.MLPClassifier(verbose=True, max_iter=50)
 
     # -- Gaussian
     # classifier = gaussian_process.GaussianProcessClassifier(kernel=1.0*RBF(1.0))
@@ -94,7 +92,7 @@ else:
 
 # Begin Testing
 # Test model on test data set - can use .predict_proba instead, but the probability is always 1
-print(test_features)
+print("Test feature sample:\n", test_features.head(10))
 test_predict_results = classifier.predict(test_features)
 test_predict_results_proba = classifier.predict_proba(test_features)
 

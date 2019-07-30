@@ -47,8 +47,8 @@ userid_encoded_df = pd.get_dummies(preprocessed_features['USERID'].to_list())
 preprocessed_features = pd.concat([preprocessed_features, userid_encoded_df], axis=1)
 preprocessed_features.drop(["USERID"], inplace=True, axis=1)
 
-    pd.set_option('display.max_columns', 10)
-    print("Preprocessed feature sample:\n", preprocessed_features.head(10))
+pd.set_option('display.max_columns', 10)
+print("Preprocessed feature sample:\n", preprocessed_features.head(10))
 
 # Process raw_df Labels
 preprocessed_labels = pd.DataFrame()
@@ -66,7 +66,9 @@ if os.path.isfile('saved_model.pkl'):
 
 else:
     # Split the training and testing data sets
-    train_labels, test_labels, train_features, test_features = train_test_split(preprocessed_labels, preprocessed_features, test_size=0.2)
+    train_labels, test_labels, train_features, test_features = train_test_split(preprocessed_labels,
+                                                                                preprocessed_features,
+                                                                                test_size=0.2)
 
     test_features.to_csv("test_features.csv")
     test_labels.to_csv("test_labels.csv")

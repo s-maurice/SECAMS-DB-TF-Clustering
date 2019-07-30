@@ -16,54 +16,63 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
 
 
-#  Read csv
-raw_df = pd.read_csv("reason_df.csv")
-raw_df['Day'] = pd.to_datetime(raw_df['Day'])
-
-# Process raw_df Features
-# features = ['USERID', 'Day_of_week', '']
-
-preprocessed_features = pd.DataFrame()
-preprocessed_features['USERID'] = [str(i) for i in raw_df['USERID']]
-preprocessed_features['Day_of_week'] = [day.weekday() for day in raw_df['Day']]
-preprocessed_features['Day_of_month'] = [day.day for day in raw_df['Day']]
-preprocessed_features['Month_of_year'] = [day.month for day in raw_df['Day']]
-preprocessed_features['Prev_absences'] = raw_df['Prev_absences']
-
-present_label_encoder = preprocessing.LabelEncoder()
-preprocessed_features['Present'] = present_label_encoder.fit_transform(raw_df['Present'])
-# Be aware it assigns the first value it sees to 0, so present may not always be 1
-
-for day in pd.to_datetime(raw_df['Day'].unique()):
-    preprocessed_features.loc[(preprocessed_features['Day_of_month'] == day.day) & (preprocessed_features['Month_of_year'] == day.month), 'Users_absent'] = \
-        len(preprocessed_features[(preprocessed_features['Day_of_month'] == day.day) & (preprocessed_features['Month_of_year'] == day.month) & (preprocessed_features['Present'] == present_label_encoder.transform([False])[0])]) / len(preprocessed_features['USERID'].unique())
-
-# One-hot encode USERID through get_dummies; concat this to DF and drop original USERID column
-userid_encoded_df = pd.get_dummies(preprocessed_features['USERID'].to_list())
-preprocessed_features = pd.concat([preprocessed_features, userid_encoded_df], axis=1)
-preprocessed_features.drop(["USERID"], inplace=True, axis=1)
-
-pd.set_option('display.max_columns', 10)
-print(preprocessed_features)
-
-# Process raw_df Labels
-preprocessed_labels = pd.DataFrame()
-reason_label_encoder = preprocessing.LabelEncoder()
-preprocessed_labels['Reason'] = reason_label_encoder.fit_transform(raw_df['Reason'])
-# Be aware it assigns the first value it sees to 0, possibly use one_hot instead
-
-# print(preprocessed_labels)
-
-# Split the training and testing data sets
-train_labels, test_labels, train_features, test_features = train_test_split(preprocessed_labels,
-                                                                            preprocessed_features,
-                                                                            test_size=0.2)
-
 # Begin Training
-# Try to load the model if True
 if os.path.isfile('saved_model.pkl'):
+    # Try to load the model and test data sets if the model already exists
     classifier = joblib.load('saved_model.pkl')
+    test_labels = pd.read_csv('test_labels.csv')
+    test_features = pd.read_csv('test_features.csv')
+    
 else:
+    #  Read csv
+    raw_df = pd.read_csv("reason_df.csv")
+    raw_df['Day'] = pd.to_datetime(raw_df['Day'])
+
+    # Process raw_df Features
+    # features = ['USERID', 'Day_of_week', '']
+
+    preprocessed_features = pd.DataFrame()
+    preprocessed_features['USERID'] = [str(i) for i in raw_df['USERID']]
+    preprocessed_features['Day_of_week'] = [day.weekday() for day in raw_df['Day']]
+    preprocessed_features['Day_of_month'] = [day.day for day in raw_df['Day']]
+    preprocessed_features['Month_of_year'] = [day.month for day in raw_df['Day']]
+    preprocessed_features['Prev_absences'] = raw_df['Prev_absences']
+
+    present_label_encoder = preprocessing.LabelEncoder()
+    preprocessed_features['Present'] = present_label_encoder.fit_transform(raw_df['Present'])
+    # Be aware it assigns the first value it sees to 0, so present may not always be 1
+
+    for day in pd.to_datetime(raw_df['Day'].unique()):
+        preprocessed_features.loc[(preprocessed_features['Day_of_month'] == day.day) & (
+                    preprocessed_features['Month_of_year'] == day.month), 'Users_absent'] = \
+            len(preprocessed_features[(preprocessed_features['Day_of_month'] == day.day) & (
+                        preprocessed_features['Month_of_year'] == day.month) & (preprocessed_features['Present'] ==
+                                                                                present_label_encoder.transform(
+                                                                                    [False])[0])]) / len(
+                preprocessed_features['USERID'].unique())
+
+    # One-hot encode USERID through get_dummies; concat this to DF and drop original USERID column
+    userid_encoded_df = pd.get_dummies(preprocessed_features['USERID'].to_list())
+    preprocessed_features = pd.concat([preprocessed_features, userid_encoded_df], axis=1)
+    preprocessed_features.drop(["USERID"], inplace=True, axis=1)
+
+    pd.set_option('display.max_columns', 10)
+    print(preprocessed_features)
+
+    # Process raw_df Labels
+    preprocessed_labels = pd.DataFrame()
+    reason_label_encoder = preprocessing.LabelEncoder()
+    preprocessed_labels['Reason'] = reason_label_encoder.fit_transform(raw_df['Reason'])
+    # Be aware it assigns the first value it sees to 0, possibly use one_hot instead
+
+    # Split the training and testing data sets
+    train_labels, test_labels, train_features, test_features = train_test_split(preprocessed_labels,
+                                                                                preprocessed_features,
+                                                                                test_size=0.2)
+
+    test_features.to_csv("test_features.csv")
+    test_labels.to_csv("test_labels.csv")
+    
     # Different classifiers:
     # -- Tree
     # classifier = tree.DecisionTreeClassifier()  # Create Classifier, doesn't even need any of the params changed

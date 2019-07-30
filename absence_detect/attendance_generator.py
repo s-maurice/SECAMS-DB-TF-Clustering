@@ -20,13 +20,13 @@ def get_event(present, weekday):
         return "Absent"
 
 
-def random(sick_weight=0,
-           car_weight=0,
-           train_weight=0,
-           skiving_weight=0,
-           hungover_weight=0,
-           other_weight=0,
-           rare_weight=0):
+def random_reason(sick_weight=0,
+                  car_weight=0,
+                  train_weight=0,
+                  skiving_weight=0,
+                  hungover_weight=0,
+                  other_weight=0,
+                  rare_weight=0):
     # Method that chooses a random item from 'choice' depending on the weights.
     # Uses np.random.choice(), but allows weights to add up to any total value.
 
@@ -81,13 +81,13 @@ def get_reason(day, event, userid):
         elif day.weekday() == 3:   # absent on last day of week
             skiving_weight = week_edge_bias
 
-        return random(sick_weight=sick_weight,
-                      car_weight=car_weight,
-                      train_weight=train_weight,
-                      skiving_weight=skiving_weight,
-                      hungover_weight=hungover_weight,
-                      other_weight=other_weight,
-                      rare_weight=rare_weight)
+        return random_reason(sick_weight=sick_weight,
+                             car_weight=car_weight,
+                             train_weight=train_weight,
+                             skiving_weight=skiving_weight,
+                             hungover_weight=hungover_weight,
+                             other_weight=other_weight,
+                             rare_weight=rare_weight)
 
     # If not absent, then return the event as is
     else:
@@ -95,7 +95,7 @@ def get_reason(day, event, userid):
 
 
 def gen_holiday(df, holidate):
-    # Generates a holiday; on all 'holidate' events, people are absent due to the reason 'Holiday'
+    # Generates a holiday; on all 'holidate' events, people are abse nt due to the reason 'Holiday'
     df.loc[df['Day'] == holidate, 'Present'] = False
     df.loc[df['Day'] == holidate, 'Reason'] = "Holiday"
 
@@ -117,6 +117,9 @@ def gen_leave(df, leave_threshold=2):
             print(str(idx) + ' reached ; ' + str(time_taken) + ' seconds')
             start_time = time.time()
 
+
+
+
 df = pd.read_csv("absence_df.csv")
 df['Day'] = pd.to_datetime(df['Day'])
 df.set_index("index", inplace=True)
@@ -125,6 +128,7 @@ df['Reason'] = [get_reason(day, event, userid) for day, event, userid in zip(df[
 
 gen_leave(df)
 gen_holiday(df, pd.Timestamp(dt.date(year=2016, month=5, day=18)))
+
 
 pd.set_option('display.max_rows', 1000)
 print(df)

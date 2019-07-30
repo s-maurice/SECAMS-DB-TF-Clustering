@@ -23,7 +23,7 @@ classifier_type = "DNN"    # Classifiers: Tree / DNN / Gaussian / Discriminant
 
 
 # Preprocess the data and encode the features + labels
-#  Read csv
+# Read csv
 raw_df = pd.read_csv("reason_df.csv")
 raw_df['Day'] = pd.to_datetime(raw_df['Day'])
 
@@ -73,7 +73,7 @@ if os.path.isfile('saved_model.pkl'):
     classifier = joblib.load('saved_model.pkl')
     test_labels = pd.read_csv('test_labels.csv', index_col=0)
     test_features = pd.read_csv('test_features.csv', index_col=0)
-    
+
 else:
     # Split the training and testing data sets; save this test data set for later use too
     train_labels, test_labels, train_features, test_features = train_test_split(preprocessed_labels, preprocessed_features, test_size=0.2)

@@ -106,13 +106,6 @@ def generator_by_period_remove_classrooms_from_list(lunch_period=3):
     print(part_time_df)
 
 
-
-
-
-
-
-
-
 # Each user has the same daily schedule, repeated across weekdays, with the exception of a weekly meeting on Wednesday.
 # Turns daily schedule df into a list of DataFrames,
 # with each dataframe representing a single user's weekly schedule,

@@ -23,7 +23,7 @@ pd.set_option('display.width', None)
 one_hot_encode = False
 max_iter = 200    # (200 by default)
 classifier_type = "DNN"    # Classifiers: Tree / DNN / Gaussian
-use_calibrator = True
+use_calibrator = False
 early_stopping = True
 show_examples = True
 
@@ -154,7 +154,7 @@ def average_actual_deviation(proba_df):  # Calculates how far off the model is o
     deviation = []
     for (index, row), zero_index in zip(proba_df.iterrows(), range(len(proba_df))):
         deviation.append(row[pred[zero_index]] - row[actual[zero_index]])
-    return np.abs(deviation) / len(deviation)
+    return np.mean(np.abs(deviation))
 
 
 def prediction_actual_hist(proba_df_list, name_list):  # Shows hist of predicted values v actual values occurrences

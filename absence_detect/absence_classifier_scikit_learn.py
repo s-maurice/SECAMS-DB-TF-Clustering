@@ -23,7 +23,7 @@ pd.set_option('display.width', None)
 one_hot_encode = False
 max_iter = 200    # (200 by default)
 classifier_type = "DNN"    # Classifiers: Tree / DNN / Gaussian
-use_calibrator = False
+use_calibrator = True
 early_stopping = True
 show_examples = True
 
@@ -98,12 +98,18 @@ else:
 
     classifier.fit(train_features, train_labels)  # Fit Model
 
-    if use_calibrator:
-        # Calibrate Classifier
-        # Calibrated Classifier - Calibrates for predict_proba
-        classifier = CalibratedClassifierCV(classifier).fit(train_features, train_labels)  # Defaults to sigmanoid
-    # Save Model
-    # Output a pickle file for the model
+    if use_calibrator:      # Calibrate Classifier to adjust label probabilities
+        # Use only the features and labels without 'Normal' as the label
+        # no_normal_train_features = train_features[train_labels['Reason'] != 'Normal']
+        # no_normal_train_labels = train_labels[train_labels['Reason'] != 'Normal']
+
+        # Calibrate
+        print('calibrating...')
+        classifier = CalibratedClassifierCV(classifier, cv="prefit", method="isotonic")  # Defaults to sigmoid
+        classifier.fit(train_features, train_labels)
+        print('calibrated')
+
+    # Save Model as a pickle file
     joblib.dump(classifier, 'saved_model.pkl')
 
 

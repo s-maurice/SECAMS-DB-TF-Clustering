@@ -64,18 +64,18 @@ def get_reason(day, event, userid):
         rare_weight = 0
 
         # Define some weights straight off user_bias
-        sick_weight = 0.5 + user_bias*0.2
-        other_weight = 0.05 + user_bias*0.05
-        rare_weight = 0.01 + user_bias*0.01
+        sick_weight = 0.4 + user_bias*0.2
+        other_weight = 0.08 + user_bias*0.05
+        rare_weight = 0.02 + user_bias*0.01
 
         # Transportation weights - will either only use car or train
         if abs(hash(str(userid))) % 2 == 0:
-            train_weight = 0.05 + user_bias*0.05
+            train_weight = 0.15 + user_bias*0.05
         else:
-            car_weight = 0.05 + user_bias*0.05
+            car_weight = 0.25 + user_bias*0.05
 
         # Skiving/Hungover weights - only if absent, and depending on the day of the week
-        week_edge_bias = 0.1 + user_bias*0.1
+        week_edge_bias = 0.6 + user_bias*0.3
         if day.weekday() == 6:  # absent on first day of week
             hungover_weight = week_edge_bias
         elif day.weekday() == 3:   # absent on last day of week
@@ -115,7 +115,13 @@ def gen_leave(df, leave_threshold=2):
         if idx % 5000 == 0:
             time_taken = time.time() - start_time
             print(str(idx) + ' reached ; ' + str(time_taken) + ' seconds')
+            if idx == 5000:
+                estimated_time = time_taken * len(df.index) / 5000
+                print('estimated time: ' + str(estimated_time) + ' seconds')
+
             start_time = time.time()
+
+
 
 
 

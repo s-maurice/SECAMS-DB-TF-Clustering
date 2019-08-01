@@ -143,7 +143,7 @@ wrong_proba_df = test_results[test_results['Actual Labels'] != test_results['Pre
 # DF for a random set of entries, apart from 'Normal' labels
 no_normal_proba_df = test_results[test_results['Actual Labels'] != "Normal"]
 
-# DF for entries that aren't Normal, Holiday, or Leave
+# DF for entries that aren't Normal, Holiday, Weekend_Work or Leave
 irregular_proba_df = test_results[(test_results['Actual Labels'] != "Normal") & (test_results['Actual Labels'] != "Holiday") & (test_results['Actual Labels'] != "Leave") & (test_results['Actual Labels'] != "Weekend_Work")]
 
 

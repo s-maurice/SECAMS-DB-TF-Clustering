@@ -14,7 +14,8 @@ import numpy as np
 # import graphviz
 
 
-pd.set_option('display.max_columns', 100)
+pd.set_option('display.max_columns', 10)
+pd.set_option('display.max_rows', 10)
 pd.set_option('display.width', None)
 
 # Hyperparameters?
@@ -23,6 +24,7 @@ one_hot_encode = False
 max_iter = 200    # (200 by default)
 classifier_type = "DNN"    # Classifiers: Tree / DNN / Gaussian
 early_stopping = True
+show_examples = False
 
 
 # Preprocess the data and encode the features + labels
@@ -62,7 +64,6 @@ else:
     userid_label_encoder = preprocessing.LabelEncoder()
     preprocessed_features['USERID'] = userid_label_encoder.fit_transform(preprocessed_features['USERID'])
 
-pd.set_option('display.max_columns', 10)
 print("Preprocessed feature sample:\n", preprocessed_features.head(10))
 
 # Process raw_df Labels
@@ -162,9 +163,12 @@ def prediction_actual_hist(proba_df_list, name_list):  # Shows hist of predicted
         pred = proba_df["Predicted Labels"].to_list()
         actual = proba_df["Actual Labels"].to_list()
 
-        ax[index, 0].set_ylabel(name_list[index], rotation=0)
+        ax[index, 0].set_ylabel(name_list[index], rotation=90, size="large")
         ax[index, 0].hist(pred)
         ax[index, 1].hist(actual)
+
+    plt.setp(ax[-1, 0].get_xticklabels(), ha="right", rotation=90)
+    plt.setp(ax[-1, 1].get_xticklabels(), ha="right", rotation=90)
 
     ax[0, 0].set_title("Predicted Labels")
     ax[0, 1].set_title("Actual Labels")
@@ -224,6 +228,7 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         ax[a][b].text(0.05, 0.95, features, fontsize=8, transform=ax[a][b].transAxes, verticalalignment='top', bbox=props)
 
+    # Rotate x tick labels
     [plt.setp(item.get_xticklabels(), ha="right", rotation=90) for row in ax for item in row]
 
     if name is not None:
@@ -234,11 +239,13 @@ print("Wrong Average Deviation ", average_actual_deviation(wrong_proba_df))
 print("No Normal Average Deviation ", average_actual_deviation(no_normal_proba_df))
 print("Irregular Average Deviation ", average_actual_deviation(irregular_proba_df))
 
-prediction_actual_hist([wrong_proba_df, no_normal_proba_df, irregular_proba_df], ["wrong_proba_df", "no_normal_proba_df", "irregular_proba_df"])
+prediction_actual_hist([wrong_proba_df, no_normal_proba_df], ["wrong_proba_df", "no_normal_proba_df"])
+# prediction_actual_hist([wrong_proba_df, no_normal_proba_df, irregular_proba_df], ["wrong_proba_df", "no_normal_proba_df", "irregular_proba_df"])
 
-predict_plot(no_normal_proba_df, name="Results (excluding Normal)")
-predict_plot(irregular_proba_df, name="Results (excluding Normal, Leave, Weekend, Holiday)")
-predict_plot(wrong_proba_df, name="Wrong Predictions")
+if show_examples:
+    predict_plot(no_normal_proba_df, name="Results (excluding Normal)")
+    predict_plot(irregular_proba_df, name="Results (excluding Normal, Leave, Weekend, Holiday)")
+    predict_plot(wrong_proba_df, name="Wrong Predictions")
 
 # Save wrong_proba_df for later analysis as well
 wrong_proba_df.to_csv("wrong_proba_df.csv")

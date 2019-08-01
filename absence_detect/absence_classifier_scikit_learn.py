@@ -137,6 +137,9 @@ print("Accuracy:", test_accuracy)
 
 test_results = pd.concat([test_result_proba_df, test_result_df], axis=1)
 
+# DF for all the correct entries
+correct_proba_df = test_results[test_results['Actual Labels'] == test_results['Predicted Labels']]
+
 # DF for all the wrong entries
 wrong_proba_df = test_results[test_results['Actual Labels'] != test_results['Predicted Labels']]
 
@@ -237,6 +240,8 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
         fig.canvas.set_window_title(name)
 
 
+print("Overall Deviation ", average_actual_deviation(test_results))
+print("Correct Deviation ", average_actual_deviation(correct_proba_df))
 print("Wrong Average Deviation ", average_actual_deviation(wrong_proba_df))
 print("No Normal Average Deviation ", average_actual_deviation(no_normal_proba_df))
 print("Irregular Average Deviation ", average_actual_deviation(irregular_proba_df))

@@ -253,6 +253,7 @@ if show_examples:
     predict_plot(no_normal_proba_df, name="Results (excluding Normal)")
     predict_plot(irregular_proba_df, name="Results (excluding Normal, Leave, Weekend, Holiday)")
     predict_plot(wrong_proba_df, name="Wrong Predictions")
+    predict_plot(correct_proba_df, name="Correct Predictions")
 
 # Save wrong_proba_df for later analysis as well
 wrong_proba_df.to_csv("wrong_proba_df.csv")

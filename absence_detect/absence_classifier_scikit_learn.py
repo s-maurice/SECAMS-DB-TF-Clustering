@@ -7,8 +7,8 @@ from sklearn import tree
 from sklearn import neural_network
 from sklearn import gaussian_process
 from sklearn.gaussian_process.kernels import RBF
-from sklearn import discriminant_analysis
 import matplotlib.pyplot as plt
+import datetime as dt
 # import graphviz
 
 
@@ -19,7 +19,8 @@ pd.set_option('display.width', None)
 # WARNING: The test_features.csv file generated while one_hot_encode is set to True requires a lot of memory.
 one_hot_encode = False
 max_iter = 200    # (200 by default)
-classifier_type = "DNN"    # Classifiers: Tree / DNN / Gaussian / Discriminant
+classifier_type = "DNN"    # Classifiers: Tree / DNN / Gaussian
+early_stopping = True
 
 
 # Preprocess the data and encode the features + labels
@@ -85,11 +86,9 @@ else:
     if classifier_type == "Tree":
         classifier = tree.DecisionTreeClassifier()  # Create Classifier, doesn't even need any of the params changed
     elif classifier_type == "DNN":
-        classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter)
+        classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter, early_stopping=early_stopping)
     elif classifier_type == "Gaussian":
         classifier = gaussian_process.GaussianProcessClassifier(kernel=1.0*RBF(1.0))
-    elif classifier_type == "Discriminant":
-        classifier = discriminant_analysis.QuadraticDiscriminantAnalysis(store_covariance=True)
     else:   # Default to DNN
         classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter)
 
@@ -132,35 +131,77 @@ test_results = pd.concat([test_result_proba_df, test_result_df], axis=1)
 # DF for all the wrong entries
 wrong_proba_df = test_results[test_results['Actual Labels'] != test_results['Predicted Labels']]
 
-
 # DF for a random set of entries, apart from 'Normal' labels
 no_normal_proba_df = test_results[test_results['Actual Labels'] != "Normal"]
 
+# DF for a
 
-def predict_plot(proba_df, num_cols=5, num_rows=5):
+
+def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
+
+    # Functions for plotting the features; allows easier reading
+    def get_weekday(num):   # Function that returns a String of the day of week, given a number from .weekday()
+        days_of_week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        return days_of_week[num]
+
+    def get_present(bool):  # Function that returns 'present' or 'absent' depending on the 'present' parameter
+        if bool:
+            return "Present"
+        else:
+            return "Absent"
 
     proba_df = proba_df.head(num_cols*num_rows)
 
-    fig, ax = plt.subplots(nrows=num_rows, ncols=num_cols, sharex=True, sharey=True)
+    fig, ax = plt.subplots(figsize=(16, 8), nrows=num_rows, ncols=num_cols, sharex=True, sharey=True)
     for idx, row in proba_df.head(num_rows * num_cols).reset_index(drop=True).iterrows():
+        # coordinates of the ax graph
+        a = idx // 5
+        b = idx % 5
+        
+        # Get labels and their heights; plot this as a bar graph
         labels = row.index[:14]
         heights = row[:14]
+        bars = ax[a][b].bar(labels, heights, color='gray')
 
-        bars = ax[idx // 5][idx % 5].bar(labels, heights, color='gray')
-
+        # Find predicted and actual labels; highlight them as red and blue.
         predicted_label = reason_label_encoder.transform([row[-1]])[0]
         actual_label = reason_label_encoder.transform([row[-2]])[0]
 
         bars[predicted_label].set_color('r')
         bars[actual_label].set_color('b')
 
+        # Draw a mean line
         mean = sum(heights) / len(heights)
-        ax[idx // 5][idx % 5].axhline(mean, color='k', linestyle='dashed', linewidth=1)
+        ax[a][b].axhline(mean, color='k', linestyle='dashed', linewidth=1)
+
+        # Find features and place them on the graph as well
+        day = dt.date(year=2016, month=row['Month_of_year'], day=row['Day_of_month'])
+        weekday = get_weekday(row['Day_of_week'])
+        present = get_present(row['Present'])
+        prev_absences = row['Prev_absences']
+        users_absent = row['Users_absent']
+
+        features = "%s (%s)\n%s / %s / %.3f" % (day, weekday, present, prev_absences, users_absent)
+
+        # As a subtitle
+        # font = dict(fontsize=8)
+        # ax[a][b].set_title(features, fontdict=font, pad=-10)
+
+        # As a textbox
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        ax[a][b].text(0.05, 0.95, features, fontsize=8, transform=ax[a][b].transAxes, verticalalignment='top', bbox=props)
+
     [plt.setp(item.get_xticklabels(), ha="right", rotation=90) for row in ax for item in row]
 
+    if name is not None:
+        fig.canvas.set_window_title(name)
 
-predict_plot(no_normal_proba_df)
-predict_plot(wrong_proba_df)
+
+predict_plot(no_normal_proba_df, name="Results (excluding Normal)")
+predict_plot(wrong_proba_df, name="Wrong Predictions")
+
+# Save wrong_proba_df for later analysis as well
+wrong_proba_df.to_csv("wrong_proba_df.csv")
 
 # If tree classifier, display the tree
 if classifier_type == "Tree":

@@ -8,7 +8,9 @@ from sklearn import neural_network
 from sklearn import gaussian_process
 from sklearn.gaussian_process.kernels import RBF
 from sklearn import discriminant_analysis
+from sklearn.calibration import CalibratedClassifierCV
 import matplotlib.pyplot as plt
+import numpy as np
 # import graphviz
 
 
@@ -94,6 +96,9 @@ else:
         classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter)
 
     classifier.fit(train_features, train_labels)  # Fit Model
+    # Calibrate Classifier
+    # Calibrated Classifier - Calibrates for predict_proba
+    classifier = CalibratedClassifierCV(classifier).fit(train_features, train_labels)  # Defaults to sigmanoid
     # Save Model
     # Output a pickle file for the model
     joblib.dump(classifier, 'saved_model.pkl')
@@ -104,6 +109,7 @@ else:
 print("Test feature sample:\n", test_features.head(10))
 test_predict_results = classifier.predict(test_features)
 test_predict_results_proba = classifier.predict_proba(test_features)
+
 
 # Convert into a Data Frame with matching features and actual_labels for easy analysis
 test_result_df = test_features.copy()
@@ -121,6 +127,7 @@ test_result_df.reset_index(drop=True, inplace=True)
 test_result_proba_df = pd.DataFrame.from_records(test_predict_results_proba)
 test_result_proba_df.columns = reason_label_encoder.inverse_transform(test_result_proba_df.columns)
 
+pd.set_option('display.max_columns', 10)
 print(test_result_proba_df)
 print(test_result_df)
 
@@ -135,6 +142,35 @@ wrong_proba_df = test_results[test_results['Actual Labels'] != test_results['Pre
 
 # DF for a random set of entries, apart from 'Normal' labels
 no_normal_proba_df = test_results[test_results['Actual Labels'] != "Normal"]
+
+# DF for entries that aren't Normal, Holiday, or Leave
+irregular_proba_df = test_results[(test_results['Actual Labels'] != "Normal") & (test_results['Actual Labels'] != "Holiday") & (test_results['Actual Labels'] != "Leave") & (test_results['Actual Labels'] != "Weekend_Work")]
+
+
+def average_actual_deviation(proba_df):  # Calculates how far off the model is on average
+    pred = proba_df["Predicted Labels"].to_list()
+    actual = proba_df["Actual Labels"].to_list()
+
+    deviation = []
+    for (index, row), zero_index in zip(proba_df.iterrows(), range(len(proba_df))):
+        deviation.append(row[pred[zero_index]] - row[actual[zero_index]])
+    return np.mean(np.abs(deviation))
+
+
+def prediction_actual_hist(proba_df_list, name_list):  # Shows hist of predicted values v actual values occurrences
+    fig, ax = plt.subplots(len(proba_df_list), 2, sharey=True, sharex=True)
+    fig.canvas.set_window_title('Predicted vs. Actual Labels')
+
+    for index, proba_df in zip(range(len(proba_df_list)), proba_df_list):
+        pred = proba_df["Predicted Labels"].to_list()
+        actual = proba_df["Actual Labels"].to_list()
+
+        ax[index, 0].set_ylabel(name_list[index], rotation=0)
+        ax[index, 0].hist(pred)
+        ax[index, 1].hist(actual)
+
+    ax[0, 0].set_title("Predicted Labels")
+    ax[0, 1].set_title("Actual Labels")
 
 
 def predict_plot(proba_df, num_cols=5, num_rows=5):
@@ -159,6 +195,13 @@ def predict_plot(proba_df, num_cols=5, num_rows=5):
     [plt.setp(item.get_xticklabels(), ha="right", rotation=90) for row in ax for item in row]
 
 
+print("Wrong Average Deviation ", average_actual_deviation(wrong_proba_df))
+print("No Normal Average Deviation ", average_actual_deviation(no_normal_proba_df))
+print("Irregular Average Deviation ", average_actual_deviation(irregular_proba_df))
+
+prediction_actual_hist([wrong_proba_df, no_normal_proba_df, irregular_proba_df], ["wrong_proba_df", "no_normal_proba_df", "irregular_proba_df"])
+
+predict_plot(irregular_proba_df)
 predict_plot(no_normal_proba_df)
 predict_plot(wrong_proba_df)
 

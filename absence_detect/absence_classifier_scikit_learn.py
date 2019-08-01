@@ -23,8 +23,9 @@ pd.set_option('display.width', None)
 one_hot_encode = False
 max_iter = 200    # (200 by default)
 classifier_type = "DNN"    # Classifiers: Tree / DNN / Gaussian
+use_calibrator = True
 early_stopping = True
-show_examples = False
+show_examples = True
 
 
 # Preprocess the data and encode the features + labels
@@ -97,9 +98,10 @@ else:
 
     classifier.fit(train_features, train_labels)  # Fit Model
 
-    # Calibrate Classifier
-    # Calibrated Classifier - Calibrates for predict_proba
-    classifier = CalibratedClassifierCV(classifier).fit(train_features, train_labels)  # Defaults to sigmanoid
+    if use_calibrator:
+        # Calibrate Classifier
+        # Calibrated Classifier - Calibrates for predict_proba
+        classifier = CalibratedClassifierCV(classifier).fit(train_features, train_labels)  # Defaults to sigmanoid
     # Save Model
     # Output a pickle file for the model
     joblib.dump(classifier, 'saved_model.pkl')
@@ -152,7 +154,7 @@ def average_actual_deviation(proba_df):  # Calculates how far off the model is o
     deviation = []
     for (index, row), zero_index in zip(proba_df.iterrows(), range(len(proba_df))):
         deviation.append(row[pred[zero_index]] - row[actual[zero_index]])
-    return np.mean(np.abs(deviation))
+    return np.abs(deviation) / len(deviation)
 
 
 def prediction_actual_hist(proba_df_list, name_list):  # Shows hist of predicted values v actual values occurrences

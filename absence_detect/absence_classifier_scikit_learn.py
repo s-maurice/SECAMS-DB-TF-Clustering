@@ -211,12 +211,15 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
         heights = row[:14]
         bars = ax[a][b].bar(labels, heights, color='gray')
 
-        # Find predicted and actual labels; highlight them as red and blue.
-        predicted_label = reason_label_encoder.transform([row[-1]])[0]
-        actual_label = reason_label_encoder.transform([row[-2]])[0]
+        # Find predicted and actual labels
+        predicted_label = row['Predicted Labels']
+        actual_label = row['Actual Labels']
 
-        bars[predicted_label].set_color('r')
-        bars[actual_label].set_color('b')
+        # Get indexes to set color
+        predicted_index = reason_label_encoder.transform([predicted_label])[0]
+        actual_index = reason_label_encoder.transform([actual_label])[0]
+        bars[predicted_index].set_color('r')
+        bars[actual_index].set_color('b')
 
         # Draw a mean line
         mean = sum(heights) / len(heights)
@@ -229,7 +232,7 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
         prev_absences = row['Prev_absences']
         users_absent = row['Users_absent']
 
-        features = "%s (%s)\n%s / %s / %.3f" % (day, weekday, present, prev_absences, users_absent)
+        features = "%s (%s)\n%s / %s / %.3f\nP: %.3s / A: %.3s" % (day, weekday, present, prev_absences, users_absent, predicted_label, actual_label)
 
         # As a subtitle
         # font = dict(fontsize=8)
@@ -240,14 +243,13 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
         ax[a][b].text(0.05, 0.95, features, fontsize=8, transform=ax[a][b].transAxes, verticalalignment='top', bbox=props)
 
     # Rotate x tick labels
-    [plt.setp(item.get_xticklabels(), ha="right", rotation=90) for row in ax for item in row]
+    [plt.setp(item.get_xticklabels(), ha="center", rotation=90) for row in ax for item in row]
 
     if name is not None:
         fig.canvas.set_window_title(name)
 
 
 print("Overall Deviation ", average_actual_deviation(test_results))
-print("Correct Deviation ", average_actual_deviation(correct_proba_df))
 print("Wrong Average Deviation ", average_actual_deviation(wrong_proba_df))
 print("No Normal Average Deviation ", average_actual_deviation(no_normal_proba_df))
 print("Irregular Average Deviation ", average_actual_deviation(irregular_proba_df))

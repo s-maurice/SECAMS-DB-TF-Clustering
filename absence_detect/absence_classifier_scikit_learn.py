@@ -22,7 +22,7 @@ pd.set_option('display.width', None)
 # WARNING: The test_features.csv file generated while one_hot_encode is set to True requires a lot of memory.
 one_hot_encode = False
 max_iter = 200    # (200 by default)
-classifier_type = "DNN"    # Classifiers: Tree / DNN / Gaussian
+classifier_type = "Cal_Class_Test"    # Classifiers: Tree / DNN / Gaussian / Cal_Class_Test
 use_calibrator = True
 early_stopping = True
 show_examples = True
@@ -42,6 +42,7 @@ preprocessed_features['Day_of_week'] = [day.weekday() for day in raw_df['Day']]
 preprocessed_features['Day_of_month'] = [day.day for day in raw_df['Day']]
 preprocessed_features['Month_of_year'] = [day.month for day in raw_df['Day']]
 preprocessed_features['Prev_absences'] = raw_df['Prev_absences']
+# Add feature for whether they drive a car or take the train to work
 
 present_label_encoder = preprocessing.LabelEncoder()
 preprocessed_features['Present'] = present_label_encoder.fit_transform(raw_df['Present'])
@@ -90,11 +91,14 @@ else:
     if classifier_type == "Tree":
         classifier = tree.DecisionTreeClassifier()  # Create Classifier, doesn't even need any of the params changed
     elif classifier_type == "DNN":
-        classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter, early_stopping=early_stopping)
+        classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter, early_stopping=early_stopping, hidden_layer_sizes=(100, 50))
     elif classifier_type == "Gaussian":
         classifier = gaussian_process.GaussianProcessClassifier(kernel=1.0*RBF(1.0))
+    elif classifier_type == "Cal_Class_Test":
+        classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter, hidden_layer_sizes=(100, 50))
+        classifier = CalibratedClassifierCV(classifier, cv=5, method="isotonic")
     else:   # Default to DNN
-        classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter)
+        classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter, hidden_layer_sizes=(100, 50))
 
     classifier.fit(train_features, train_labels)  # Fit Model
 

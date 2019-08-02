@@ -167,7 +167,7 @@ def average_actual_deviation(proba_df):  # Calculates how far off the model is o
 
 
 def prediction_actual_hist(proba_df_list, name_list):  # Shows hist of predicted values v actual values occurrences
-    fig, ax = plt.subplots(len(proba_df_list), 2, sharey=True, sharex=True)
+    fig, ax = plt.subplots(len(proba_df_list), 2, sharey=True, sharex=True, figsize=(16, 8))
     fig.canvas.set_window_title('Predicted vs. Actual Labels')
 
     for index, proba_df in zip(range(len(proba_df_list)), proba_df_list):
@@ -249,6 +249,8 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
         fig.canvas.set_window_title(name)
 
 
+print("---------")
+print("Deviation")
 print("Overall Deviation ", average_actual_deviation(test_results))
 print("Wrong Average Deviation ", average_actual_deviation(wrong_proba_df))
 print("No Normal Average Deviation ", average_actual_deviation(no_normal_proba_df))
@@ -279,6 +281,12 @@ if classifier_type == "Tree":
     # tree_plot = tree.export_graphviz(classifier, out_file=None)
     # tree_graph = graphviz.Source(tree_plot)
     # tree_graph.render("Classifier_Tree")
+
+# Hyperparam Printout
+
+print("----------------")
+print("Hyper Parameters")
+print("One Hot Encode: %s \nMax Iterations: %s \nClassifier Type: %s \nUse Calibrator: %s \nEarly Stopping: %s \nShow Examples: %s " % (one_hot_encode, max_iter, classifier_type, use_calibrator, early_stopping, show_examples))
 
 plt.show()
 

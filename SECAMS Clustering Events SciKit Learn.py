@@ -34,15 +34,17 @@ preprocessed_features["TerminalSN"] = TerminalSN_le.fit_transform(preprocessed_f
 # preprocessed_features["EventID"] = EventID_le.fit_transform(preprocessed_features["EventID"])
 
 
-# Split data set
-train_features, test_features = train_test_split(preprocessed_features, test_size=0.2)
+# Split data set, not needed as it is unsupervised
+# train_features, test_features = train_test_split(preprocessed_features, test_size=0.2)
 
 # Begin Training
 neigh = LocalOutlierFactor(novelty=False)  # Default Args
-train_outliers = neigh.fit_predict(train_features)  # On training data
+train_outliers = neigh.fit_predict(preprocessed_features)  # On training data
 
 outlier_result_df = pd.DataFrame()
-outlier_result_df = train_features.copy()
+outlier_result_df["UserID"] = UserID_le.inverse_transform(preprocessed_features["UserID"])
+outlier_result_df["TerminalSN"] = TerminalSN_le.inverse_transform(preprocessed_features["TerminalSN"])
+outlier_result_df["Timestamps"] = raw_df["TIMESTAMPS"]
 outlier_result_df["Outlier"] = train_outliers
 print(outlier_result_df)
 

@@ -248,9 +248,12 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
 
     # Rotate x tick labels
     [plt.setp(item.get_xticklabels(), ha="center", rotation=90) for row in ax for item in row]
-
+    fig.text(0.5, 0, 'Reason', ha='center', va='bottom')
+    fig.text(0.06, 0.5, 'Percentage Confidence', ha='center', va='center', rotation='vertical')
+    plt.subplots_adjust(left=0.09, bottom=0.15, top=0.94, wspace=0.06, hspace=0.09)
     if name is not None:
         fig.canvas.set_window_title(name)
+        fig.suptitle(name)
 
 
 print("---------")
@@ -266,8 +269,12 @@ prediction_actual_hist([wrong_proba_df, no_normal_proba_df], ["wrong_proba_df", 
 if show_examples:
     predict_plot(no_normal_proba_df, name="Results (excluding Normal)")
     predict_plot(irregular_proba_df, name="Results (excluding Normal, Leave, Weekend, Holiday)")
+    plt.savefig('iregular.png', dpi=500)
     predict_plot(wrong_proba_df, name="Wrong Predictions")
+    plt.savefig('wrong.png', dpi=500)
     predict_plot(correct_proba_df, name="Correct Predictions")
+    plt.savefig('correct.png', dpi=500)
+
 
 # Save wrong_proba_df for later analysis as well
 wrong_proba_df.to_csv("wrong_proba_df.csv")

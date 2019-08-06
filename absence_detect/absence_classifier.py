@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow import data
 import os
+from sklearn import preprocessing
 import shutil
 
 
@@ -25,6 +26,11 @@ def pp_feature(df):
     feature_df['Day_of_week'] = [day.weekday() for day in df['Day']]
     feature_df['Day_of_month'] = [day.day for day in df['Day']]
     feature_df['Month_of_year'] = [day.month for day in df['Day']]
+    feature_df["Prev_absences"] = [int(i) for i in df["Prev_absences"]]
+    feature_df["USERID"] = [str(i) for i in df["USERID"]]
+
+    userid_le = preprocessing.LabelEncoder()
+    feature_df["USERID"] = userid_le.fit_transform(feature_df["USERID"])
 
     return feature_df
 
@@ -68,6 +74,13 @@ def create_feature_columns(df):
     feature_column_list.append(tf.feature_column.indicator_column(
         categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="Month_of_year", vocabulary_list=df["Month_of_year"].unique())))
 
+    feature_column_list.append(tf.feature_column.numeric_column(key="Prev_absences"))
+
+    feature_column_list.append(tf.feature_column.indicator_column(
+        categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="USERID",
+                                                                                     vocabulary_list=df[
+                                                                                         "USERID"].unique())))
+
     return feature_column_list
 
 
@@ -80,12 +93,12 @@ def train_model(train_features, train_targets, test_features, test_targets, lear
 
     # Create the DNN
     classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
-                                                hidden_units=[128, 64, 16],
-                                               optimizer=optimizer,
-                                               label_vocabulary=label_vocab_list,
-                                               n_classes=len(label_vocab_list),
-                                               model_dir=model_dir,
-                                               config=tf.estimator.RunConfig().replace(save_summary_steps=50))
+                                            hidden_units=[128, 64],
+                                            optimizer=optimizer,
+                                            label_vocabulary=label_vocab_list,
+                                            n_classes=len(label_vocab_list),
+                                            model_dir=model_dir,
+                                            config=tf.estimator.RunConfig().replace(save_summary_steps=50))
     
     # Input functions
     train_fn = lambda: create_input_function(train_features, train_targets, batch_size=batch_size, shuffle=True)
@@ -259,7 +272,7 @@ def main():
                              train_targets=train_targets,
                              test_features=test_features,
                              test_targets=test_targets,
-                             learning_rate=0.0001,  # 0.003 works
+                             learning_rate=0.003,  # 0.003 works
                              steps=3000,
                              batch_size=100,  # 100 works
                              model_dir=model_dir_path)

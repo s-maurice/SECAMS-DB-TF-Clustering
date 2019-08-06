@@ -57,9 +57,19 @@ print(outlier_percentage)
 # # Normals
 # plt.scatter(outlier_result_df.loc[outlier_result_df["Outlier"] == 1]["Time_Of_Day"], outlier_result_df.loc[outlier_result_df["Outlier"] == 1]["TerminalSN"], c='blue', alpha=0.5)
 
+plt.figure(figsize=(12, 3), frameon=False, dpi=100)
 # Outliers in red
-plt.scatter(outlier_result_df.loc[outlier_result_df["Outlier"] == -1]["Time_Of_Day"], [0] * len(outlier_result_df.loc[outlier_result_df["Outlier"] == -1]), c='red', alpha=0.01)
+outliers_line = plt.scatter(outlier_result_df.loc[outlier_result_df["Outlier"] == -1]["Time_Of_Day"], [0] * len(outlier_result_df.loc[outlier_result_df["Outlier"] == -1]), c='red', alpha=0.01, label="Outliers")
 # Normals
-plt.scatter(outlier_result_df.loc[outlier_result_df["Outlier"] == 1]["Time_Of_Day"], [0] * len(outlier_result_df.loc[outlier_result_df["Outlier"] == 1]), c='blue', alpha=0.01)
+inliers_line = plt.scatter(outlier_result_df.loc[outlier_result_df["Outlier"] == 1]["Time_Of_Day"], [0] * len(outlier_result_df.loc[outlier_result_df["Outlier"] == 1]), c='blue', alpha=0.01, label="Inliers")
+leg = plt.legend()
+for lh in leg.legendHandles:
+    lh.set_alpha(1)
+plt.xlabel("Time Of Day")
+plt.yticks([])
+plt.box(True)
+plt.subplots_adjust(bottom=0.25)
+plt.title("Event Outliers in Common Users")
+plt.savefig('filename.png', dpi=500)
 plt.show()
 

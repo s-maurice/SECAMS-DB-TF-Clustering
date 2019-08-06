@@ -38,9 +38,11 @@ preprocessed_features["TerminalSN"] = TerminalSN_le.fit_transform(preprocessed_f
 train_features, test_features = train_test_split(preprocessed_features, test_size=0.2)
 
 # Begin Training
-neigh = LocalOutlierFactor()  # Default Args
+neigh = LocalOutlierFactor(novelty=False)  # Default Args
 train_outliers = neigh.fit_predict(train_features)  # On training data
 
-train_features["Outlier"] = train_outliers
-print(train_features)
+outlier_result_df = pd.DataFrame()
+outlier_result_df = train_features.copy()
+outlier_result_df["Outlier"] = train_outliers
+print(outlier_result_df)
 

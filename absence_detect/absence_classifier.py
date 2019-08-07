@@ -385,6 +385,7 @@ def main():
     predictions_to_plot_df.rename(columns={"Reason": "Actual Labels"}, inplace=True)
     print(predictions_to_plot_df)
     predict_plot(predictions_to_plot_df, name="TensorFlow Predictions")
+    plt.subplots_adjust(bottom=0.20)
     plt.savefig('tensorflow_all.png', dpi=500)
 
 

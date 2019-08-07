@@ -22,8 +22,8 @@ pd.set_option('display.width', None)
 # WARNING: The test_features.csv file generated while one_hot_encode is set to True requires a lot of memory.
 one_hot_encode = False
 max_iter = 200    # (200 by default)
-classifier_type = "Cal_Class_Test"  # Classifiers: Tree / DNN / Gaussian / Cal_Class_Test
-use_calibrator = True               # Whether to calibrate (always, if using 'Cal_Class_Test')
+classifier_type = "Cal_Class_Test"  # Classifiers: Tree / DNN / Gaussian / Cal_Class_Test # TODO set to cal_class_test
+use_calibrator = True               # Whether to calibrate (always, if using 'Cal_Class_Test') # TODO set to True
 calibration_type = "sigmoid"        # Sigmoid / Isotonic
 early_stopping = True               # Stop based on validation acc, rather than loss (disabled, if using 'Cal_Class_Test')
 show_examples = True                # Show example predictions
@@ -100,6 +100,8 @@ else:
         classifier = CalibratedClassifierCV(classifier, cv=5, method="isotonic")
         use_calibrator = False    # already calibrated
     else:   # Default to DNN
+        print("Classifier Unselected, Defaulting to DNN")
+        print("----------------------------------------")
         classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter, hidden_layer_sizes=(100, 50))
 
     classifier.fit(train_features, train_labels)  # Fit Model
@@ -200,6 +202,7 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
 
     fig, ax = plt.subplots(figsize=(16, 8), nrows=num_rows, ncols=num_cols, sharex=True, sharey=True)
     for idx, row in proba_df.head(num_rows * num_cols).reset_index(drop=True).iterrows():
+
         # coordinates of the ax graph
         a = idx // 5
         b = idx % 5
@@ -208,6 +211,9 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
         labels = row.index[:14]
         heights = row[:14]
         bars = ax[a][b].bar(labels, heights, color='gray')
+
+        # Lock scale
+        ax[a][b].set_ylim(0, 1)
 
         # Find predicted and actual labels
         predicted_label = row['Predicted Labels']
@@ -242,6 +248,7 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
 
     # Rotate x tick labels
     [plt.setp(item.get_xticklabels(), ha="center", rotation=90) for row in ax for item in row]
+
     fig.text(0.5, 0, 'Reason', ha='center', va='bottom')
     fig.text(0.06, 0.5, 'Percentage Confidence', ha='center', va='center', rotation='vertical')
     plt.subplots_adjust(left=0.09, bottom=0.15, top=0.94, wspace=0.06, hspace=0.09)
@@ -268,8 +275,8 @@ if show_examples:
     plt.savefig('wrong.png', dpi=500)
     predict_plot(correct_proba_df, name="Correct Predictions")
     plt.savefig('correct.png', dpi=500)
-
     predict_plot(no_normal_correct_proba_df, name="Correct Predictions (excluding Normal)")
+    plt.savefig('no_normal_correct.png', dpi=500)
 
 # Save wrong_proba_df for later analysis as well
 wrong_proba_df.to_csv("wrong_proba_df.csv")

@@ -22,10 +22,11 @@ pd.set_option('display.width', None)
 # WARNING: The test_features.csv file generated while one_hot_encode is set to True requires a lot of memory.
 one_hot_encode = False
 max_iter = 200    # (200 by default)
-classifier_type = "Cal_Class_Test"    # Classifiers: Tree / DNN / Gaussian / Cal_Class_Test
-use_calibrator = True
-early_stopping = True
-show_examples = True
+classifier_type = "Cal_Class_Test"  # Classifiers: Tree / DNN / Gaussian / Cal_Class_Test
+use_calibrator = True               # Whether to calibrate (always, if using 'Cal_Class_Test')
+calibration_type = "sigmoid"        # Sigmoid / Isotonic
+early_stopping = True               # Stop based on validation acc, rather than loss (disabled, if using 'Cal_Class_Test')
+show_examples = True                # Show example predictions
 
 
 # Preprocess the data and encode the features + labels
@@ -97,19 +98,15 @@ else:
     elif classifier_type == "Cal_Class_Test":
         classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter, hidden_layer_sizes=(100, 50))
         classifier = CalibratedClassifierCV(classifier, cv=5, method="isotonic")
+        use_calibrator = False    # already calibrated
     else:   # Default to DNN
         classifier = neural_network.MLPClassifier(verbose=True, max_iter=max_iter, hidden_layer_sizes=(100, 50))
 
     classifier.fit(train_features, train_labels)  # Fit Model
 
     if use_calibrator:      # Calibrate Classifier to adjust label probabilities
-        # Use only the features and labels without 'Normal' as the label
-        # no_normal_train_features = train_features[train_labels['Reason'] != 'Normal']
-        # no_normal_train_labels = train_labels[train_labels['Reason'] != 'Normal']
-
-        # Calibrate
         print('calibrating...')
-        classifier = CalibratedClassifierCV(classifier, cv="prefit", method="isotonic")  # Defaults to sigmoid
+        classifier = CalibratedClassifierCV(classifier, cv="prefit", method=calibration_type)  # Defaults to sigmoid
         classifier.fit(train_features, train_labels)
         print('calibrated')
 
@@ -139,25 +136,22 @@ test_result_df.reset_index(drop=True, inplace=True)
 test_result_proba_df = pd.DataFrame.from_records(test_predict_results_proba)
 test_result_proba_df.columns = reason_label_encoder.inverse_transform(test_result_proba_df.columns)
 
-print(test_result_proba_df)
-print(test_result_df)
+print("Test result sample:\n", test_result_df.head(10))
 
 test_accuracy = classifier.score(test_features, test_labels)  # Gets mean accuracy of test data set
 print("Accuracy:", test_accuracy)
 
 test_results = pd.concat([test_result_proba_df, test_result_df], axis=1)
 
-# DF for all the correct entries
-correct_proba_df = test_results[test_results['Actual Labels'] == test_results['Predicted Labels']]
-
-# DF for all the wrong entries
-wrong_proba_df = test_results[test_results['Actual Labels'] != test_results['Predicted Labels']]
-
-# DF for a random set of entries, apart from 'Normal' labels
-no_normal_proba_df = test_results[test_results['Actual Labels'] != "Normal"]
-
-# DF for entries that aren't Normal, Holiday, Weekend_Work or Leave
-irregular_proba_df = test_results[(test_results['Actual Labels'] != "Normal") & (test_results['Actual Labels'] != "Holiday") & (test_results['Actual Labels'] != "Leave") & (test_results['Actual Labels'] != "Weekend_Work")]
+# Create a number of DFs from the probabilities:
+correct_proba_df = test_results[test_results['Actual Labels'] == test_results['Predicted Labels']]  # Correct entries
+no_normal_correct_proba_df = correct_proba_df[correct_proba_df['Actual Labels'] != "Normal"]        # Correct entries, apart from Normal
+wrong_proba_df = test_results[test_results['Actual Labels'] != test_results['Predicted Labels']]    # Wrong entries
+no_normal_proba_df = test_results[test_results['Actual Labels'] != "Normal"]                        # Entries, apart from Normal
+irregular_proba_df = test_results[(test_results['Actual Labels'] != "Normal") &
+                                  (test_results['Actual Labels'] != "Holiday") &
+                                  (test_results['Actual Labels'] != "Leave") &
+                                  (test_results['Actual Labels'] != "Weekend_Work")]  # Entries that aren't Normal, Holiday, Weekend_Work or Leave
 
 
 def average_actual_deviation(proba_df):  # Calculates how far off the model is on average
@@ -182,8 +176,8 @@ def prediction_actual_hist(proba_df_list, name_list):  # Shows hist of predicted
         ax[index, 0].hist(pred)
         ax[index, 1].hist(actual)
 
-    plt.setp(ax[-1, 0].get_xticklabels(), ha="right", rotation=90)
-    plt.setp(ax[-1, 1].get_xticklabels(), ha="right", rotation=90)
+    plt.setp(ax[-1, 0].get_xticklabels(), ha="center", rotation=90)
+    plt.setp(ax[-1, 1].get_xticklabels(), ha="center", rotation=90)
 
     ax[0, 0].set_title("Predicted Labels")
     ax[0, 1].set_title("Actual Labels")
@@ -275,6 +269,7 @@ if show_examples:
     predict_plot(correct_proba_df, name="Correct Predictions")
     plt.savefig('correct.png', dpi=500)
 
+    predict_plot(no_normal_correct_proba_df, name="Correct Predictions (excluding Normal)")
 
 # Save wrong_proba_df for later analysis as well
 wrong_proba_df.to_csv("wrong_proba_df.csv")
@@ -296,8 +291,8 @@ if classifier_type == "Tree":
 # Hyperparam Printout
 
 print("----------------")
-print("Hyper Parameters")
-print("One Hot Encode: %s \nMax Iterations: %s \nClassifier Type: %s \nUse Calibrator: %s \nEarly Stopping: %s \nShow Examples: %s " % (one_hot_encode, max_iter, classifier_type, use_calibrator, early_stopping, show_examples))
+print("Hyperparameters")
+print("One Hot Encode: %s \nMax Iterations: %s \nClassifier Type: %s \nUse Calibrator: %s (%s) \nEarly Stopping: %s \nShow Examples: %s " % (one_hot_encode, max_iter, classifier_type, use_calibrator, calibration_type, early_stopping, show_examples))
 
 plt.show()
 

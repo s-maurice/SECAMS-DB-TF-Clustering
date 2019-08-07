@@ -373,7 +373,7 @@ def main():
             predictions_df.columns = [i.decode("utf-8") for i in predictions_df.columns]
 
         predictions_df.loc[index] = prediction.get("probabilities")
-        predictions_labels_df.loc[index, "Actual Labels"] = prediction.get("classes")[0].decode("utf-8")
+        # predictions_labels_df.loc[index, "Actual Labels"] = prediction.get("classes")[0].decode("utf-8")
         predictions_labels_df.loc[index, "Predicted Labels"] = predictions_df.columns.tolist()[np.argmax(prediction.get("probabilities"))]
 
     # print(predictions_df)
@@ -381,7 +381,8 @@ def main():
     # print(test_features.head(25))
     # print(test_targets.head(25))
 
-    predictions_to_plot_df = pd.concat([predictions_df, test_features.head(25), predictions_labels_df, test_targets.head(25)], axis="columns")
+    predictions_to_plot_df = pd.concat([predictions_df, test_features.head(25), predictions_labels_df, test_targets.head(25).reset_index(drop=True)], axis="columns")
+    predictions_to_plot_df.rename(columns={"Reason": "Actual Labels"})
     print(predictions_to_plot_df)
     predict_plot(predictions_to_plot_df, name="TensorFlow Predictions")
 

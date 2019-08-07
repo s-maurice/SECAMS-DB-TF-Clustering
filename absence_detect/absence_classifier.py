@@ -378,10 +378,10 @@ def main():
 
     # print(predictions_df)
     # print(predictions_labels_df)
-    print(test_features.head(25))
-    print(test_targets.head(25))
+    # print(test_features.head(25))
+    # print(test_targets.head(25))
 
-    predictions_to_plot_df = pd.concat([predictions_df, test_features.head(25), predictions_labels_df], axis="columns")
+    predictions_to_plot_df = pd.concat([predictions_df, test_features.head(25), predictions_labels_df, test_targets.head(25)], axis="columns")
     print(predictions_to_plot_df)
     predict_plot(predictions_to_plot_df, name="TensorFlow Predictions")
 

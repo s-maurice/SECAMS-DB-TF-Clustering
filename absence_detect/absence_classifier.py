@@ -52,22 +52,22 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
         mean = sum(heights) / len(heights)
         ax[a][b].axhline(mean, color='k', linestyle='dashed', linewidth=1)
 
-        # Find features and place them on the graph as well
-        day = dt.date(year=2016, month=row['Month_of_year'], day=row['Day_of_month'])
-        weekday = get_weekday(row['Day_of_week'])
-        present = get_present(row['Present'])
-        prev_absences = row['Prev_absences']
-        users_absent = row['Users_absent']
+        # # Find features and place them on the graph as well
+        # day = dt.date(year=2016, month=row['Month_of_year'], day=row['Day_of_month'])
+        # weekday = get_weekday(row['Day_of_week'])
+        # present = get_present(row['Present'])
+        # prev_absences = row['Prev_absences']
+        # users_absent = row['Users_absent']
 
-        features = "%s (%s)\n%s / %s / %.3f\nP: %.3s / A: %.3s" % (day, weekday, present, prev_absences, users_absent, predicted_label, actual_label)
+        # features = "%s (%s)\n%s / %s / %.3f\nP: %.3s / A: %.3s" % (day, weekday, present, prev_absences, users_absent, predicted_label, actual_label)
 
         # As a subtitle
         # font = dict(fontsize=8)
         # ax[a][b].set_title(features, fontdict=font, pad=-10)
 
         # As a textbox
-        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        ax[a][b].text(0.05, 0.95, features, fontsize=8, transform=ax[a][b].transAxes, verticalalignment='top', bbox=props)
+        # props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        # ax[a][b].text(0.05, 0.95, features, fontsize=8, transform=ax[a][b].transAxes, verticalalignment='top', bbox=props)
 
     # Rotate x tick labels
     [plt.setp(item.get_xticklabels(), ha="center", rotation=90) for row in ax for item in row]
@@ -202,7 +202,7 @@ def predict_model(classifier, features, targets):
     #  classes
     #  all_class_ids
     #  all_classes      (use this too)
-    predict_input_fn = lambda: create_input_function(features, targets, batch_size=1, num_epochs=1)
+    predict_input_fn = lambda: create_input_function(features, targets, batch_size=1, num_epochs=1, shuffle=False)
 
     predict_results = classifier.predict(predict_input_fn)
 
@@ -361,22 +361,19 @@ def main():
         if index == 0:
             predictions_df = pd.DataFrame(columns=prediction.get("all_classes"))
             predictions_df.columns = [i.decode("utf-8") for i in predictions_df.columns]
-            labels_le = preprocessing.LabelEncoder().fit(prediction.get("all_classes"))
 
-        print(prediction)
         predictions_df.loc[index] = prediction.get("probabilities")
         predictions_labels_df.loc[index, "Actual Labels"] = prediction.get("classes")[0].decode("utf-8")
-        predictions_labels_df.loc[index, "Predicted Labels"] = int(np.argmax(prediction.get("probabilities")))
+        predictions_labels_df.loc[index, "Predicted Labels"] = predictions_df.columns.tolist()[np.argmax(prediction.get("probabilities"))]
 
     print(predictions_df)
-    # Decode label
-    predictions_labels_df["Predicted Labels"] = labels_le.inverse_transform(predictions_labels_df["Predicted Labels"].astype(int))
     print(predictions_labels_df)
     print(test_features.head(25))
     print(test_targets.head(25))
 
-
-    predict_plot()
+    predictions_to_plot_df = pd.concat([predictions_df, predictions_labels_df])
+    predict_plot(predictions_to_plot_df, name="TensorFlow Predictions")
 
 
 main()
+plt.show()

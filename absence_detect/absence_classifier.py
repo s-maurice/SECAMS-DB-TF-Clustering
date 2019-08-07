@@ -52,22 +52,22 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
         mean = sum(heights) / len(heights)
         ax[a][b].axhline(mean, color='k', linestyle='dashed', linewidth=1)
 
-        # # Find features and place them on the graph as well
-        # day = dt.date(year=2016, month=row['Month_of_year'], day=row['Day_of_month'])
-        # weekday = get_weekday(row['Day_of_week'])
-        # present = get_present(row['Present'])
-        # prev_absences = row['Prev_absences']
-        # users_absent = row['Users_absent']
+        # Find features and place them on the graph as well
+        day = dt.date(year=2016, month=row['Month_of_year'], day=row['Day_of_month'])
+        weekday = get_weekday(row['Day_of_week'])
+        present = get_present(row['Present'])
+        prev_absences = row['Prev_absences']
+        users_absent = row['Users_absent']
 
-        # features = "%s (%s)\n%s / %s / %.3f\nP: %.3s / A: %.3s" % (day, weekday, present, prev_absences, users_absent, predicted_label, actual_label)
+        features = "%s (%s)\n%s / %s / %.3f\nP: %.3s / A: %.3s" % (day, weekday, present, prev_absences, users_absent, predicted_label, actual_label)
 
         # As a subtitle
         # font = dict(fontsize=8)
         # ax[a][b].set_title(features, fontdict=font, pad=-10)
 
         # As a textbox
-        # props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        # ax[a][b].text(0.05, 0.95, features, fontsize=8, transform=ax[a][b].transAxes, verticalalignment='top', bbox=props)
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        ax[a][b].text(0.05, 0.95, features, fontsize=8, transform=ax[a][b].transAxes, verticalalignment='top', bbox=props)
 
     # Rotate x tick labels
     [plt.setp(item.get_xticklabels(), ha="center", rotation=90) for row in ax for item in row]
@@ -371,7 +371,7 @@ def main():
     print(test_features.head(25))
     print(test_targets.head(25))
 
-    predictions_to_plot_df = pd.concat([predictions_df, predictions_labels_df], axis="columns")
+    predictions_to_plot_df = pd.concat([test_features.head(25), predictions_df, predictions_labels_df], axis="columns")
     print(predictions_to_plot_df)
     predict_plot(predictions_to_plot_df, name="TensorFlow Predictions")
 

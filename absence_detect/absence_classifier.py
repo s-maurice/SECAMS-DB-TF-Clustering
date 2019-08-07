@@ -43,10 +43,10 @@ def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
         actual_label = row['Actual Labels']
 
         # Get indexes to set color
-        # predicted_index = reason_label_encoder.transform([predicted_label])[0]
-        # actual_index = reason_label_encoder.transform([actual_label])[0]
-        # bars[predicted_index].set_color('r')
-        # bars[actual_index].set_color('b')
+        predicted_index = proba_df.columns.tolist().index(row["Predicted Labels"])
+        actual_index = proba_df.columns.tolist().index(row["Actual Labels"])
+        bars[predicted_index].set_color('r')
+        bars[actual_index].set_color('b')
 
         # Draw a mean line
         mean = sum(heights) / len(heights)
@@ -366,12 +366,13 @@ def main():
         predictions_labels_df.loc[index, "Actual Labels"] = prediction.get("classes")[0].decode("utf-8")
         predictions_labels_df.loc[index, "Predicted Labels"] = predictions_df.columns.tolist()[np.argmax(prediction.get("probabilities"))]
 
-    print(predictions_df)
-    print(predictions_labels_df)
+    # print(predictions_df)
+    # print(predictions_labels_df)
     print(test_features.head(25))
     print(test_targets.head(25))
 
-    predictions_to_plot_df = pd.concat([predictions_df, predictions_labels_df])
+    predictions_to_plot_df = pd.concat([predictions_df, predictions_labels_df], axis="columns")
+    print(predictions_to_plot_df)
     predict_plot(predictions_to_plot_df, name="TensorFlow Predictions")
 
 

@@ -1,3 +1,5 @@
+import itertools
+
 import math
 import pandas as pd
 import tensorflow as tf
@@ -7,6 +9,74 @@ from tensorflow import data
 import os
 from sklearn import preprocessing
 import shutil
+import datetime as dt
+
+
+def predict_plot(proba_df, name=None, num_cols=5, num_rows=5):
+
+    # Functions for plotting the features; allows easier reading
+    def get_weekday(num):   # Function that returns a String of the day of week, given a number from .weekday()
+        days_of_week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        return days_of_week[num]
+
+    def get_present(bool):  # Function that returns 'present' or 'absent' depending on the 'present' parameter
+        if bool:
+            return "Present"
+        else:
+            return "Absent"
+
+    proba_df = proba_df.head(num_cols*num_rows)
+
+    fig, ax = plt.subplots(figsize=(16, 8), nrows=num_rows, ncols=num_cols, sharex=True, sharey=True)
+    for idx, row in proba_df.head(num_rows * num_cols).reset_index(drop=True).iterrows():
+        # coordinates of the ax graph
+        a = idx // 5
+        b = idx % 5
+
+        # Get labels and their heights; plot this as a bar graph
+        labels = row.index[:14]
+        heights = row[:14]
+        bars = ax[a][b].bar(labels, heights, color='gray')
+
+        # Find predicted and actual labels
+        predicted_label = row['Predicted Labels']
+        actual_label = row['Actual Labels']
+
+        # Get indexes to set color
+        # predicted_index = reason_label_encoder.transform([predicted_label])[0]
+        # actual_index = reason_label_encoder.transform([actual_label])[0]
+        # bars[predicted_index].set_color('r')
+        # bars[actual_index].set_color('b')
+
+        # Draw a mean line
+        mean = sum(heights) / len(heights)
+        ax[a][b].axhline(mean, color='k', linestyle='dashed', linewidth=1)
+
+        # Find features and place them on the graph as well
+        day = dt.date(year=2016, month=row['Month_of_year'], day=row['Day_of_month'])
+        weekday = get_weekday(row['Day_of_week'])
+        present = get_present(row['Present'])
+        prev_absences = row['Prev_absences']
+        users_absent = row['Users_absent']
+
+        features = "%s (%s)\n%s / %s / %.3f\nP: %.3s / A: %.3s" % (day, weekday, present, prev_absences, users_absent, predicted_label, actual_label)
+
+        # As a subtitle
+        # font = dict(fontsize=8)
+        # ax[a][b].set_title(features, fontdict=font, pad=-10)
+
+        # As a textbox
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        ax[a][b].text(0.05, 0.95, features, fontsize=8, transform=ax[a][b].transAxes, verticalalignment='top', bbox=props)
+
+    # Rotate x tick labels
+    [plt.setp(item.get_xticklabels(), ha="center", rotation=90) for row in ax for item in row]
+    fig.text(0.5, 0, 'Reason', ha='center', va='bottom')
+    fig.text(0.06, 0.5, 'Percentage Confidence', ha='center', va='center', rotation='vertical')
+    plt.subplots_adjust(left=0.09, bottom=0.15, top=0.94, wspace=0.06, hspace=0.09)
+    if name is not None:
+        fig.canvas.set_window_title(name)
+        fig.suptitle(name)
 
 
 def pp_feature(df):
@@ -106,7 +176,7 @@ def train_model(train_features, train_targets, test_features, test_targets, lear
     predict_train_fn = lambda: create_input_function(train_features, train_targets, batch_size=1, num_epochs=1)
     predict_test_fn = lambda: create_input_function(test_features, test_targets, batch_size=1, num_epochs=1)
 
-    periods = 10  # Training periods
+    periods = 1  # Training periods #TODO set back to 10
     steps_per_period = steps // 10
 
     print("Training...")
@@ -178,7 +248,7 @@ def test_result_plotter(predict_results, num_results):
         else:
             result_dict["actual_class"] = [actual_class]
 
-    print(result_dict)
+    # print(result_dict)
 
     # --- Plotting result_dict
     # Make a figure with axes
@@ -252,19 +322,19 @@ def main():
     raw_df = raw_df.reindex(np.random.permutation(raw_df.index))
     raw_df.reset_index(inplace=True)
 
-    df_train = raw_df.head(math.floor(len(raw_df) * 0.7))
-    df_test = raw_df.tail(math.floor(len(raw_df) * 0.3))
+    # df_train = raw_df.head(math.floor(len(raw_df) * 0.7))
+    # df_test = raw_df.tail(math.floor(len(raw_df) * 0.3))
 
     # Take a proportion of the data - there are just too many points to analyse
-    # df_train = raw_df.head(20000)
-    # df_test = raw_df.tail(10000)
+    df_train = raw_df.head(20000)
+    df_test = raw_df.tail(10000)
 
-    print("--- Training DF ---\n", df_train.head(50))
+    print("--- Training DF ---\n", df_train.head(500))
     print("--- Testing DF ---\n", df_test.head(50))
 
     train_features = pp_feature(df_train)
     test_features = pp_feature(df_test)
-    
+
     train_targets = pp_targets(df_train)
     test_targets = pp_targets(df_test)
 
@@ -273,12 +343,40 @@ def main():
                              test_features=test_features,
                              test_targets=test_targets,
                              learning_rate=0.003,  # 0.003 works
-                             steps=3000,
-                             batch_size=100,  # 100 works
+                             steps=10,  # 3000
+                             batch_size=1,  # 100 works
                              model_dir=model_dir_path)
 
     predictions = predict_model(classifier, test_features, test_targets)
-    test_result_plotter(predictions, 4)
+
+    pd.set_option('display.max_columns', 15)
+    pd.set_option('display.max_rows', 10)
+    pd.set_option('display.width', None)
+
+    # Place into DF for plotting
+    predictions_labels_df = pd.DataFrame()
+    for index, prediction in enumerate(predictions):
+        if index == 25:
+            break
+        if index == 0:
+            predictions_df = pd.DataFrame(columns=prediction.get("all_classes"))
+            predictions_df.columns = [i.decode("utf-8") for i in predictions_df.columns]
+            labels_le = preprocessing.LabelEncoder().fit(prediction.get("all_classes"))
+
+        print(prediction)
+        predictions_df.loc[index] = prediction.get("probabilities")
+        predictions_labels_df.loc[index, "Actual Labels"] = prediction.get("classes")[0].decode("utf-8")
+        predictions_labels_df.loc[index, "Predicted Labels"] = int(np.argmax(prediction.get("probabilities")))
+
+    print(predictions_df)
+    # Decode label
+    predictions_labels_df["Predicted Labels"] = labels_le.inverse_transform(predictions_labels_df["Predicted Labels"].astype(int))
+    print(predictions_labels_df)
+    print(test_features.head(25))
+    print(test_targets.head(25))
+
+
+    predict_plot()
 
 
 main()

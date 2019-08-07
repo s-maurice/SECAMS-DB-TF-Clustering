@@ -102,6 +102,13 @@ def pp_feature(df):
     userid_le = preprocessing.LabelEncoder()
     feature_df["USERID"] = userid_le.fit_transform(feature_df["USERID"])
 
+    for day in pd.to_datetime(df['Day'].unique()):
+        feature_df.loc[(feature_df['Day_of_month'] == day.day) & (
+                feature_df['Month_of_year'] == day.month), 'Users_absent'] = \
+            len(feature_df[(feature_df['Day_of_month'] == day.day) & (
+                    feature_df['Month_of_year'] == day.month) & (feature_df['Present'] ==
+                                                                 one_hot_encode([False]))]) / len(feature_df['USERID'].unique())
+
     return feature_df
 
 
@@ -145,6 +152,8 @@ def create_feature_columns(df):
         categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="Month_of_year", vocabulary_list=df["Month_of_year"].unique())))
 
     feature_column_list.append(tf.feature_column.numeric_column(key="Prev_absences"))
+
+    feature_column_list.append(tf.feature_column.numeric_column(key="Users_absent"))
 
     feature_column_list.append(tf.feature_column.indicator_column(
         categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="USERID",
@@ -319,6 +328,7 @@ def main():
     raw_df = pd.read_csv("reason_df.csv")
     raw_df['Day'] = pd.to_datetime(raw_df['Day'])
 
+
     raw_df = raw_df.reindex(np.random.permutation(raw_df.index))
     raw_df.reset_index(inplace=True)
 
@@ -371,7 +381,7 @@ def main():
     print(test_features.head(25))
     print(test_targets.head(25))
 
-    predictions_to_plot_df = pd.concat([test_features.head(25), predictions_df, predictions_labels_df], axis="columns")
+    predictions_to_plot_df = pd.concat([predictions_df, test_features.head(25), predictions_labels_df], axis="columns")
     print(predictions_to_plot_df)
     predict_plot(predictions_to_plot_df, name="TensorFlow Predictions")
 

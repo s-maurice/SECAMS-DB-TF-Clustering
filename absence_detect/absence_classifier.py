@@ -382,9 +382,10 @@ def main():
     # print(test_targets.head(25))
 
     predictions_to_plot_df = pd.concat([predictions_df, test_features.head(25), predictions_labels_df, test_targets.head(25).reset_index(drop=True)], axis="columns")
-    predictions_to_plot_df.rename(columns={"Reason": "Actual Labels"})
+    predictions_to_plot_df.rename(columns={"Reason": "Actual Labels"}, inplace=True)
     print(predictions_to_plot_df)
     predict_plot(predictions_to_plot_df, name="TensorFlow Predictions")
+    plt.savefig('tensorflow_all.png', dpi=500)
 
 
 main()

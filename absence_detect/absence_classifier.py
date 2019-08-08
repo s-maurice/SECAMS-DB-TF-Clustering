@@ -328,16 +328,15 @@ def main():
     raw_df = pd.read_csv("reason_df.csv")
     raw_df['Day'] = pd.to_datetime(raw_df['Day'])
 
-
     raw_df = raw_df.reindex(np.random.permutation(raw_df.index))
     raw_df.reset_index(inplace=True)
 
-    # df_train = raw_df.head(math.floor(len(raw_df) * 0.7))
-    # df_test = raw_df.tail(math.floor(len(raw_df) * 0.3))
+    df_train = raw_df.head(math.floor(len(raw_df) * 0.7)) # TODO Switch back to this
+    df_test = raw_df.tail(math.floor(len(raw_df) * 0.3))  # TODO Switch back to this
 
     # Take a proportion of the data - there are just too many points to analyse
-    df_train = raw_df.head(20000)
-    df_test = raw_df.tail(10000)
+    # df_train = raw_df.head(20000)
+    # df_test = raw_df.tail(10000)
 
     print("--- Training DF ---\n", df_train.head(500))
     print("--- Testing DF ---\n", df_test.head(50))

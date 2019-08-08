@@ -278,7 +278,7 @@ def main():
         print('Error while attempting to delete directory ' + model_dir_path)
 
     # raw_df = get_input_data.get_events()  # Get Raw DF
-    raw_df = get_input_data.get_events_from_csv("CSV Files/Curated Data/ALL_USERID_beginning_with_20_and_between_100_and_500_entries.csv")
+    raw_df = get_input_data.get_events_from_csv("CSV Files/SECAMS_common_user_id_big.csv")
 
     df_array = split_df(raw_df, [8, 1, 1])  # Split into 3 DFs
 

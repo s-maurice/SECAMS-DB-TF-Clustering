@@ -331,7 +331,7 @@ def main():
     raw_df = raw_df.reindex(np.random.permutation(raw_df.index))
     raw_df.reset_index(inplace=True)
 
-    df_train = raw_df.head(math.floor(len(raw_df) * 0.7)) # TODO Switch back to this
+    df_train = raw_df.head(math.floor(len(raw_df) * 0.7))  # TODO Switch back to this
     df_test = raw_df.tail(math.floor(len(raw_df) * 0.3))  # TODO Switch back to this
 
     # Take a proportion of the data - there are just too many points to analyse

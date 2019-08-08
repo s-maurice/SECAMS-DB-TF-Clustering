@@ -45,7 +45,7 @@ ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
 # Put a legend to the right of the current axis
 ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize="small")
-plt.xlabel("Day, starting from 1st May, 2018")
+plt.xlabel("Day, starting from 1st May, 2016")
 plt.ylabel("UserID")
 plt.title("UserID Time Events")
 plt.savefig('userid_time_events.png', dpi=500)

@@ -32,7 +32,7 @@ def day_time_normed(events):
 
 def data_preprocessing(df, split=[1, 1, 1]):
     # In the case of SECAMS DB, all terminals are on thr same TERMINALGROUP, so drop as it may confuse the DNN
-    df = df.drop(columns=["TERMINALGROUP", "TERMINALNAME"])  # TerminalName redundant as same as teminal id FUTURE USE MAY CONSIDER GROUPING BOYS/GIRLS VERSIONS OF SCHOOLS
+    # df = df.drop(columns=["TERMINALGROUP", "TERMINALNAME"])  # TerminalName redundant as same as teminal id FUTURE USE MAY CONSIDER GROUPING BOYS/GIRLS VERSIONS OF SCHOOLS
 
     # Drop NANs
     df = df.dropna(how="any", axis=0)
@@ -173,14 +173,16 @@ def rmse_plot(train, val):
 
 def main():
     # Hyper-parameters
-    learning_rate = 0.0003              #
-    batch_size = 200                    #
-    steps_per_period = 100              #
+    learning_rate = 0.003              #
+    batch_size = 30                    #
+    steps_per_period = 1000              #
     periods = 10                        #
-    hidden_units = [1024, 512, 256]     # layers of DNN
+    hidden_units = [512, 128]     # layers of DNN
     data_split_ratio = [6, 2, 2]        # ratio of data used for train, validation, testing (respectively)
 
-    event_df = get_input_data.get_events()
+    event_df = pd.read_csv("CSV Files/SECAMS_common_user_id_big.csv")
+    event_df['TIMESTAMPS'] = pd.to_datetime(event_df['TIMESTAMPS'])
+
     df_train, df_test, df_val = data_preprocessing(event_df, split=data_split_ratio)
 
     fc_list = define_feature_columns(df_train)

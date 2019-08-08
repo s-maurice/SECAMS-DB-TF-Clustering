@@ -1,16 +1,19 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn import preprocessing
 from numpy import datetime64
 from more_itertools import unique_everseen
+import matplotlib as mpl
 
 import get_input_data
 
 # Get and prepare DF
-raw_df = get_input_data.get_events_from_csv("CSV Files/Curated Data/ALL_USERID_beginning_with_20_and_between_100_and_500_entries.csv")
+# raw_df = get_input_data.get_events_from_csv("CSV Files/Curated Data/ALL_USERID_beginning_with_20_and_between_100_and_500_entries.csv")
 # raw_df = get_input_data.get_events_from_csv("CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv")
+raw_df = pd.read_csv("CSV Files/SECAMS_common_user_id_big.csv")
 
 
 def get_decimal_hour(events):
@@ -27,8 +30,9 @@ if "TIMESTAMPS" in raw_df.columns:
     raw_df["DECHOUR"] = get_decimal_hour(raw_df["TIMESTAMPS"])
 
 # Figures + subplots
-fig = plt.figure()
+fig = plt.figure(figsize=(12, 8))
 ax = fig.add_subplot(111, projection='3d')
+plt.title("UserID, TerminalSN, Time of Day in SECAMS Database")
 
 # x: user // y: timestamp // z: terminalsn // color: eventID
 # 3d plots can't deal with categorical (x and z); encode using label encoders
@@ -53,23 +57,34 @@ eventid_encoded = le_eventid.fit_transform(raw_df["EVENTID"])
 # print(le_eventid.inverse_transform(eventid_encoded).tolist())
 print(remove_duplicates(le_eventid.inverse_transform(eventid_encoded).tolist()))
 
-p = ax.scatter(userid_encoded, dechour, terminalsn_encoded, c=eventid_encoded, cmap="Set1")
+# Cmap
+colors = ['orangered', "goldenrod", 'lightslategrey']
+my_cmap = ListedColormap(colors)
 
 
-ax.set_xlabel("UserID")
+p = ax.scatter(userid_encoded, dechour, terminalsn_encoded, c=eventid_encoded, cmap=my_cmap, marker=".")
+
+ax.set_xlabel("UserID", labelpad=12)
 ax.set_xticks(remove_duplicates(userid_encoded.tolist()))
 ax.set_xticklabels(x_ticklabels)
 
 ax.set_ylabel("Time of day")
 
-ax.set_zlabel('TerminalSN')
+ax.set_zlabel('TerminalSN', labelpad=23)
 ax.set_zticks(remove_duplicates(terminalsn_encoded.tolist()))
 ax.set_zticklabels(z_ticklabels)
 
 
-# Give the colorbar - ticks doesn't work on Mac
-fig.colorbar(p)
+# Give the colorbar
+
+cbar = fig.colorbar(p, ticks=[0, 1, 2])
+cbar.set_ticklabels(le_eventid.classes_)
 # fig.colorbar(p, ticks=list(set(le_eventid.inverse_transform(eventid_encoded).tolist())))
+
+# ax.view_init(3, -3)
+ax.view_init(82, -3)
+
+plt.savefig('3d.png', dpi=500)
 plt.show()
 
 

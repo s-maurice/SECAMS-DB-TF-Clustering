@@ -304,10 +304,10 @@ def main():
         val_targets,
         learning_rate=0.003,
         batch_size=20,
-        steps=1500,
-        periods=1,
+        steps=1000,
+        periods=10,
         model_dir=model_dir_path,
-        hidden_units=[512, 256, 128])
+        hidden_units=[512, 128])
 
     # --- MODEL TESTING ---
 

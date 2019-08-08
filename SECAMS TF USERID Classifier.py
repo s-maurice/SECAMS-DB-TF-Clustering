@@ -302,10 +302,10 @@ def main():
         train_targets,
         val_features,
         val_targets,
-        learning_rate=0.003,
-        batch_size=20,
-        steps=1000,
-        periods=10,
+        learning_rate=0.003,  # 0.003
+        batch_size=20,  # 20
+        steps=1000,  # 1000
+        periods=10,  # 10
         model_dir=model_dir_path,
         hidden_units=[512, 128])
 

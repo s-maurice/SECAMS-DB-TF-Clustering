@@ -173,12 +173,12 @@ def rmse_plot(train, val):
 
 def main():
     # Hyper-parameters
-    learning_rate = 0.003              #
-    batch_size = 30                    #
-    steps_per_period = 1000              #
-    periods = 10                        #
+    learning_rate = 0.003              # 0.003
+    batch_size = 20                    # 20
+    steps_per_period = 1000              # 1000
+    periods = 10                        # 10
     hidden_units = [512, 128]     # layers of DNN
-    data_split_ratio = [6, 2, 2]        # ratio of data used for train, validation, testing (respectively)
+    data_split_ratio = [8, 1, 1]        # ratio of data used for train, validation, testing (respectively)
 
     event_df = pd.read_csv("CSV Files/SECAMS_common_user_id_big.csv")
     event_df['TIMESTAMPS'] = pd.to_datetime(event_df['TIMESTAMPS'])

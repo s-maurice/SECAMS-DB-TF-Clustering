@@ -365,8 +365,8 @@ def main():
     # Place into DF for plotting
     predictions_labels_df = pd.DataFrame()
     for index, prediction in enumerate(predictions):
-        if index == 25:
-            break
+        # if index == 25:  # Stop this at 25 items
+        #     break
         if index == 0:
             predictions_df = pd.DataFrame(columns=prediction.get("all_classes"))
             predictions_df.columns = [i.decode("utf-8") for i in predictions_df.columns]
@@ -377,8 +377,8 @@ def main():
 
     # print(predictions_df)
     # print(predictions_labels_df)
-    # print(test_features.head(25))
-    # print(test_targets.head(25))
+    predictions_df.to_csv("tensorflow predictions df")
+    predictions_labels_df.to_csv("tensorflow predictions labels df")
 
     predictions_to_plot_df = pd.concat([predictions_df, test_features.head(25), predictions_labels_df, test_targets.head(25).reset_index(drop=True)], axis="columns")
     predictions_to_plot_df.rename(columns={"Reason": "Actual Labels"}, inplace=True)

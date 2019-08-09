@@ -122,10 +122,6 @@ def gen_leave(df, leave_threshold=2):
             start_time = time.time()
 
 
-
-
-
-
 df = pd.read_csv("absence_df.csv")
 df['Day'] = pd.to_datetime(df['Day'])
 df.set_index("index", inplace=True)

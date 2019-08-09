@@ -15,6 +15,10 @@ import get_input_data
 # raw_df = get_input_data.get_events_from_csv("CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv")
 raw_df = pd.read_csv("CSV Files/SECAMS_common_user_id_big.csv")
 
+print(raw_df.head(10))
+
+# raw_df = raw_df[]
+
 
 def get_decimal_hour(events):
     decimal_hour = (events.dt.hour + events.dt.minute / 60)

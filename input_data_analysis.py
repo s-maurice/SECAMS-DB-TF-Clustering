@@ -109,15 +109,15 @@ def plot_points(filepath, x, y, name=None, event_color=False):
 def main():
     plot_points(filepath="CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv",
                 x="TIMESTAMPS",
-                y="USERID",
+                y="TERMINALSN",
                 name="Timestamps vs UserID",
                 event_color=True)
 
-    plot_points(filepath="CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv",
-                x="DECHOUR",
-                y="USERID",
-                name="Time of Day vs UserID",
-                event_color=True)
+    # plot_points(filepath="CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv",
+    #             x="DECHOUR",
+    #             y="USERID",
+    #             name="Time of Day vs UserID",
+    #             event_color=True)
 
     # show_pattern([20018])
 

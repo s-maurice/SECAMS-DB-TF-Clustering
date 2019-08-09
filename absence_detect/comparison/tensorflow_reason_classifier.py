@@ -119,7 +119,8 @@ with open('tensorflow_reason_classifier.pkl', 'wb') as output:
     pickle.dump(classifier, output, pickle.HIGHEST_PROTOCOL)
 
 # Get prediction
-predictions = predict_model(classifier, test_features, test_targets)
+predict_input_fn = lambda: create_input_function(test_features, test_targets, batch_size=1, num_epochs=1, shuffle=False)
+predictions = classifier.predict(predict_input_fn)
 
 # Place into DF
 predictions_labels_df = pd.DataFrame()

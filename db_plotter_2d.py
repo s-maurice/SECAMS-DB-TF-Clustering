@@ -16,7 +16,7 @@ print(raw_df.sort_values(by=["TIMESTAMPS"]))
 #raw_df = raw_df.groupby('TERMINALSN').filter(lambda x: len(x) > 20)
 #raw_df.to_csv("CSV Files/Curated Data/ALL_USERID_beginning_with_20_and_between_100_and_500_entries.csv")
 raw_df2 = get_input_data.get_events_from_csv("CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100up_hour_15down.csvZ")
-
+raw_df2['TIMESTAMPS'] = pd.to_datetime(raw_df2['TIMESTAMPS'])
 
 plt.subplot(211)
 raw_df2["DECHOUR"] = get_decimal_hour(raw_df2["TIMESTAMPS"])

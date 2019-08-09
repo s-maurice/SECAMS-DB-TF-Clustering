@@ -1,4 +1,5 @@
 import itertools
+import pickle
 
 import math
 import pandas as pd
@@ -355,6 +356,9 @@ def main():
                              steps=10,  # 3000
                              batch_size=1,  # 100 works
                              model_dir=model_dir_path)
+
+    with open('tensorflow_classifier.pkl', 'wb') as output:
+        pickle.dump(classifier, output, pickle.HIGHEST_PROTOCOL)
 
     predictions = predict_model(classifier, test_features, test_targets)
 

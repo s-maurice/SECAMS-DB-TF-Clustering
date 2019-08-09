@@ -7,6 +7,7 @@ import pickle
 # Will be used to compare the specific results of ML models from TensorFlow vs SciKit learn.
 
 pd.set_option('display.max_rows', 10)
+pd.set_option('display.max_columns', 100)
 
 raw_df = pd.read_csv("../reason_df.csv")
 
@@ -58,9 +59,10 @@ test_labels.to_csv("test_labels.csv")
 train_features.to_csv("train_features.csv")
 test_features.to_csv("test_features.csv")
 
+
 def save_object(obj, filename):
     with open(filename, 'wb') as output:
-        pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(obj, output)
 
 
 save_object(present_label_encoder, "encoder_present.pkl")

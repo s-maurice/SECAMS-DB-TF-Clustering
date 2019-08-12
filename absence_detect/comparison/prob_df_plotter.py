@@ -5,6 +5,7 @@ import datetime as dt
 import pickle
 
 pd.set_option("display.max_columns", None)
+pd.set_option("display.width", None)
 
 
 # Gets object from pickles
@@ -123,15 +124,24 @@ sklearn_prob_df.columns = reason_encoder.inverse_transform([int(i) for i in skle
 # Get predicted labels
 sklearn_prob_df['Predicted Labels'] = sklearn_prob_df.idxmax(axis=1)
 
-print(sklearn_prob_df)
-print(test_features)
-print(test_labels)
 # Add on features + actual labels
 sklearn_prob_df = pd.concat([sklearn_prob_df, test_features, test_labels], axis=1)
 
-plot_types = ["correct", "incorrect", "no_normal", "no_normal_correct", "irregular"]
 
+# --- TENSORFLOW ---
+tf_prob_df = pd.read_csv("tensorflow predictions df", index_col=0)
+tf_prob_df.columns = [int(i) for i in tf_prob_df.columns]
+tf_prob_df = tf_prob_df.reindex(sorted(tf_prob_df.columns), axis=1)
+
+tf_prob_df.columns = reason_encoder.inverse_transform(tf_prob_df.columns)
+tf_prob_df['Predicted Labels'] = tf_prob_df.idxmax(axis=1)
+
+tf_prob_df = pd.concat([tf_prob_df, test_features, test_labels], axis=1)
+
+# Plotting
+plot_types = ["correct", "incorrect", "no_normal", "no_normal_correct", "irregular"]
 for plot_type in plot_types:
-    predict_plot(sklearn_prob_df, name="Scikit Learn " + plot_type, plot_type=plot_type)
+    predict_plot(sklearn_prob_df, name="Scikit Learn (" + plot_type + ")", plot_type=plot_type)
+    predict_plot(tf_prob_df, name="TensorFlow (" + plot_type + ")", plot_type=plot_type)
 
 plt.show()

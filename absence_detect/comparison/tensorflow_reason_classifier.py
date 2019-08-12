@@ -30,7 +30,7 @@ def create_feature_columns(df):
     feature_column_list = []
 
     feature_column_list.append(tf.feature_column.indicator_column(
-        categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="Present", vocabulary_list=['True', 'False'])))
+        categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="Present", vocabulary_list=[0, 1])))
 
     feature_column_list.append(tf.feature_column.indicator_column(
         categorical_column=tf.feature_column.categorical_column_with_vocabulary_list(key="Day_of_week", vocabulary_list=df["Day_of_week"].unique())))
@@ -57,11 +57,10 @@ def train_model(train_features, train_targets, test_features, test_targets, lear
     label_vocab_list = train_targets['Reason'].unique().tolist()
 
     optimizer = lambda: tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-    #   optimizer = tf.contrib.estimator.clip_gradients_by_norm(optimizer, 5.0)
 
     # Create the DNN
     classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
-                                            hidden_units=[128, 64],
+                                            hidden_units=[10, 5],
                                             optimizer=optimizer,
                                             label_vocabulary=label_vocab_list,
                                             n_classes=len(label_vocab_list),
@@ -74,8 +73,8 @@ def train_model(train_features, train_targets, test_features, test_targets, lear
     predict_train_fn = lambda: create_input_function(train_features, train_targets, batch_size=1, num_epochs=1)
     predict_test_fn = lambda: create_input_function(test_features, test_targets, batch_size=1, num_epochs=1)
 
-    periods = 10  # Training periods #TODO set back to 10
-    steps_per_period = steps // 10
+    periods = 1  # Training periods #TODO 1? 10?
+    steps_per_period = steps // periods
 
     print("Training...")
 
@@ -83,8 +82,8 @@ def train_model(train_features, train_targets, test_features, test_targets, lear
         classifier.train(input_fn=train_fn, steps=steps_per_period)
 
         print('Period ' + str(period) + ':')
-        print("Training:", classifier.evaluate(predict_train_fn, name="Train"))
-        print("Testing:", classifier.evaluate(predict_test_fn, name="Test"))
+        # print("Training:", classifier.evaluate(predict_train_fn, name="Train"))
+        # print("Testing:", classifier.evaluate(predict_test_fn, name="Test"))
 
     print("Training ended.")
 
@@ -104,37 +103,34 @@ test_targets = pd.read_csv("test_labels.csv", index_col=0)
 train_features = pd.read_csv("train_features.csv", index_col=0)
 train_targets = pd.read_csv("train_labels.csv", index_col=0)
 
+test_targets['Reason'] = test_targets['Reason'].astype(str)
+train_targets['Reason'] = train_targets['Reason'].astype(str)
+
 # Create Classifier
 classifier = train_model(train_features=train_features,
                          train_targets=train_targets,
                          test_features=test_features,
                          test_targets=test_targets,
                          learning_rate=0.003,  # 0.003 works
-                         steps=10,  # 3000
-                         batch_size=1,  # 100 works
+                         steps=1000,  # 1000 TODO
+                         batch_size=40,  # 100 works
                          model_dir=model_dir_path)
 
-# Dump Classifier Object
-with open('tensorflow_reason_classifier.pkl', 'wb') as output:
-    pickle.dump(classifier, output, pickle.HIGHEST_PROTOCOL)
+# # Dump Classifier Object   -- dont work ;(
+# with open('tensorflow_reason_classifier.pkl', 'wb') as output:
+#     pickle.dump(classifier, output, pickle.HIGHEST_PROTOCOL)
 
 # Get prediction
 predict_input_fn = lambda: create_input_function(test_features, test_targets, batch_size=1, num_epochs=1, shuffle=False)
 predictions = classifier.predict(predict_input_fn)
 
 # Place into DF
-predictions_labels_df = pd.DataFrame()
 for index, prediction in enumerate(predictions):
-    # if index == 25:  # Stop this at 25 items
-    #     break
     if index == 0:
         predictions_df = pd.DataFrame(columns=prediction.get("all_classes"))
         predictions_df.columns = [i.decode("utf-8") for i in predictions_df.columns]
 
     predictions_df.loc[index] = prediction.get("probabilities")
-    # predictions_labels_df.loc[index, "Actual Labels"] = prediction.get("classes")[0].decode("utf-8")
-    predictions_labels_df.loc[index, "Predicted Labels"] = predictions_df.columns.tolist()[np.argmax(prediction.get("probabilities"))]
 
+print(predictions_df)
 predictions_df.to_csv("tensorflow predictions df")
-predictions_labels_df.to_csv("tensorflow predictions labels df")
-

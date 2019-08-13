@@ -140,18 +140,18 @@ def train_model(
     for period in range(periods):
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
 
-        eval_train_results = evaluate_model(classifier, train_features, train_targets, name="Training")
-        eval_val_results = evaluate_model(classifier, val_features, val_targets, name="Validation")
-
-        train_acc.append(eval_train_results.get('accuracy'))
-        train_loss.append(eval_train_results.get('average_loss'))
-        val_acc.append(eval_val_results.get('accuracy'))
-        val_loss.append(eval_val_results.get('average_loss'))
-
-        print("  Period %02d: Train: Accuracy = %f // Loss = %f // Average Loss = %f \n"
-              "             Valid: Accuracy = %f // Loss = %f // Average Loss = %f" %
-              (period, eval_train_results.get('accuracy'), eval_train_results.get('loss'), eval_train_results.get('average_loss'),
-               eval_val_results.get('accuracy'), eval_val_results.get('loss'), eval_val_results.get('average_loss')))
+        # eval_train_results = evaluate_model(classifier, train_features, train_targets, name="Training")
+        # eval_val_results = evaluate_model(classifier, val_features, val_targets, name="Validation")
+        #
+        # train_acc.append(eval_train_results.get('accuracy'))
+        # train_loss.append(eval_train_results.get('average_loss'))
+        # val_acc.append(eval_val_results.get('accuracy'))
+        # val_loss.append(eval_val_results.get('average_loss'))
+        #
+        # print("  Period %02d: Train: Accuracy = %f // Loss = %f // Average Loss = %f \n"
+        #       "             Valid: Accuracy = %f // Loss = %f // Average Loss = %f" %
+        #       (period, eval_train_results.get('accuracy'), eval_train_results.get('loss'), eval_train_results.get('average_loss'),
+        #        eval_val_results.get('accuracy'), eval_val_results.get('loss'), eval_val_results.get('average_loss')))
 
     # All periods done
     print("Classifier trained.")
@@ -224,12 +224,13 @@ def plot_row(row, ax, column_list, max_value, show_actual_label, event_predicted
 
     cur_plot = ax.bar(xlabels, barheight, color='gray')
     ax.axhline(barheight.mean(), color='k', linestyle='dashed', linewidth=1)
-    ax.axes.set_ylim(bottom=0, top=max_value)
+    ax.axes.set_ylim(bottom=0, top=1)
     if type(event_predicted_on) == (str or list or pd.DataFrame):  # Doesn't work
         ax.axes.title(event_predicted_on, loc="right")
     cur_plot[prediction_label].set_color('r')
     if show_actual_label:
         cur_plot[actual_label].set_color('b')
+    plt.xticks(rotation=90)
 
 
 def test_result_plotter(result_df, num, features):
@@ -241,11 +242,14 @@ def test_result_plotter(result_df, num, features):
     max_value = results_to_plot.iloc[[0, -1]].max()
     max_value = max_value[0:-1].max()
 
-    fig, axes = plt.subplots(nrows=num, ncols=1, sharex=True)
+    fig, axes = plt.subplots(nrows=num, ncols=1, sharex=True, sharey=True)
+    fig.set_size_inches(5, 10)
     for index, row in results_to_plot.iterrows():
         plot_row(row, axes[index], results_to_plot.columns[0:-1], max_value, show_actual_label=True)
+        plt.ylabel("Percentage Confidence")
+        plt.xlabel("User ID")
     fig.canvas.set_window_title('Testing Results')
-    fig.suptitle("Test Predict Result Percentages")
+    fig.title("Test Predict Result Percentages")
 
 
 def test_predict(model, features, labels_df):
@@ -279,6 +283,7 @@ def main():
 
     # raw_df = get_input_data.get_events()  # Get Raw DF
     raw_df = get_input_data.get_events_from_csv("CSV Files/SECAMS_common_user_id_big.csv")
+    raw_df["USERID"] = [str(i) for i in raw_df["USERID"]]
 
     df_array = split_df(raw_df, [8, 1, 1])  # Split into 3 DFs
 
@@ -319,14 +324,18 @@ def main():
     plt.subplot(234)
     plt.title("UserID vs. TIMESTAMPS")
     plt.scatter(raw_df["TIMESTAMPS"], raw_df["USERID"], marker=".")
+    plt.xlabel("Timestamps")
+    plt.ylabel("UserID")
 
     plt.subplot(235)
     plt.title("UserID vs. DECHOUR")
     plt.scatter(preprocess_features(raw_df)["DECHOUR"], raw_df["USERID"], marker=".")
+    plt.xlabel("Time of Day")
+    plt.ylabel("UserID")
 
     # Plots probabilities of num examples from the test set to see how well the model did
     test_results = predict_model(dnn_classifier, test_features, test_targets)
-    test_result_plotter(test_results, 10, test_features)
+    test_result_plotter(test_results, 5, test_features)
 
     # Plots probabilities of a single user-defined example with given features
     test_predict(dnn_classifier, [[0.1, "6", "7", "00111DA0ED90", "OUT"]], test_targets)

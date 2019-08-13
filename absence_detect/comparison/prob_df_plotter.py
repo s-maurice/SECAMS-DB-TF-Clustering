@@ -144,4 +144,5 @@ for plot_type in plot_types:
     predict_plot(sklearn_prob_df, name="Scikit Learn (" + plot_type + ")", plot_type=plot_type)
     predict_plot(tf_prob_df, name="TensorFlow (" + plot_type + ")", plot_type=plot_type)
 
+
 plt.show()

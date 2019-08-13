@@ -8,6 +8,8 @@ test_features = pd.read_csv("test_features.csv", index_col=0)
 test_labels = pd.read_csv("test_labels.csv", index_col=0)
 train_features = pd.read_csv("train_features.csv", index_col=0)
 train_labels = pd.read_csv("train_labels.csv", index_col=0)
+train_features["USERID"] = [str(i) for i in train_features["USERID"]]
+test_features["USERID"] = [str(i) for i in test_features["USERID"]]
 
 # Begin Training: Try to load the model and test data sets if the model already exists
 if os.path.isfile('saved_model.pkl'):

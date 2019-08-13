@@ -96,8 +96,10 @@ def plot_points(filepath, x, y, name=None, event_color=False):
     if event_color:
         df_in = df[df['EVENTID'] == "IN"]
         df_out = df[df['EVENTID'] == "OUT"]
+        df_f1 = df[df['EVENTID'] == "F1"]
         ax.plot(df_in[x], df_in[y], marker='.', linestyle='', label="in")
         ax.plot(df_out[x], df_out[y], marker='.', linestyle='', label="out")
+        ax.plot(df_f1[x], df_f1[y], marker='.', linestyle='', label="f1")
         ax.legend(loc='best')
     else:
         ax.plot(df[x], df[y], marker='.', linestyle='')
@@ -107,17 +109,17 @@ def plot_points(filepath, x, y, name=None, event_color=False):
 # import matplotlib.pyplot as plt
 # import input_data_analysis
 def main():
-    plot_points(filepath="CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv",
-                x="TIMESTAMPS",
-                y="TERMINALSN",
-                name="Timestamps vs UserID",
-                event_color=True)
-
     # plot_points(filepath="CSV Files/Curated Data/userid_20xxx_terminal_400up_user_100to500_hour_15down.csv",
-    #             x="DECHOUR",
-    #             y="USERID",
-    #             name="Time of Day vs UserID",
+    #             x="TIMESTAMPS",
+    #             y="TERMINALSN",
+    #             name="Timestamps vs UserID",
     #             event_color=True)
+
+    plot_points(filepath="CSV Files/Curated Data/dept27.csv",
+                x="TIMESTAMPS",
+                y="USERID",
+                name="dept27",
+                event_color=True)
 
     # show_pattern([20018])
 

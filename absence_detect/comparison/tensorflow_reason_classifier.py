@@ -73,7 +73,7 @@ def train_model(train_features, train_targets, test_features, test_targets, lear
     predict_train_fn = lambda: create_input_function(train_features, train_targets, batch_size=1, num_epochs=1)
     predict_test_fn = lambda: create_input_function(test_features, test_targets, batch_size=1, num_epochs=1)
 
-    periods = 1  # Training periods #TODO 1? 10?
+    periods = 10  # Training periods #TODO 1? 10? No need for mid-period evaluation
     steps_per_period = steps // periods
 
     print("Training...")
@@ -86,6 +86,9 @@ def train_model(train_features, train_targets, test_features, test_targets, lear
         # print("Testing:", classifier.evaluate(predict_test_fn, name="Test"))
 
     print("Training ended.")
+    print("--- Accuracy ---")
+    print("  Training:", classifier.evaluate(predict_train_fn, name="Train"))
+    print("  Testing:", classifier.evaluate(predict_test_fn, name="Test"))
 
     return classifier
 
@@ -112,7 +115,7 @@ classifier = train_model(train_features=train_features,
                          test_features=test_features,
                          test_targets=test_targets,
                          learning_rate=0.003,  # 0.003 works
-                         steps=1000,  # 1000 TODO
+                         steps=1000,  # 1000
                          batch_size=40,  # 100 works
                          model_dir=model_dir_path)
 

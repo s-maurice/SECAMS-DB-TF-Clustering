@@ -246,10 +246,10 @@ def test_result_plotter(result_df, num, features):
     fig.set_size_inches(5, 10)
     for index, row in results_to_plot.iterrows():
         plot_row(row, axes[index], results_to_plot.columns[0:-1], max_value, show_actual_label=True)
-        plt.ylabel("Percentage Confidence")
-        plt.xlabel("User ID")
+    plt.ylabel("Percentage Confidence")
+    plt.xlabel("User ID")
     fig.canvas.set_window_title('Testing Results')
-    fig.title("Test Predict Result Percentages")
+    plt.suptitle("Test Predict Result Percentages")
 
 
 def test_predict(model, features, labels_df):
@@ -317,8 +317,10 @@ def main():
     # --- MODEL TESTING ---
 
     # model.evaluate() on test results
+    eval_train_results = evaluate_model(dnn_classifier, train_features, train_targets, name="train")
     eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets, name="Test")
     print("Test results:", eval_test_results)
+    print("Train results:", eval_train_results)
 
     # Shows the timestamps of each user in the raw dataframe made - as a comparison for how similar data entries are
     plt.subplot(234)

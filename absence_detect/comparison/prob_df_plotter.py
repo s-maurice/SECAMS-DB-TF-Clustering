@@ -142,7 +142,9 @@ tf_prob_df = pd.concat([tf_prob_df, test_features, test_labels], axis=1)
 plot_types = ["correct", "incorrect", "no_normal", "no_normal_correct", "irregular"]
 for plot_type in plot_types:
     predict_plot(sklearn_prob_df, name="Scikit Learn (" + plot_type + ")", plot_type=plot_type)
+    plt.savefig("Reson Classifier TF SKL Comparison 5x5Plots/SciKit Learn/" + "Scikit Learn (" + plot_type + ")" + ".png")
     predict_plot(tf_prob_df, name="TensorFlow (" + plot_type + ")", plot_type=plot_type)
+    plt.savefig("Reson Classifier TF SKL Comparison 5x5Plots/TensorFlow/" + "TensorFlow (" + plot_type + ")" + ".png")
 
 
 plt.show()

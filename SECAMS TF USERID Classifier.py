@@ -141,6 +141,7 @@ def train_model(
     for period in range(periods):
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
 
+        # Evaluate and plot, very slow
         eval_train_results = evaluate_model(classifier, train_features, train_targets, name="Training")
         eval_val_results = evaluate_model(classifier, val_features, val_targets, name="Validation")
 
@@ -247,8 +248,8 @@ def test_result_plotter(result_df, num, features):
     fig.set_size_inches(5, 10)
     for index, row in results_to_plot.iterrows():
         plot_row(row, axes[index], results_to_plot.columns[0:-1], max_value, show_actual_label=True)
-        plt.ylabel("Percentage Confidence")
-        plt.xlabel("User ID")
+    fig.text(0.04, 0.5, 'Percentage Confidence', va='center', rotation='vertical')
+    plt.xlabel("User ID")
     fig.canvas.set_window_title('Testing Results')
     plt.suptitle("Test Predict Result Percentages")
 
@@ -310,7 +311,7 @@ def main():
         val_targets,
         learning_rate=0.003,  # 0.003
         batch_size=20,  # 20
-        steps=10000,  # 1000
+        steps=10000,  # 10000
         periods=10,  # 10
         model_dir=model_dir_path,
         hidden_units=[512, 128])
@@ -343,8 +344,6 @@ def main():
     # Plots probabilities of a single user-defined example with given features
     test_predict(dnn_classifier, [[0.1, "6", "7", "00111DA0ED90", "OUT"]], test_targets)
     test_predict(dnn_classifier, [[20, "6", "7", "00111DA0ED98", "IN"]], test_targets)
-
-
 
 
 start_time = time.time()

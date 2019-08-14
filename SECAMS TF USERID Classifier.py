@@ -1,3 +1,5 @@
+import time
+
 import math
 import pandas as pd
 import tensorflow as tf
@@ -140,18 +142,18 @@ def train_model(
     for period in range(periods):
         classifier.train(input_fn=train_input_fn, steps=steps_per_period)
 
-        # eval_train_results = evaluate_model(classifier, train_features, train_targets, name="Training")
-        # eval_val_results = evaluate_model(classifier, val_features, val_targets, name="Validation")
-        #
-        # train_acc.append(eval_train_results.get('accuracy'))
-        # train_loss.append(eval_train_results.get('average_loss'))
-        # val_acc.append(eval_val_results.get('accuracy'))
-        # val_loss.append(eval_val_results.get('average_loss'))
-        #
-        # print("  Period %02d: Train: Accuracy = %f // Loss = %f // Average Loss = %f \n"
-        #       "             Valid: Accuracy = %f // Loss = %f // Average Loss = %f" %
-        #       (period, eval_train_results.get('accuracy'), eval_train_results.get('loss'), eval_train_results.get('average_loss'),
-        #        eval_val_results.get('accuracy'), eval_val_results.get('loss'), eval_val_results.get('average_loss')))
+        eval_train_results = evaluate_model(classifier, train_features, train_targets, name="Training")
+        eval_val_results = evaluate_model(classifier, val_features, val_targets, name="Validation")
+
+        train_acc.append(eval_train_results.get('accuracy'))
+        train_loss.append(eval_train_results.get('average_loss'))
+        val_acc.append(eval_val_results.get('accuracy'))
+        val_loss.append(eval_val_results.get('average_loss'))
+
+        print("  Period %02d: Train: Accuracy = %f // Loss = %f // Average Loss = %f \n"
+              "             Valid: Accuracy = %f // Loss = %f // Average Loss = %f" %
+              (period, eval_train_results.get('accuracy'), eval_train_results.get('loss'), eval_train_results.get('average_loss'),
+               eval_val_results.get('accuracy'), eval_val_results.get('loss'), eval_val_results.get('average_loss')))
 
     # All periods done
     print("Classifier trained.")
@@ -249,7 +251,7 @@ def test_result_plotter(result_df, num, features):
         plt.ylabel("Percentage Confidence")
         plt.xlabel("User ID")
     fig.canvas.set_window_title('Testing Results')
-    fig.title("Test Predict Result Percentages")
+    # fig.title("Test Predict Result Percentages")
 
 
 def test_predict(model, features, labels_df):
@@ -281,7 +283,7 @@ def main():
     except FileNotFoundError:
         print('Error while attempting to delete directory ' + model_dir_path)
 
-    # raw_df = get_input_data.get_events()  # Get Raw DF
+    # raw_df = get_input_data.get_events_from_csv("CSV Files/SECAMS_common_user_id.csv")
     raw_df = get_input_data.get_events_from_csv("CSV Files/SECAMS_common_user_id_big.csv")
     raw_df["USERID"] = [str(i) for i in raw_df["USERID"]]
 
@@ -309,7 +311,7 @@ def main():
         val_targets,
         learning_rate=0.003,  # 0.003
         batch_size=20,  # 20
-        steps=1000,  # 1000
+        steps=10000,  # 1000
         periods=10,  # 10
         model_dir=model_dir_path,
         hidden_units=[512, 128])
@@ -317,7 +319,9 @@ def main():
     # --- MODEL TESTING ---
 
     # model.evaluate() on test results
+    eval_train_results = evaluate_model(dnn_classifier, train_features, train_targets, name="Train")
     eval_test_results = evaluate_model(dnn_classifier, test_features, test_targets, name="Test")
+    print("Train results:", eval_train_results)
     print("Test results:", eval_test_results)
 
     # Shows the timestamps of each user in the raw dataframe made - as a comparison for how similar data entries are
@@ -341,7 +345,10 @@ def main():
     test_predict(dnn_classifier, [[0.1, "6", "7", "00111DA0ED90", "OUT"]], test_targets)
     test_predict(dnn_classifier, [[20, "6", "7", "00111DA0ED98", "IN"]], test_targets)
 
-    plt.show()
 
 
+
+start_time = time.time()
 main()
+print("--- %s seconds ---" % (time.time() - start_time))
+plt.show()

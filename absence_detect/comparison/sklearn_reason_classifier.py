@@ -20,8 +20,9 @@ else:
     classifier = CalibratedClassifierCV(classifier, cv=3, method="isotonic")
 
     classifier.fit(train_features, train_labels)
-    joblib.dump(classifier, 'saved_model.pkl')
+    joblib.dump(classifier, 'saved_model.pkl')  # Save Model
 
+classifier.fit(train_features, train_labels)
 
 # Testing: Place probabilities in a DF
 test_predict_results_proba = classifier.predict_proba(test_features)
@@ -32,5 +33,8 @@ test_accuracy = classifier.score(test_features, test_labels)
 print("Test Accuracy: ", test_accuracy)
 print(test_predict_results_proba)
 
-test_predict_results_proba.to_csv("predictions_sklearn.csv")
+# test_predict_results_proba.to_csv("predictions_sklearn.csv")  # Save new predictions
+
+
+
 

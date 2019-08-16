@@ -10,8 +10,11 @@ for plot_type in plot_types:
     im_list_sk.append("SciKit Learn/" + "Scikit Learn (" + plot_type + ")" + ".png")
     im_list_tf.append("SciKit Learn/" + "TensorFlow (" + plot_type + ")" + ".png")
 
-imgs_sk = [PIL.Image.open(i) for i in im_list_sk]
-imgs_tf = [PIL.Image.open(i) for i in im_list_sk]
+imgs_sk = [PIL.Image.open(i) for i in im_list_sk]  # Open
+imgs_tf = [PIL.Image.open(i) for i in im_list_sk]  # Open
+
+imgs_sk = [i.crop((70, 0, 1500, 800)) for i in imgs_sk]  # Crop image
+imgs_tf = [i.crop((70, 0, 1500, 800)) for i in imgs_tf]  # Crop image
 
 # Combine Image
 img_pairs = zip(imgs_sk, imgs_tf)

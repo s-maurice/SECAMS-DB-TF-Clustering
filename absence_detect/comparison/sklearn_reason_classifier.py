@@ -22,7 +22,7 @@ else:
     classifier.fit(train_features, train_labels)
     joblib.dump(classifier, 'saved_model.pkl')  # Save Model
 
-classifier.fit(train_features, train_labels)
+    classifier.fit(train_features, train_labels)
 
 # Testing: Place probabilities in a DF
 test_predict_results_proba = classifier.predict_proba(test_features)

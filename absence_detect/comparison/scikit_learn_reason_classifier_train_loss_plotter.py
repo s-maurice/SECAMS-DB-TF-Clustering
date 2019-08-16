@@ -11,6 +11,8 @@ file = file.readlines()
 iterations = []
 [iterations.append(line) for line in file if line[0] == "I"]
 
+print("Total Iterations: " + str(len(iterations)))
+
 iterations_split = []
 cur_iter_seq = None
 for line in iterations:
